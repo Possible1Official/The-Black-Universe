@@ -1,3 +1,4 @@
+import {flyLeg} from "./flight-qa-helpers.mjs";
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -79,7 +80,7 @@ await interact('Initialize universe forge');s=await page.evaluate(()=>window.__e
 await interact('Scan the new world');assert.equal(await page.locator('#navigationHud').isVisible(),false,'dialogue hides guidance');assert.match(await page.locator('#speech').textContent(),/NYSA/);await page.click('#closeDialogue');
 // Deploy through actual science controls, walk over the terrain, survey and extract.
 await interact('Scan the new world');assert.equal(await page.locator('#deployNysa').isEnabled(),true);
-await page.click('#deployNysa');await page.waitForFunction(()=>window.__erebus.snapshot().onSurface);
+await page.click('#deployNysa');await flyLeg(page);await page.waitForFunction(()=>window.__erebus.snapshot().onSurface);
 await page.waitForFunction(()=>window.__erebus.snapshot().position.y<.95);
 // Quality changes while away must not enable ship lights or restore stale flags on return.
 await page.click('#menu');await page.selectOption('#quality','high');
@@ -96,8 +97,8 @@ assert.ok((await page.evaluate(()=>window.__erebus.snapshot().position.y))>0,'te
 await page.evaluate(()=>window.__erebus.place(430,0,-Math.PI/2));await page.keyboard.down('KeyW');await page.waitForFunction(()=>window.__erebus.snapshot().position.x>431.4,{},{timeout:30000});await page.waitForTimeout(500);await page.keyboard.up('KeyW');
 assert.ok((await page.evaluate(()=>window.__erebus.snapshot().position.x))<431.8,'basalt perimeter blocks leaving survey site');
 await interact('Survey luminous outcrop');assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
-assert.equal(await page.locator('#objective').textContent(),'Return to Erebus');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='extraction');assert.equal(await page.locator('#navLabel').textContent(),'Extraction beacon');await page.screenshot({path:'.local/qa/nysa-sample.png'});
-await interact('Extract to Erebus');await page.waitForFunction(()=>!window.__erebus.snapshot().onSurface);
+assert.equal(await page.locator('#objective').textContent(),'Return to Erebus');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='extraction');assert.equal(await page.locator('#navLabel').textContent(),'Kestrel shuttle hatch');await page.screenshot({path:'.local/qa/nysa-sample.png'});
+await interact('Board shuttle for Erebus');await flyLeg(page);await page.waitForFunction(()=>!window.__erebus.snapshot().onSurface);
 await page.waitForFunction(()=>window.__erebus.snapshot().render.lighting.visibleSources===9&&window.__erebus.snapshot().render.lighting.visibleProxies===0);
 await page.click('#menu');await page.selectOption('#quality','low');await page.click('#play');
 await page.waitForFunction(()=>window.__erebus.snapshot().render.lighting.visibleSources===0&&window.__erebus.snapshot().render.lighting.visibleProxies===4);
@@ -106,7 +107,7 @@ console.log('Checked: High 9 / performance 4 / surface 0 light policy, surface q
 assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.forged,true);
 assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
 // Reloading from the surface starts safely aboard while preserving the sample.
-await interact('Scan the new world');await page.click('#deployNysa');await page.click('#menu');
+await interact('Scan the new world');await page.click('#deployNysa');await flyLeg(page);await page.click('#menu');
 await page.reload({waitUntil:'domcontentloaded'});await page.waitForSelector('canvas[data-ready="true"]');
 assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).onSurface,false);assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
 await installPointerLock();await page.click('#play');
@@ -185,7 +186,7 @@ await mobile.evaluate(()=>window.__erebus.target('Scan the new world'));
 await mobile.waitForFunction(()=>window.__erebus.snapshot().nearest==='Scan the new world');
 await mobile.click('#touchAction');assert.equal(await mobile.locator('#deployNysa').isEnabled(),true);
 assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'surface controls fit mobile viewport');
-await mobile.click('#deployNysa');await mobile.waitForFunction(()=>window.__erebus.snapshot().onSurface);
+await mobile.click('#deployNysa');await flyLeg(mobile);await mobile.waitForFunction(()=>window.__erebus.snapshot().onSurface);
 await mobile.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='sample');assert.equal(await mobile.locator('#navigationHud').isVisible(),true);
 const surfaceStart=await mobile.evaluate(()=>window.__erebus.snapshot().position.z);
 await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:80,y:668}]});
@@ -195,9 +196,9 @@ await mobile.evaluate(()=>window.__erebus.target('Survey luminous outcrop'));
 await mobile.waitForFunction(()=>window.__erebus.snapshot().nearest==='Survey luminous outcrop');
 await mobile.click('#touchAction');assert.equal((await mobile.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
 await mobile.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='extraction');await mobile.screenshot({path:'.local/qa/nysa-mobile.png'});
-await mobile.evaluate(()=>window.__erebus.target('Extract to Erebus'));
-await mobile.waitForFunction(()=>window.__erebus.snapshot().nearest==='Extract to Erebus');
-await mobile.click('#touchAction');await mobile.waitForFunction(()=>!window.__erebus.snapshot().onSurface);
+await mobile.evaluate(()=>window.__erebus.target('Board shuttle for Erebus'));
+await mobile.waitForFunction(()=>window.__erebus.snapshot().nearest==='Board shuttle for Erebus');
+await mobile.click('#touchAction');await flyLeg(mobile);await mobile.waitForFunction(()=>!window.__erebus.snapshot().onSurface);
 assert.equal((await mobile.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
 assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
 console.log('Checked: mobile surface deployment, real touch walking, sample and extraction');

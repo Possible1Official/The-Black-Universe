@@ -1,6 +1,6 @@
 # The Black Universe
 
-An evolving browser science-fiction game: explore the starship **Erebus**, restore its power network, and awaken a colossal **universe forge**.
+An evolving browser science-fiction game: explore the starship **Erebus**, restore its power network, awaken a colossal **universe forge**, then pilot **Kestrel** through space and land on **Nysa**.
 
 **Play:** https://the-black-universe-erebus.harshit-0207.chatgpt.site
 
@@ -18,11 +18,12 @@ Enter the Erebus. Move with WASD/arrows, look with the mouse, sprint with Shift,
 2. Use the access panel beside the port bulkhead to open engineering. Activate the power relay near the reactor. Engineering has an interior access panel for returning to the concourse.
 3. Open the starboard bulkhead and activate the observatory relay. Its interior panel controls the same bulkhead.
 4. Return to the central bridge console and initialize the architect. A new world, Nysa, appears outside.
-5. Scan it from the bridge and deploy to the Nysa survey site. Collect a sample from the luminous outcrop with E, then return through the landing beacon.
+5. Scan it from the bridge and launch Kestrel (the concourse shuttle-bay console also launches it). W/S controls throttle, A/D turns, mouse/drag or Up/Down aims, Shift boosts and Space brakes. Fly to Nysa's cyan ring, brake below 18 m/s within 100 m, then press E for guided touchdown.
+6. Explore the Nysa survey site on foot and sample the luminous outcrop. Board the parked shuttle at its aft hatch/beacon, fly back to Erebus, brake at its ring and dock with E. See [flight controls and scope](docs/FLIGHT.md).
 
 Engineering also has a containment console: choose Balanced for stable operation, Genesis for a stronger forge bus at the cost of heat, or Cooling to recover an overload. If containment trips, cool to 40% and reset. See [power model and controls](docs/POWER.md).
 
-Progress saves locally on this browser/device; corrupt or unavailable storage fails safely. Reset is in the menu. Nysa offers one bounded surface excursion; reloading starts safely aboard with collected samples retained. Nysa uses slope-colored, textured ground; High mode adds fine normal and roughness detail. See [surface controls and scope](docs/EXCURSION.md).
+Progress saves locally on this browser/device; corrupt or unavailable storage fails safely. Reset is in the menu. Kestrel offers bounded manual spaceflight with a cockpit, assisted inertia, boost/braking, collision recovery and guided final landing/docking. Touch uses the movement joystick, right-side aiming and held BRAKE/BOOST buttons; T or TARGET switches destination in flight. Nysa offers one bounded surface excursion; reloading starts safely aboard with collected samples retained. Nysa uses slope-colored, textured ground; High mode adds fine normal and roughness detail. Its orbital view now has coastlines, polar ice and drifting clouds. See [surface controls and scope](docs/EXCURSION.md).
 
 ## Technology and scope
 

@@ -15,4 +15,6 @@ The user authorized hourly development, testing, committing, and automatic mergi
 Use `git revert <merge-commit> -m 1` for a merge commit, or revert the squash commit. Run tests/build and merge the revert through the same process. `foundation-baseline` preserves the initial repository state. Avoid resets/force pushes. Local saved mission data can be reset in the game settings.
 
 ## Durable state
+Current user priority: expand piloted shuttle flight, landing and planetary exploration toward Infinity-like immersion. Read FLIGHT.md and the reprioritized ROADMAP before selecting the next cycle. Keep the full launch/land/survey/board/dock loop playable while improving realism and NPC/ship agency.
+
 GitHub is authoritative. The workspace may not survive between scheduled runs. Never depend on a local bearer token remaining available. Read the latest asset status before fetching; do not harvest every Mixamo asset. Record source, license/terms and optimization statistics for imported assets. The current credential screenshot is not a reliable reusable authentication source.

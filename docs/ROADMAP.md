@@ -76,10 +76,19 @@ Vision: an immersive, physically coherent browser universe with explorable vesse
 - One Vite-fingerprinted model URL supports safe cache updates; procedural loading-failure fallback remains.
 
 ## Next four prioritized cycles
-1. **Character polish:** inspect walking/idle transitions on hardware, add a visually distinct second crew member after preview, and evaluate foot contact/IK and LOD before increasing asset budgets.
-2. **Ship simulation expansion:** deepen the new power/containment model, ambient machinery, better doors, minimap and navigation aids. Preserve completed saves through a versioned migration.
-3. **Exploration polish and performance:** improve terrain materials/lighting and measure surface/ship rendering before expanding the biome. Evaluate instancing and frame pacing; keep the existing mission/navigation loop stable.
-4. **NPC agency:** navigation graph, schedules, perception and task execution, with explicit goals and failure recovery. Add deterministic simulation tests. Dialogue can remain local until a properly authenticated backend exists.
+The user has reprioritized development toward the flight, planet exploration and open-ended immersion of **Infinity** in Black Mirror: USS Callister. Maintain an original universe and grow these capabilities incrementally, without claiming television-level realism or general NPC agency prematurely.
+
+1. **Flight and landing depth:** refine craft/hangar geometry, approach cues, collision shapes and visible atmospheric descent; retain the complete manual round trip and measure rendering budgets.
+2. **Nysa expansion:** enlarge/stream landing terrain, add exploration goals and richer scenery, then connect additional landing sites through actual shuttle travel. Preserve sample/mission saves.
+3. **Ship and NPC agency:** navigation graph across rooms, local schedules/perception and executable crew tasks; deepen ship systems and failure recovery with deterministic tests.
+4. **Realism and character polish:** distinct visually previewed crew, animation contact/IK, authored environments, lighting, sound and LOD against measured hardware budgets.
+
+## Kestrel flight and guided landing (2026-10-13)
+- Concourse bay/bridge launch, cockpit manual thrust/steering/boost/braking and target switching in a bounded sector.
+- Erebus exterior, visible universe forge, Nysa ocean/coast/land/ice colors and separate drifting clouds.
+- Low-speed approach guards, guided final touchdown, a visibly parked shuttle, survey on foot, boarding, return flight and docking.
+- Fixed-step assisted flight, approximate planet/hull safety recovery, touch controls, pause/reset and transient location with compatible saves.
+- Three-second guided transitions and a separate local survey sector; orbital mechanics, seamless whole-planet descent and terrain streaming remain future work.
 
 ## Later
 - Physically based and baked lighting, modular authored environments, LODs, GPU timing and measured device budgets.
