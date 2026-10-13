@@ -37,6 +37,30 @@ export function canApproach(f:FlightState){return f.phase==='flying'&&flightDist
 export function beginApproach(f:FlightState):FlightState {
   return canApproach(f)?{...f,phase:f.leg==='nysa'?'landing':'docking',timer:0,throttle:0,velocity:{x:0,y:0,z:0},start:copy(f.position)}:f;
 }
+function advanceThrust(f:Pick<FlightState,'throttle'|'velocity'>,input:FlightInput,dt:number){
+  // Brake wins over simultaneous joystick/throttle/boost intent.
+  const throttle=input.brake?Math.max(0,f.throttle-dt*1.8):Math.max(0,Math.min(1,f.throttle+Math.max(-1,Math.min(1,input.throttle))*dt*.7));
+  const speed=throttle*(input.boost&&!input.brake?180:110),pitch=Math.max(-1.35,Math.min(1.35,input.pitch));
+  const desired={x:-Math.sin(input.yaw)*Math.cos(pitch)*speed,y:Math.sin(pitch)*speed,z:-Math.cos(input.yaw)*Math.cos(pitch)*speed};
+  const blend=1-Math.exp(-(input.brake?5:1.4)*dt),velocity=copy(f.velocity);
+  for(const axis of ['x','y','z'] as const)velocity[axis]+=(desired[axis]-velocity[axis])*blend;
+  return {throttle,velocity};
+}
+// Bounded 60 Hz forecast of held braking at the current heading; no hull avoidance.
+export function brakePrediction(f:FlightState,yaw:number,pitch:number){
+  let motion={throttle:f.throttle,velocity:copy(f.velocity)},steps=0;
+  const displacement={x:0,y:0,z:0},dt=1/60,input={throttle:0,brake:true,boost:false,yaw,pitch};
+  while(steps<300&&(motion.throttle>0||Math.hypot(motion.velocity.x,motion.velocity.y,motion.velocity.z)>.5)){
+    motion=advanceThrust(motion,input,dt);for(const axis of ['x','y','z'] as const)displacement[axis]+=motion.velocity[axis]*dt;steps++;
+  }
+  return {displacement,steps,time:steps*dt,distance:Math.hypot(displacement.x,displacement.y,displacement.z)};
+}
+export function approachGuidance(f:FlightState,yaw:number,pitch:number){
+  const target=flightGoal(f),distance=flightDistance(f),speed=flightSpeed(f),dx=(target.x-f.position.x)/Math.max(distance,.001),dy=(target.y-f.position.y)/Math.max(distance,.001),dz=(target.z-f.position.z)/Math.max(distance,.001);
+  const closing=f.velocity.x*dx+f.velocity.y*dy+f.velocity.z*dz,lateral=Math.sqrt(Math.max(0,speed*speed-closing*closing));
+  const stop=brakePrediction(f,yaw,pitch),stopToward=Math.max(0,stop.displacement.x*dx+stop.displacement.y*dy+stop.displacement.z*dz);
+  return {closing,lateral,stop,ready:canApproach(f),brakeNow:f.phase==='flying'&&speed>SAFE_SPEED&&closing>5&&distance<=APPROACH_RANGE+stopToward+15,movingAway:closing< -5};
+}
 export function stepFlight(previous:FlightState,input:FlightInput,dt:number):FlightState {
   if(!Number.isFinite(dt)||dt<=0)return previous;
   dt=Math.min(dt,.05);
@@ -54,16 +78,12 @@ export function stepFlight(previous:FlightState,input:FlightInput,dt:number):Fli
     if(f.timer>=3){f.phase=f.phase==='launching'?'flying':f.phase==='landing'?'descending':'docked';if(f.phase==='descending')f.timer=0;}
     return f;
   }
-  f.throttle=Math.max(0,Math.min(1,f.throttle+Math.max(-1,Math.min(1,input.throttle))*dt*.7));
-  if(input.brake)f.throttle=Math.max(0,f.throttle-dt*1.8);
-  const speed=f.throttle*(input.boost?180:110),pitch=Math.max(-1.35,Math.min(1.35,input.pitch));
-  const desired={x:-Math.sin(input.yaw)*Math.cos(pitch)*speed,y:Math.sin(pitch)*speed,z:-Math.cos(input.yaw)*Math.cos(pitch)*speed};
-  const blend=1-Math.exp(-(input.brake?5:1.4)*dt);
-  for(const axis of ['x','y','z'] as const){f.velocity[axis]+=(desired[axis]-f.velocity[axis])*blend;f.position[axis]+=f.velocity[axis]*dt;}
+  Object.assign(f,advanceThrust(f,input,dt));
+  for(const axis of ['x','y','z'] as const)f.position[axis]+=f.velocity[axis]*dt;
   // At the fixed 60 Hz step, displacement is <=3 m, far below these hull radii.
   for(const [center,radius] of [[NYSA_CENTER,NYSA_RADIUS+8],[{x:0,y:0,z:0},52]] as const){
     const p=f.position,dx=p.x-center.x,dy=p.y-center.y,dz=p.z-center.z,d=Math.hypot(dx,dy,dz);
-    if(d<radius){const scale=radius/Math.max(d,.001);p.x=center.x+dx*scale;p.y=center.y+dy*scale;p.z=center.z+(d>.001?dz*scale:radius);f.velocity={x:0,y:0,z:0};f.throttle=0;f.collisions++;}
+    if(d<radius){const clearance=radius+.01,scale=clearance/Math.max(d,.001);p.x=center.x+dx*scale;p.y=center.y+dy*scale;p.z=center.z+(d>.001?dz*scale:clearance);f.velocity={x:0,y:0,z:0};f.throttle=0;f.collisions++;}
   }
   if(Math.hypot(f.position.x,f.position.y,f.position.z)>2300){f.position=copy(flightGoal(f));f.velocity={x:0,y:0,z:0};f.throttle=0;f.collisions++;}
   return f;
