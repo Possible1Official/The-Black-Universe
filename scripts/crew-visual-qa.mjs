@@ -19,6 +19,6 @@ try{
  assert.deepEqual(errors,[]);console.log(JSON.stringify({moving,later,resting,errors}));
  // Failed local asset must keep the mission playable and both procedural actors intact.
  const fallback=await browser.newPage({viewport:{width:640,height:400},isMobile:true,hasTouch:true});
- await fallback.route('**/assets/crew/ely.glb',route=>route.abort());await fallback.goto('http://localhost:5173/?qa');await fallback.waitForSelector('canvas[data-ready="true"]');await fallback.click('#play');await fallback.waitForTimeout(500);
+ await fallback.route('**/ely*.glb*',route=>route.abort());await fallback.goto('http://localhost:5173/?qa');await fallback.waitForSelector('canvas[data-ready="true"]');await fallback.click('#play');await fallback.waitForTimeout(500);
  assert.ok((await fallback.evaluate(()=>window.__erebus.snapshot())).crew.every(c=>c.visual===null));console.log('Asset-failure fallback remains playable');
 }finally{await browser.close();}

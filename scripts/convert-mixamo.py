@@ -9,7 +9,7 @@ from mathutils import Vector
 
 ROOT = Path(__file__).resolve().parent.parent
 RAW = ROOT / '.local/mixamo-assets/f7b85d05-5f1c-47d8-9770-9a1a054bd6f6'
-OUT = ROOT / 'public/assets/crew'
+OUT = ROOT / '.local/mixamo-converted'
 CHARACTER = 'f7b85d05-5f1c-47d8-9770-9a1a054bd6f6'
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.scene.render.fps = 30

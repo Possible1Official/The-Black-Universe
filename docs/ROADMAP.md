@@ -70,6 +70,11 @@ Vision: an immersive, physically coherent browser universe with explorable vesse
 - 14,808 triangles, 67 bones, four 1K textures, 4.826 MB GLB; procedural loading-failure fallback.
 - Both officers currently share one appearance; no facial animation, IK, run clip or photorealism claim.
 
+## Crew download budget (2026-10-13)
+- Lossless embedded WebP maps reduce the shared character GLB from 4.826 MB to 3.303 MB (31.6%).
+- Decoded texture pixels and geometry/rig/animation bytes retain source checksums; no visual-quality reduction or FPS gain is claimed.
+- One Vite-fingerprinted model URL supports safe cache updates; procedural loading-failure fallback remains.
+
 ## Next four prioritized cycles
 1. **Character polish:** inspect walking/idle transitions on hardware, add a visually distinct second crew member after preview, and evaluate foot contact/IK and LOD before increasing asset budgets.
 2. **Ship simulation expansion:** deepen the new power/containment model, ambient machinery, better doors, minimap and navigation aids. Preserve completed saves through a versioned migration.

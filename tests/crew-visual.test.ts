@@ -1,12 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import * as THREE from 'three';
 import {CrewVisual,WALK_STRIDE} from '../src/crew-visual';
 
 test('shipped rig is self-contained, bounded, and has in-place idle/walk animation',()=>{
-  const file=readFileSync(new URL('../public/assets/crew/ely.glb',import.meta.url));
-  assert.equal(file.readUInt32LE(0),0x46546c67);assert.ok(file.byteLength<8_000_000);
+  const file=readFileSync(new URL('../src/assets/ely.glb',import.meta.url));
+  const optimization=JSON.parse(readFileSync(new URL('../public/assets/crew/optimization.json',import.meta.url),'utf8'));
+  const hash=(bytes:Uint8Array)=>createHash('sha256').update(bytes).digest('hex');
+  assert.equal(file.readUInt32LE(0),0x46546c67);assert.ok(file.byteLength<3_400_000);
+  assert.equal(hash(file),optimization.output_sha256);
+  assert.ok(optimization.output_bytes/optimization.source_bytes<.7);
   const jsonLength=file.readUInt32LE(12);
   const asset=JSON.parse(file.subarray(20,20+jsonLength).toString());
   const bin=file.subarray(28+jsonLength);
@@ -23,7 +28,15 @@ test('shipped rig is self-contained, bounded, and has in-place idle/walk animati
     for(const axis of [0,1]){const components=Array.from(values).filter((_,i)=>i%3===axis);assert.ok(Math.max(...components)-Math.min(...components)<.0001);}
     const duration=asset.accessors[anim.samplers[channel.sampler].input].max[0];assert.ok(duration>0&&duration<10);
   }
-  for(const image of asset.images){assert.equal(image.uri,undefined);const view=asset.bufferViews[image.bufferView];const png=bin.subarray(view.byteOffset,view.byteOffset+view.byteLength);assert.equal(image.mimeType,'image/png');assert.ok(png.readUInt32BE(16)<=2048&&png.readUInt32BE(20)<=2048);}
+  assert.ok(asset.extensionsRequired.includes('EXT_texture_webp'));
+  for(const texture of asset.textures){assert.equal(texture.source,undefined);assert.ok(asset.images[texture.extensions.EXT_texture_webp.source]);}
+  for(const image of asset.images){
+    assert.equal(image.uri,undefined);const view=asset.bufferViews[image.bufferView],webp=bin.subarray(view.byteOffset,view.byteOffset+view.byteLength);
+    assert.equal(image.mimeType,'image/webp');assert.equal(webp.subarray(0,4).toString(),'RIFF');assert.equal(webp.subarray(8,12).toString(),'WEBP');assert.equal(webp.subarray(12,16).toString(),'VP8L');
+    assert.equal(webp[20],0x2f);const dimensions=webp.readUInt32LE(21),width=(dimensions&0x3fff)+1,height=((dimensions>>>14)&0x3fff)+1;
+    const evidence=optimization.images.find((i:any)=>i.name===image.name);assert.equal(width,evidence.width);assert.equal(height,evidence.height);assert.ok(width<=2048&&height<=2048);assert.equal(evidence.pixels_equal,true);
+  }
+  for(const evidence of optimization.retained_buffer_views){const view=asset.bufferViews[evidence.index];assert.equal(view.byteLength,evidence.bytes);assert.equal(hash(bin.subarray(view.byteOffset,view.byteOffset+view.byteLength)),evidence.sha256,'geometry/rig/animation bytes retain their source checksum');}
   const indices=asset.meshes.flatMap((m:any)=>m.primitives.map((p:any)=>asset.accessors[p.indices].count));assert.ok(indices.reduce((a:number,b:number)=>a+b,0)/3<40_000);
 });
 
