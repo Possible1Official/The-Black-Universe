@@ -34,6 +34,11 @@ Vision: an immersive, physically coherent browser universe with explorable vesse
 - Measured software-renderer walking speed restored toward 3 m/s; rendering FPS is unchanged.
 - Deterministic Rapier low-frame-rate collision/jump tests and dev-only render counters.
 
+## Static ship rendering milestone (2026-10-13)
+- Spatial instancing for 103 opaque static cuboids, retaining independent doors, screens and crew.
+- Sampled ship draw counts reduced 13–23%, with less than 1% additional submitted triangles.
+- Lighting/fragment optimization and hardware GPU measurements remain future work; no FPS gain is claimed.
+
 ## Next four prioritized cycles
 1. **Character pipeline:** obtain valid Mixamo access, import one approved character with idle/walk clips, optimize to GLB, add asset provenance and budgets. If access is blocked, improve lighting/materials and crew collision/animation instead.
 2. **Ship simulation expansion:** deepen the new power/containment model, ambient machinery, better doors, minimap and navigation aids. Preserve completed saves through a versioned migration.
