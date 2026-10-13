@@ -7,14 +7,14 @@ export interface Waypoint extends NavPoint {id:string;label:string;hint:string}
 const at=(id:string,label:string,x:number,z:number,hint='Approach, face the console and interact with E.'):Waypoint=>({id,label,x,z,hint});
 export function missionDestination(p:Progress,onSurface:boolean):Waypoint {
   if(onSurface)return p.surveyed
-    ?at('extraction','Extraction beacon',SURFACE_ORIGIN,LANDING.z+2.4,'Approach the beacon and interact with E to return aboard.')
+    ?at('extraction','Kestrel shuttle hatch',SURFACE_ORIGIN,LANDING.z+2.4,'Board with E, fly to Erebus and brake at the docking ring.')
     :at('sample','Luminous outcrop',SURFACE_ORIGIN+SAMPLE.x,SAMPLE.z,'Approach the crystals and interact with E to secure a sample.');
   if(p.power.tripped || (!p.forged&&p.relays.length===3&&forgeReadiness(p.power,3)!==null))return at('diagnostics','Engineering diagnostics',-13.5,11.7,'Use diagnostics to restore stable Balanced routing and containment.');
   if(!p.relays.includes('navigation'))return at('navigation','Navigation relay',-5,-11);
   if(!p.relays.includes('engineering'))return at('engineering','Engineering relay',-16,10);
   if(!p.relays.includes('observatory'))return at('observatory','Observatory relay',16,10);
   if(!p.forged)return at('forge','Universe forge',0,-11);
-  return at('science','Nysa science array',5,-11,p.surveyed?'Survey complete. The science array offers another visit.':'Scan the world and deploy to the surface.');
+  return at('science','Nysa science array',5,-11,p.surveyed?'Survey complete. Launch Kestrel for another visit.':'Scan Nysa and launch Kestrel. Fly to the approach ring and land.');
 }
 function room(x:number){return x< -11?-1:x>11?1:0;}
 // Scripted doorway routing for this ship layout, not arbitrary obstacle pathfinding.

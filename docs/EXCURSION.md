@@ -1,8 +1,8 @@
 # Nysa survey excursion
 
-After restoring all relays and initializing genesis, interact with **Scan the new world** on the bridge. The science array offers **Deploy to Nysa surface**. Deployment is blocked during a containment trip; reset engineering first. Balanced routing is recommended before departure. This transfer is instantaneous: there is no piloted shuttle, orbital descent or planet-wide streaming yet.
+After restoring all relays and initializing genesis, interact with **Scan the new world** on the bridge, then **Launch Kestrel shuttle**. The concourse shuttle-bay console also launches it. Pilot to Nysa's approach ring, brake below 18 m/s within 100 m and press E for guided touchdown. A containment trip blocks departure; Balanced routing is recommended. See [flight controls and scope](FLIGHT.md). The final landing changes to a separate local terrain sector; there is no seamless whole-planet descent or streaming yet.
 
-Nysa currently has one 64 × 64 meter walkable survey site. Move, sprint, jump and look with the same desktop/touch controls used aboard. A circular landing pad marks the start; a luminous mineral outcrop is northeast at local X 9 / Z −9. Approach and face it, then press E (or the touch E button) to collect a sample. Return to the tall luminous extraction beacon on the landing pad and interact to return to the bridge. Extraction is always available, including before sampling and during a ship containment trip.
+Nysa currently has one 64 × 64 meter walkable survey site. You disembark beside the visibly parked shuttle. Move, sprint, jump and look with the same desktop/touch controls used aboard. A circular landing pad marks the start; a luminous mineral outcrop is northeast at local X 9 / Z −9. Approach and face it, then press E (or the touch E button) to collect a sample. Return to the shuttle's aft hatch/beacon and board for the flight back. Return boarding/docking remains available before sampling and during a ship containment trip.
 
 The rolling terrain is a deterministic 48 × 48 grid. The exact indexed vertices feed both the Three.js mesh and a Rapier triangle collider. The landing region is flat, terrain slopes are gentle, rocks have sphere collisions, and the visible basalt perimeter matches the physical boundary. Instanced rocks/vegetation limit draw calls. Distant mountains and the moon are visual scenery. Vegetation does not collide; rock colliders approximate their geometry. This is a procedural biome, not an authored realistic planetary landscape.
 
@@ -10,7 +10,7 @@ The ship and surface occupy separate physics coordinates; only the current envir
 
 The additive `surveyed` flag stays in the existing v2 save. Older v1/v2 saves default to false; malformed values and samples without completed genesis are rejected. Existing relay/power/world progression is retained. Location is deliberately transient: reload always starts aboard, retaining a collected sample. An older release ignores the new flag and may discard it on its next save, but can still read the mission and power data. The separate v1 rollback slot remains untouched. Reset on the surface returns aboard and clears all mission progress.
 
-Current limits: one bounded site, one repeatable visit and one persistent sample milestone; no inventory, free spaceflight, weather simulation, global terrain streaming, fauna, surface NPCs or realistic humans. Runtime needs no credentials. Hardware GPU/mobile performance and real pointer lock require device testing.
+Current limits: one bounded site, one repeatable visit and one persistent sample milestone; no inventory, weather simulation, global terrain streaming, fauna or surface NPCs. Bounded manual shuttle flight now connects the ship and site; see FLIGHT.md for its approximations. Runtime needs no credentials. Hardware GPU/mobile performance and real pointer lock require device testing.
 
 
 ## Ground materials
