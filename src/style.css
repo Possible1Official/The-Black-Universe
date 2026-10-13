@@ -12,3 +12,4 @@
 @media(pointer:coarse) and (max-height:500px){#fieldLog{padding:5px 7px;margin-top:4px}#compass{padding-bottom:3px;margin-bottom:4px}#touchAction{bottom:84px}#touch>span{bottom:50px}}
 #velocityMarker{position:absolute;transform:translate(-50%,-50%);color:#ffcc8c;display:grid;justify-items:center;pointer-events:none;text-shadow:0 0 5px #000}#velocityMarker[hidden]{display:none}#velocityMarker span{font-size:30px;line-height:30px}#velocityMarker small{font-size:8px;letter-spacing:.12em}#flightHud[data-approach="brake"] #flightStatus,#flightHud[data-approach="receding"] #flightStatus{color:#ffcc8c}#flightHud[data-approach="ready"] #flightStatus{color:#83f0c1}
 #velocityMarker{z-index:-1}
+#flightHud[data-approach="entry"] #flightStatus{color:#ffcc8c}

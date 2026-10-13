@@ -108,6 +108,12 @@ The user has reprioritized development toward the flight, planet exploration and
 - Three shared-geometry approach beacons with cruise/brake/ready colors, plus a projected actual-velocity diamond.
 - Local guidance, not autopilot, collision avoidance or an additional landing site. Captured surface flight remains guided and global streaming is still future work.
 
+## Hull-clear capture and hangar entry (2026-10-13)
+- Shared Erebus exterior render/collision boxes with conservative craft clearance and union-safe recovery; the open bay accepts manual flight.
+- Front/open-bay docking guards, five-second staged alignment/ingress and a smoothly aligned cockpit view.
+- Nysa radial capture retains its safety margin instead of cutting a chord; existing surface descent/ascent and saves remain compatible.
+- Approximate boxes/spherical clearance and guided paths, not swept rigid-body craft physics, general pathfinding or global planet streaming.
+
 ## Later
 - Physically based and baked lighting, modular authored environments, LODs, GPU timing and measured device budgets.
 - High-quality skinned characters, blend trees, IK, facial animation, interaction poses.

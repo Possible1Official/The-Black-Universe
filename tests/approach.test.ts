@@ -31,7 +31,7 @@ test('closing/drift advice warns before arrival, handles receding/sideways trave
   const returning={...f,leg:'erebus' as const,position:{x:0,y:0,z:EREBUS_APPROACH.z-150},velocity:{x:0,y:0,z:110}};assert.equal(approachGuidance(returning,Math.PI,0).brakeNow,true);
 });
 test('hull recovery leaves clearance and does not repeatedly register a stationary contact',()=>{
-  for(const position of [{x:30,y:12,z:-1038},{x:0,y:0,z:0}]){
+  for(const position of [{x:30,y:12,z:-1038},{x:0,y:9,z:10}]){
     const collided=stepFlight({...fixture(),position,throttle:0,velocity:{x:0,y:0,z:0}},controls,1/60);assert.equal(collided.collisions,1);
     let f=collided;for(let i=0;i<120;i++)f=stepFlight(f,controls,1/60);assert.equal(f.collisions,1);assert.deepEqual(f.position,collided.position);assert.equal(flightSpeed(f),0);
   }

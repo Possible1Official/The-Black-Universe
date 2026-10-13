@@ -1,5 +1,6 @@
 import './style.css';
-import {startFlight,stepFlight,beginApproach,canApproach,flightDistance,flightSpeed,flightGoal,isSurfaceFlight,surfaceFlightPose,cloudOpacity,approachGuidance,type FlightState,type FlightLeg} from './flight';
+import {startFlight,stepFlight,beginApproach,canApproach,flightDistance,flightSpeed,flightGoal,isSurfaceFlight,surfaceFlightPose,cloudOpacity,approachGuidance,captureLook,DOCKING_SECONDS,NYSA_CENTER,type FlightState,type FlightLeg} from './flight';
+import {inDockingZone} from './station';
 import {createFlightScene,makeShuttle} from './flight-scene';
 import {createPlanetTextures} from './planet';
 import {loadCrewVisuals,type CrewVisual} from './crew-visual';
@@ -117,6 +118,7 @@ function solid(w:number,h:number,d:number,x:number,y:number,z:number,target?:Tar
 let onSurface=false;
 let trackedField:FieldScan|undefined;
 let flight:FlightState|null=null,flightBrake=false,flightBoost=false;
+let captureViewStart={yaw:0,pitch:0};
 type Target={zone?:'surface';name:string;position:THREE.Vector3;action:()=>void;screen?:THREE.Mesh;collider?:RAPIER.Collider;};
 const targets:Target[]=[];
 function terminal(name:string,x:number,z:number,title:string,subtitle:string,action:()=>void,screenMaterial?:THREE.Material){box(1.8,.9,1,x,.5,z,dark);const screen=box(1.6,.07,.9,x,1.04,z,screenMaterial??textPanel(title,subtitle));screen.rotation.x=.26;box(.12,.65,.12,x-.75,1.37,z-.4,cyan);const t={name,position:new THREE.Vector3(x,1.1,z),action,screen};targets.push(t);solid(1.8,1.1,1,x,.55,z,t);return t;}
@@ -360,7 +362,8 @@ function paintNavigation(){
   if(!visible)return;
   if(flight){
     const ground=isSurfaceFlight(flight),pose=ground?surfaceFlightPose(flight.timer,flight.phase==='ascending'):null;
-    const reading=navigationReading(pose?.position??flight.position,pose?.yaw??yaw,pose?LANDING:flightGoal(flight)),distance=flightDistance(flight),speed=flightSpeed(flight);
+    const target=pose?LANDING:flight.phase==='landing'?NYSA_CENTER:flight.phase==='docking'?{x:0,y:0,z:52}:flightGoal(flight);
+    const reading=navigationReading(pose?.position??flight.position,pose?.yaw??yaw,target),distance=flightDistance(flight),speed=flightSpeed(flight);
     $('compassHeading').textContent=`${reading.direction} / ${Math.round(reading.heading)}°`;$('navLabel').textContent=flight.leg==='nysa'?'Nysa landing corridor':'Erebus shuttle bay';
     $('navDistance').textContent=`${Math.round(distance)} m · ${reading.turn}`;$('navArrow').style.transform=`rotate(${reading.relativeDegrees}deg)`;
     $('navHint').textContent='Align with the cyan ring. Brake below 18 m/s within 100 m, then press E.';$('navigationHud').dataset.destination=`flight-${flight.leg}`;
@@ -371,8 +374,16 @@ function paintNavigation(){
       const advice=approachGuidance(flight,yaw,pitch);approachWarning=advice.brakeNow;
       flightHud.dataset.approach=advice.ready?'ready':advice.brakeNow?'brake':advice.movingAway?'receding':'cruise';
       if(!advice.ready)$('flightStatus').textContent=advice.brakeNow?`Approach ring · BRAKE NOW · stop ~${Math.round(advice.stop.distance)} m`:advice.movingAway?'Approach ring · TARGET RECEDING · turn back':'Approach ring · slow down to land or dock';
+      if(flight.leg==='erebus'&&distance<=100&&speed<=18&&!inDockingZone(flight.position)){flightHud.dataset.approach='entry';$('flightStatus').textContent='FRONT APPROACH REQUIRED';}
       $('navHint').textContent=`Closing ${Math.round(advice.closing)} m/s · lateral drift ${Math.round(advice.lateral)} m/s. Held-brake estimate: ${Math.round(advice.stop.distance)} m / ${advice.stop.time.toFixed(1)} s. Amber diamond shows velocity, not aim. E requires <18 m/s within 100 m.`;
     }
+    if(flight.phase==='landing'||flight.phase==='docking'){
+      $('flightTelemetry').textContent=`GUIDED CAPTURE ${Math.round(flight.timer/(flight.phase==='docking'?DOCKING_SECONDS:3)*100)}%`;
+      $('flightStatus').textContent=flight.phase==='landing'?'GUIDED ORBITAL CAPTURE':'GUIDED BAY ALIGNMENT / DOCKING';
+      $('navDistance').textContent=`CAPTURE ${Math.round(flight.timer/(flight.phase==='docking'?DOCKING_SECONDS:3)*100)}%`;
+      $('navHint').textContent=flight.phase==='landing'?'Following a clear arc above Nysa. Descent begins after cloud entry.':'Aligning through the bay entrance. Docking controls are guided.';
+    }
+    if(flight.phase==='launching')$('flightTelemetry').textContent=`GUIDED DEPARTURE ${Math.round(flight.timer/3*100)}%`;
     if(ground){$('navLabel').textContent=flight.phase==='descending'?'Nysa landing pad':'Nysa departure';$('navDistance').textContent='LANDING GUIDANCE';$('navHint').textContent='Guided vertical flight. The terrain below is your survey sector.';}
     $('flightTarget').textContent=`TARGET: ${flight.leg.toUpperCase()} / T`;return;
   }
@@ -394,7 +405,7 @@ function selectTarget(){
     if(distance<best&&direction.normalize().dot(forward)>.45&&clearSight(world,camera.position,t.position,playerCollider,t.collider)){selected=t;best=distance;}
   }return selected;
 }
-function interact(){if(!active||dialogueOpen)return;if(flight){if(flight.phase!=='flying')return;if(canApproach(flight)){flight=beginApproach(flight);clearInput();notify(flight.leg==='nysa'?'Guided touchdown in progress.':'Docking with Erebus.');}else notify('Reach the approach ring and brake below 18 m/s.');return;}nearest=selectTarget();nearest?.action();}
+function interact(){if(!active||dialogueOpen)return;if(flight){if(flight.phase!=='flying')return;if(canApproach(flight)){captureViewStart={yaw,pitch};flight=beginApproach(flight);clearInput();notify(flight.leg==='nysa'?'Guided orbital capture in progress.':'Aligning with the Erebus bay entrance.');}else notify(flight.leg==='erebus'&&flightDistance(flight)<=100&&!inDockingZone(flight.position)?'Approach the front bay beacons or enter the open hangar.':'Reach the approach ring and brake below 18 m/s.');return;}nearest=selectTarget();nearest?.action();}
 $('touchAction').onclick=interact;
 window.addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)&&active&&!dialogueOpen)e.preventDefault();if(e.code==='Escape'){if(dialogueOpen)closeDialogue();else if(active)pause();return;}if(!active||dialogueOpen)return;if(e.code==='KeyJ'&&!e.repeat){fieldLog.click();return;}if(e.code==='KeyE'&&!e.repeat)interact();if(e.code==='KeyT'&&!e.repeat&&flight)$('flightTarget').click();if(e.code==='Space'&&!flight){if(!e.repeat)jumpBuffer=JUMP_BUFFER_SECONDS;return;}keys.add(e.code);});
 window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{if(active)pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&active)pause();});
@@ -434,7 +445,9 @@ function frame(){requestAnimationFrame(frame);const rawDt=clock.getDelta(),dt=Ma
   const movementDt=discardMovementFrame?0:rawDt,powerDt=skipPowerFrame?0:rawDt;discardMovementFrame=false;skipPowerFrame=false;lastMotionSteps=0;if(toastTimer<=0)$('toast').style.opacity='0';
   if(active)advancePower(Math.min(powerDt,MAX_FRAME_SECONDS));powerVisuals();
   if(active&&!dialogueOpen){const budget=motionClock.advance(movementDt);lastMotionSteps=budget.steps;motionStepsTotal+=budget.steps;droppedMotionTime+=budget.dropped;for(let i=0;i<budget.steps;i++)physicsStep();const p=player.translation();const moving=velocity.length();
-    if(flight){flightWorld.update(flight,dt,approachWarning);camera.rotation.set(pitch,yaw,-touchMove.x*.1);
+    if(flight){flightWorld.update(flight,dt,approachWarning);
+      if(flight.phase==='landing'||flight.phase==='docking'){const look=captureLook(flight.position,flight.leg),blend=THREE.MathUtils.smoothstep(flight.timer,0,.8);yaw=captureViewStart.yaw+Math.atan2(Math.sin(look.yaw-captureViewStart.yaw),Math.cos(look.yaw-captureViewStart.yaw))*blend;pitch=captureViewStart.pitch+(look.pitch-captureViewStart.pitch)*blend;}
+      camera.rotation.set(pitch,yaw,-touchMove.x*.1);
       if(isSurfaceFlight(flight)){const pose=surfaceFlightPose(flight.timer,flight.phase==='ascending');camera.position.set(SURFACE_ORIGIN+pose.position.x,pose.position.y,pose.position.z);camera.rotation.set(pose.pitch,pose.yaw,0);$('location').textContent=flight.phase==='descending'?'NYSA / DESCENT':'NYSA / ASCENT';$('coordinates').textContent=`RADAR ALT ${pose.altitude.toFixed(1)} m`;$('flightTelemetry').textContent=`RADAR ALT ${pose.altitude.toFixed(1)} m · ${Math.round(pose.progress*100)}%`;}
       else {$('location').textContent='KESTREL / FREE FLIGHT';$('coordinates').textContent=`SECTOR / X ${flight.position.x.toFixed(0)} · Y ${flight.position.y.toFixed(0)} · Z ${flight.position.z.toFixed(0)}`;}nearest=undefined;}
     else {camera.position.set(p.x,p.y+.74+Math.sin(elapsed*9)*.018*Math.min(moving,1),p.z);camera.rotation.set(pitch,yaw,0);$('location').textContent=onSurface?'NYSA / SURVEY SITE':p.x< -11?'ENGINEERING':p.x>11?'OBSERVATORY':p.z< -5?'COMMAND DECK':'HABITAT CONCOURSE';$('coordinates').textContent=`${onSurface?'SURFACE':'SECTOR 00.00'} / X ${(p.x-(onSurface?SURFACE_ORIGIN:0)).toFixed(1)} · Z ${p.z.toFixed(1)}`;nearest=selectTarget();}
