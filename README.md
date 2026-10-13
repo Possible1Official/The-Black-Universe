@@ -24,9 +24,11 @@ Progress saves locally on this browser/device; corrupt or unavailable storage fa
 
 ## Technology and scope
 
-TypeScript + Three.js/WebGL 2 + Rapier WASM + Vite. Fixed-step kinematic capsule movement with floor/wall/door collision, anti-crush bulkheads, procedural metallic surfaces, real lights/shadows, restrained bloom, animated forge rings and local synthesized ambience. No runtime external assets, keys, database or AI service. Typography uses local system fonts; no external runtime requests are required. Skinned character import is pending valid Mixamo access; crew currently use temporary articulated android meshes and state-aware scripted dialogue.
+TypeScript + Three.js/WebGL 2 + Rapier WASM + Vite. Fixed-step kinematic capsule movement with floor/wall/door collision, anti-crush bulkheads, procedural metallic surfaces, real lights/shadows, restrained bloom, animated forge rings and local synthesized ambience. No runtime external assets, keys, database or AI service. Typography uses local system fonts; no external runtime requests are required. Skinned character import is pending valid Mixamo access; crew currently use temporary articulated android meshes and state-aware scripted dialogue, physical local patrols, and proximity attention.
 
 Desktop modern Chrome/Firefox/Edge with hardware acceleration is recommended. Touch controls are available; actual mobile GPU performance still needs device testing. High mode caps rendering resolution at 1.75×; performance mode uses 1×, no shadow map and no bloom. Startup downloads include the physics WASM bundle (~1 MB compressed initial JS). Further streaming/LOD and asset-budget work is on the roadmap.
+
+See [local crew behavior](docs/CREW.md) for the implemented patrol model and its limits.
 
 ## Ongoing development
 

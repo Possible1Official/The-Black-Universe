@@ -9,6 +9,11 @@ Vision: an immersive, physically coherent browser universe with explorable vesse
 - Temporary articulated android crew with state-aware scripted dialogue.
 - Tests, private Sites publication, rollback reference, hourly development task.
 
+## Incremental crew milestone (2026-10-13)
+- Physical local patrols, endpoint waits, smooth turns, player proximity attention and blocked-route reversal.
+- Movement-driven arm/leg animation, solid access consoles and pause/dialogue input cleanup.
+- Placeholder meshes and scripted dialogue remain; arbitrary pathfinding and task planning are still future work.
+
 ## Next four prioritized cycles
 1. **Character pipeline:** obtain valid Mixamo access, import one approved character with idle/walk clips, optimize to GLB, add asset provenance and budgets. If access is blocked, improve lighting/materials and crew collision/animation instead.
 2. **Ship simulation:** power distribution and containment diagnostics with observable consequences, ambient machinery, better doors, minimap and navigation aids. Preserve completed saves through a versioned migration.
