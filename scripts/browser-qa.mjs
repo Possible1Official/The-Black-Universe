@@ -83,6 +83,11 @@ await page.click('#menu'); // Freeze autosave before installing a corrupt-load f
 await page.evaluate(()=>localStorage.setItem('black-universe-v2','{bad'));console.log('Checking reload');await page.reload({waitUntil:'domcontentloaded'});await page.waitForSelector('canvas[data-ready="true"]');assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.relays.length,0,'corrupt save resets safely');
 assert.deepEqual(errors,[],'no browser exceptions');
 await page.close();console.log('Checking mobile');const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});await mobile.goto('http://localhost:5173/?qa');await mobile.waitForSelector('canvas[data-ready="true"]');await mobile.click('summary');await mobile.selectOption('#quality','low');await mobile.click('#play');await mobile.screenshot({path:'.local/qa/mobile.png'});assert.equal(await mobile.locator('#touchAction').isVisible(),true);assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'mobile fits viewport');
+// Pause before seeding so visibility/pause saving cannot overwrite the completed fixture.
+await mobile.click('#menu');
+// Seed completed progress so an accidental menu-reset click cannot hide behind fresh state.
+await mobile.evaluate(()=>localStorage.setItem('black-universe-v2',JSON.stringify({version:2,relays:['engineering','navigation','observatory'],forged:true,power:{profile:'balanced',heat:24,tripped:false}})));
+await mobile.reload({waitUntil:'domcontentloaded'});await mobile.waitForSelector('canvas[data-ready="true"]');assert.equal((await mobile.evaluate(()=>window.__erebus.snapshot())).progress.forged,true,'completed fixture loads');await mobile.click('summary');await mobile.click('#play');
 const start=await mobile.evaluate(()=>window.__erebus.snapshot().position.z);
 await mobile.touchscreen.tap(80,650); // Real touch device context.
 const cdp=await mobile.context().newCDPSession(mobile);
@@ -97,6 +102,7 @@ assert.deepEqual(await mobile.evaluate(()=>window.__erebus.snapshot().touchMove)
 assert.equal(await mobile.locator('#thumb').evaluate(e=>e.style.transform),'');
 await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
 await mobile.click('#play');
+assert.equal((await mobile.evaluate(()=>window.__erebus.snapshot())).progress.forged,true,'joystick release across pause must not activate Reset');
 const afterPause=await mobile.evaluate(()=>window.__erebus.snapshot().position.z);
 await mobile.waitForTimeout(400);
 assert.ok(Math.abs((await mobile.evaluate(()=>window.__erebus.snapshot().position.z))-afterPause)<.2,'resume does not keep stale touch motion');

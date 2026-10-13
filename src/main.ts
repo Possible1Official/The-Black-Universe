@@ -257,9 +257,12 @@ document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockEleme
 window.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas&&active&&!dialogueOpen){yaw-=e.movementX*.002;pitch=THREE.MathUtils.clamp(pitch-e.movementY*.002,-1.35,1.35);}});
 let lookPointer:number|undefined,lastLook=new THREE.Vector2();canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||!active||dialogueOpen)return;lookPointer=e.pointerId;lastLook.set(e.clientX,e.clientY);canvas.setPointerCapture(e.pointerId);});canvas.addEventListener('pointermove',e=>{if(e.pointerId!==lookPointer)return;yaw-=(e.clientX-lastLook.x)*.004;pitch=THREE.MathUtils.clamp(pitch-(e.clientY-lastLook.y)*.004,-1.35,1.35);lastLook.set(e.clientX,e.clientY);});canvas.addEventListener('pointerup',()=>lookPointer=undefined);canvas.addEventListener('pointercancel',()=>lookPointer=undefined);
 const stick=$('stick'),thumb=$('thumb');let stickPointer:number|undefined;
-stick.onpointerdown=e=>{if(!active||dialogueOpen)return;stickPointer=e.pointerId;stick.setPointerCapture(e.pointerId);moveStick(e);};
+const joystickClicks=new Set<number>();
+document.addEventListener('pointerdown',e=>{if(!stick.contains(e.target as Node))joystickClicks.delete(e.pointerId);},true);
+document.addEventListener('click',e=>{if(e instanceof PointerEvent&&joystickClicks.has(e.pointerId)){e.preventDefault();e.stopImmediatePropagation();joystickClicks.delete(e.pointerId);}},true);
+stick.onpointerdown=e=>{if(!active||dialogueOpen)return;stickPointer=e.pointerId;joystickClicks.add(e.pointerId);stick.setPointerCapture(e.pointerId);moveStick(e);};
 function moveStick(e:PointerEvent){const r=stick.getBoundingClientRect();touchMove.set((e.clientX-r.left-r.width/2)/38,(e.clientY-r.top-r.height/2)/38);if(touchMove.length()>1)touchMove.normalize();thumb.style.transform=`translate(${touchMove.x*32}px,${touchMove.y*32}px)`;}
-stick.onpointermove=e=>{if(e.pointerId===stickPointer)moveStick(e);};stick.onpointerup=stick.onpointercancel=()=>{stickPointer=undefined;touchMove.set(0,0);thumb.style.transform='';};
+stick.onpointermove=e=>{if(e.pointerId===stickPointer)moveStick(e);};stick.onpointerup=stick.onpointercancel=e=>{stickPointer=undefined;touchMove.set(0,0);thumb.style.transform='';if(e.type==='pointercancel')joystickClicks.delete(e.pointerId);else setTimeout(()=>joystickClicks.delete(e.pointerId),500);};
 function clearInput(){velocity.set(0,0,0);keys.clear();touchMove.set(0,0);stickPointer=undefined;lookPointer=undefined;thumb.style.transform='';}
 function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(innerWidth,innerHeight);}window.addEventListener('resize',resize);
 let verticalSpeed=0,accumulator=0;const fixed=1/60;const velocity=new THREE.Vector3();
