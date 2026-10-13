@@ -37,7 +37,12 @@ Vision: an immersive, physically coherent browser universe with explorable vesse
 ## Static ship rendering milestone (2026-10-13)
 - Spatial instancing for 103 opaque static cuboids, retaining independent doors, screens and crew.
 - Sampled ship draw counts reduced 13–23%, with less than 1% additional submitted triangles.
-- Lighting/fragment optimization and hardware GPU measurements remain future work; no FPS gain is claimed.
+- Hardware GPU measurements remain future work; no FPS gain is claimed.
+
+## Performance lighting budget (2026-10-13)
+- Four fixed point-light slots select nearby ship sources with hysteresis and fade handoffs; High retains all nine sources.
+- Live reactor/power uniforms and surface hide/quality-change/return behavior are preserved.
+- This trades distant light spill for fewer direct-light evaluations; hardware FPS and baked lighting remain unverified.
 
 ## Next four prioritized cycles
 1. **Character pipeline:** obtain valid Mixamo access, import one approved character with idle/walk clips, optimize to GLB, add asset provenance and budgets. If access is blocked, improve lighting/materials and crew collision/animation instead.
