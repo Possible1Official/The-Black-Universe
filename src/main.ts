@@ -1,4 +1,5 @@
 import './style.css';
+import {clearSight} from './visibility';
 import {planEngineeringDuty,recordDutyMovement,type EngineeringDuty} from './crew-duty';
 import {ShipLightBudget} from './light-budget';
 import {batchStaticBoxes} from './batching';
@@ -104,12 +105,12 @@ for(let i=0;i<3;i++){const r=new THREE.Mesh(new THREE.TorusGeometry(.6+i*.45,.01
 box(5,2,.15,15,2.7,.23,textPanel('OBSERVATORY','SPECTRAL ARRAY / ONLINE'));
 box(5,2,.15,-15,2.7,.23,textPanel('ENGINEERING','CONTAINMENT / NOMINAL','#edb378'));
 
-const solids:{size:number[];pos:number[]}[]=[];
-function solid(w:number,h:number,d:number,x:number,y:number,z:number){solids.push({size:[w,h,d],pos:[x,y,z]});}
+const solids:{size:number[];pos:number[];target?:Target}[]=[];
+function solid(w:number,h:number,d:number,x:number,y:number,z:number,target?:Target){solids.push({size:[w,h,d],pos:[x,y,z],target});}
 let onSurface=false;
-type Target={zone?:'surface';name:string;position:THREE.Vector3;action:()=>void;screen?:THREE.Mesh;};
+type Target={zone?:'surface';name:string;position:THREE.Vector3;action:()=>void;screen?:THREE.Mesh;collider?:RAPIER.Collider;};
 const targets:Target[]=[];
-function terminal(name:string,x:number,z:number,title:string,subtitle:string,action:()=>void){box(1.8,.9,1,x,.5,z,dark);const screen=box(1.6,.07,.9,x,1.04,z,textPanel(title,subtitle));screen.rotation.x=.26;box(.12,.65,.12,x-.75,1.37,z-.4,cyan);const t={name,position:new THREE.Vector3(x,1.1,z),action,screen};targets.push(t);solid(1.8,1.1,1,x,.55,z);return t;}
+function terminal(name:string,x:number,z:number,title:string,subtitle:string,action:()=>void){box(1.8,.9,1,x,.5,z,dark);const screen=box(1.6,.07,.9,x,1.04,z,textPanel(title,subtitle));screen.rotation.x=.26;box(.12,.65,.12,x-.75,1.37,z-.4,cyan);const t={name,position:new THREE.Vector3(x,1.1,z),action,screen};targets.push(t);solid(1.8,1.1,1,x,.55,z,t);return t;}
 function notify(message:string){$('toast').textContent=message;$('toast').style.opacity='1';toastTimer=5;}
 let storageWarned=false;
 function save(refresh=true){try{localStorage.setItem(SAVE_KEY,JSON.stringify(progress));}catch{if(!storageWarned){notify('Storage unavailable. Progress will last for this session.');storageWarned=true;}}if(refresh){updateHud();if(player)paintNavigation();}}
@@ -135,7 +136,7 @@ for(const x of [-11,11]){const mesh=box(.28,3.2,3.9,x,1.6,6,dark);box(.3,.03,3.7
 // Temporary articulated crew androids. Asset pipeline replaces these with licensed skinned characters.
 interface CrewMember {
   name: string; mesh: THREE.Group; legs: THREE.Group[]; arms: THREE.Group[];
-  target: Target; route: [Point, Point]; state: PatrolState; duty: EngineeringDuty|null; gait: number; walkBlend: number;
+  target: Target; route: [Point, Point]; state: PatrolState; duty: EngineeringDuty|null; visitorVisible:boolean; sightWait:number; gait: number; walkBlend: number;
   body?: RAPIER.RigidBody; collider?: RAPIER.Collider; controller?: RAPIER.KinematicCharacterController;
 }
 const crew: CrewMember[] = [];
@@ -160,7 +161,7 @@ function makeCrew(name:string,x:number,z:number,color:number){
   }};
   targets.push(target);
   const route:[Point,Point]=name==='VEGA'?[{x,z:z-1},{x,z:z+1.5}]:[{x,z},{x:x+1.5,z:z+1.5}];
-  crew.push({name,mesh:g,legs,arms,target,route,state:freshPatrol(),duty:null,gait:0,walkBlend:0});
+  crew.push({name,mesh:g,legs,arms,target,route,state:freshPatrol(),duty:null,visitorVisible:false,sightWait:0,gait:0,walkBlend:0});
 }
 makeCrew('VEGA',-3,-7,0x294b62);makeCrew('ION',-16,7,0x88684d);
 function stepCrew(){
@@ -168,7 +169,10 @@ function stepCrew(){
   for(const c of crew){
     const body=c.body!, collider=c.collider!, controller=c.controller!;
     const p=body.translation();
-    const plan=c.name==='ION'?planEngineeringDuty(c.duty,c.state,p,c.route,visitor,fixed,progress.power.tripped,speakingCrew===c.name):{duty:null,...planPatrol(c.state,p,c.route,visitor,fixed,speakingCrew===c.name)};
+    c.sightWait-=fixed;
+    if(Math.hypot(visitor.x-p.x,visitor.z-p.z)>2.3){c.visitorVisible=false;c.sightWait=0;}
+    else if(c.sightWait<=0){c.visitorVisible=clearSight(world,{x:p.x,y:p.y+.8,z:p.z},{x:visitor.x,y:visitor.y+.74,z:visitor.z},collider,playerCollider);c.sightWait=.1;}
+    const plan=c.name==='ION'?planEngineeringDuty(c.duty,c.state,p,c.route,visitor,fixed,progress.power.tripped,speakingCrew===c.name,c.visitorVisible):{duty:null,...planPatrol(c.state,p,c.route,visitor,fixed,speakingCrew===c.name,c.visitorVisible)};
     c.duty=plan.duty;
     const dx=plan.facing.x-p.x,dz=plan.facing.z-p.z;
     const heading=Math.atan2(dx,dz);
@@ -285,11 +289,11 @@ $('deployNysa').onclick=()=>{
   const blocked=landingBlock(progress.forged,progress.power.tripped);if(blocked){notify(blocked);return;}
   closeDialogue();travel(true);
 };
-targets.push({zone:'surface',name:'Survey luminous outcrop',position:new THREE.Vector3(SURFACE_ORIGIN+SAMPLE.x,terrainHeight(SAMPLE.x,SAMPLE.z)+.8,SAMPLE.z),action:()=>{
+const sampleTarget:Target={zone:'surface',name:'Survey luminous outcrop',position:new THREE.Vector3(SURFACE_ORIGIN+SAMPLE.x,terrainHeight(SAMPLE.x,SAMPLE.z)+.8,SAMPLE.z),action:()=>{
   if(!progress.surveyed){progress={...progress,surveyed:true};save();tone(660);notify('SAMPLE SECURED · Return to the landing beacon.');}
   else notify('Outcrop surveyed. Return through the extraction beacon.');
-}});
-targets.push({zone:'surface',name:'Extract to Erebus',position:new THREE.Vector3(SURFACE_ORIGIN,1.2,LANDING.z+2.4),action:()=>travel(false)});
+}};targets.push(sampleTarget);
+const extractionTarget:Target={zone:'surface',name:'Extract to Erebus',position:new THREE.Vector3(SURFACE_ORIGIN,1.2,LANDING.z+2.4),action:()=>travel(false)};targets.push(extractionTarget);
 let navigationTimer=0;
 function paintNavigation(){
   const visible=active&&!dialogueOpen;
@@ -307,7 +311,13 @@ function paintNavigation(){
   $('navigationHud').dataset.waypoint=waypoint.id;
 }
 let nearest:Target|undefined;
-function interact(){if(!active||dialogueOpen)return;nearest?.action();}
+function selectTarget(){
+  let selected:Target|undefined,best=2.65;const forward=camera.getWorldDirection(new THREE.Vector3());
+  for(const t of targets){if((t.zone==='surface')!==onSurface)continue;const direction=t.position.clone().sub(camera.position),distance=direction.length();
+    if(distance<best&&direction.normalize().dot(forward)>.45&&clearSight(world,camera.position,t.position,playerCollider,t.collider)){selected=t;best=distance;}
+  }return selected;
+}
+function interact(){if(!active||dialogueOpen)return;nearest=selectTarget();nearest?.action();}
 $('touchAction').onclick=interact;
 window.addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)&&active&&!dialogueOpen)e.preventDefault();if(e.code==='Escape'){if(dialogueOpen)closeDialogue();else if(active)pause();return;}if(!active||dialogueOpen)return;if(e.code==='KeyE'&&!e.repeat)interact();if(e.code==='Space'){if(!e.repeat)jumpBuffer=JUMP_BUFFER_SECONDS;return;}keys.add(e.code);});
 window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{if(active)pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&active)pause();});
@@ -340,7 +350,7 @@ function frame(){requestAnimationFrame(frame);const rawDt=clock.getDelta(),dt=Ma
   if(active)advancePower(Math.min(powerDt,MAX_FRAME_SECONDS));powerVisuals();
   navigationTimer+=rawDt;if(navigationTimer>=.1){paintNavigation();navigationTimer=0;}
   if(active&&!dialogueOpen){const budget=motionClock.advance(movementDt);lastMotionSteps=budget.steps;motionStepsTotal+=budget.steps;droppedMotionTime+=budget.dropped;for(let i=0;i<budget.steps;i++)physicsStep();const p=player.translation();const moving=velocity.length();camera.position.set(p.x,p.y+.74+Math.sin(elapsed*9)*.018*Math.min(moving,1),p.z);camera.rotation.set(pitch,yaw,0);$('location').textContent=onSurface?'NYSA / SURVEY SITE':p.x< -11?'ENGINEERING':p.x>11?'OBSERVATORY':p.z< -5?'COMMAND DECK':'HABITAT CONCOURSE';$('coordinates').textContent=`${onSurface?'SURFACE':'SECTOR 00.00'} / X ${(p.x-(onSurface?SURFACE_ORIGIN:0)).toFixed(1)} · Z ${p.z.toFixed(1)}`;
-    nearest=undefined;let best=2.65;const forward=camera.getWorldDirection(new THREE.Vector3());for(const t of targets){if((t.zone==='surface')!==onSurface)continue;const direction=t.position.clone().sub(camera.position),distance=direction.length();if(distance<best&&direction.normalize().dot(forward)>.45){nearest=t;best=distance;}}$('interaction').style.display=nearest?'block':'none';$('interaction').textContent=nearest?`[ E ] ${nearest.name}`:'';
+    nearest=selectTarget();$('interaction').style.display=nearest?'block':'none';$('interaction').textContent=nearest?`[ E ] ${nearest.name}`:'';
   }else{$('interaction').style.display='none';}
   for(let i=0;i<rings.length;i++){rings[i].rotation.z+=dt*.035*(i%2?-1:1);rings[i].rotation.y+=dt*.012;}pylons.rotation.z=elapsed*.018;shell.rotation.y=elapsed*.06;forgeBody.rotation.y=elapsed*.03;forgeLight.scale.setScalar(.96+Math.sin(elapsed*1.4)*.04+(progress.forged?.12:0));chart.rotation.y=elapsed*.15;reactorCore.rotation.y=elapsed*.25;planet.rotation.y=elapsed*.008;
   if(dialogueOpen&&speakingCrew){const c=crew.find(c=>c.name===speakingCrew)!;const p=player.translation();c.mesh.rotation.y=turnToward(c.mesh.rotation.y,Math.atan2(p.x-c.mesh.position.x,p.z-c.mesh.position.z),dt);}
@@ -350,19 +360,20 @@ function frame(){requestAnimationFrame(frame);const rawDt=clock.getDelta(),dt=Ma
 async function boot(){await RAPIER.init();world=new RAPIER.World({x:0,y:-9.81,z:0});world.timestep=fixed;
   world.createCollider(RAPIER.ColliderDesc.trimesh(surface.mesh.vertices,surface.mesh.indices).setTranslation(SURFACE_ORIGIN,0,0));
   for(const axis of ['x','z'])for(const sign of [-1,1])world.createCollider(RAPIER.ColliderDesc.cuboid(axis==='x'?1:SITE_HALF+1,4,axis==='z'?1:SITE_HALF+1).setTranslation(SURFACE_ORIGIN+(axis==='x'?sign*(SITE_HALF+1):0),2,axis==='z'?sign*(SITE_HALF+1):0));
-  world.createCollider(RAPIER.ColliderDesc.cuboid(.16,1.2,.16).setTranslation(SURFACE_ORIGIN,1.2,LANDING.z+2.4));
-  world.createCollider(RAPIER.ColliderDesc.ball(.6).setTranslation(SURFACE_ORIGIN+SAMPLE.x,terrainHeight(SAMPLE.x,SAMPLE.z)+.45,SAMPLE.z));
+  extractionTarget.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(.16,1.2,.16).setTranslation(SURFACE_ORIGIN,1.2,LANDING.z+2.4));
+  sampleTarget.collider=world.createCollider(RAPIER.ColliderDesc.ball(.6).setTranslation(SURFACE_ORIGIN+SAMPLE.x,terrainHeight(SAMPLE.x,SAMPLE.z)+.45,SAMPLE.z));
   for(const rock of surface.obstacles)world.createCollider(RAPIER.ColliderDesc.ball(rock.radius).setTranslation(rock.x,rock.y,rock.z));
-  for(const s of solids)world.createCollider(RAPIER.ColliderDesc.cuboid(s.size[0]/2,s.size[1]/2,s.size[2]/2).setTranslation(s.pos[0],s.pos[1],s.pos[2]));for(const d of doors)d.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(.14,1.6,1.95).setTranslation(d.x,1.6,6));player=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0,.9,16));playerCollider=world.createCollider(RAPIER.ColliderDesc.capsule(.55,.3),player);controller=world.createCharacterController(.015);controller.enableAutostep(.25,.2,true);controller.enableSnapToGround(.2);controller.setMaxSlopeClimbAngle(Math.PI/4);
+  for(const s of solids){const collider=world.createCollider(RAPIER.ColliderDesc.cuboid(s.size[0]/2,s.size[1]/2,s.size[2]/2).setTranslation(s.pos[0],s.pos[1],s.pos[2]));if(s.target)s.target.collider=collider;}for(const d of doors)d.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(.14,1.6,1.95).setTranslation(d.x,1.6,6));player=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0,.9,16));playerCollider=world.createCollider(RAPIER.ColliderDesc.capsule(.55,.3),player);controller=world.createCharacterController(.015);controller.enableAutostep(.25,.2,true);controller.enableSnapToGround(.2);controller.setMaxSlopeClimbAngle(Math.PI/4);
   for(const c of crew){
     c.body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(c.mesh.position.x,.94,c.mesh.position.z));
-    c.collider=world.createCollider(RAPIER.ColliderDesc.capsule(.67,.24),c.body);
+    c.collider=world.createCollider(RAPIER.ColliderDesc.capsule(.67,.24),c.body);c.target.collider=c.collider;
     c.controller=world.createCharacterController(.015);c.controller.enableSnapToGround(.2);c.controller.enableAutostep(.25,.2,true);
   }
+  world.step(); // Populate collision queries before the first interaction/sight sample.
   syncCrew();updateHud();paintPower();$('loading').textContent='Systems ready · progress saves on this device';$('play').removeAttribute('disabled');canvas.dataset.ready='true';frame();}
 if(matchMedia('(pointer:coarse)').matches || new URLSearchParams(location.search).has('qa')){$<HTMLSelectElement>('quality').value='low';renderer.setPixelRatio(1);renderer.shadowMap.enabled=false;bloom.enabled=false;surface.setQuality(false);resize();}
 $('play').setAttribute('disabled','');boot().catch(()=>{$('loading').textContent='Physics initialization failed. Refresh to retry.';});
 // Explicit development-only observability; stripped from the static production build.
 if(import.meta.env.DEV && new URLSearchParams(location.search).has('qa')){
-  Object.assign(window,{__erebus:{snapshot:()=>({position:player?.translation(),onSurface,progress,surfaceMaterials:surface.materialSnapshot(),timing:{lastMotionSteps,motionStepsTotal,droppedMotionTime},render:{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,batching,lighting:lightBudget.snapshot()},doors:doors.map(d=>({open:d.open,height:d.mesh.position.y})),active,dialogueOpen,nearest:nearest?.name,crew:crew.map(c=>({name:c.name,position:c.body?.translation(),mode:c.state.mode,duty:c.duty?(c.duty.phase==='watch'?'containment-watch':'returning-to-patrol'):'patrol',dutyPath:c.duty?.path,dutyCursor:c.duty?.cursor,gait:c.gait,walkBlend:c.walkBlend,yaw:c.mesh.rotation.y})),touchMove:{x:touchMove.x,y:touchMove.y},reactorColor:reactorMaterial.emissive.getHex(),habitatLight:ceilingSpot.intensity}),place:(x:number,z:number,angle=0)=>{player.setTranslation({x,y:onSurface?terrainHeight(x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=angle;pitch=-.12;velocity.set(0,0,0);verticalSpeed=0;},target:(name:string)=>{const t=targets.find(t=>t.name===name);if(!t)throw new Error('Unknown test target');const z=t.position.z+1.65;player.setTranslation({x:t.position.x,y:onSurface?terrainHeight(t.position.x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=0;pitch=-.3;velocity.set(0,0,0);}}});
+  Object.assign(window,{__erebus:{snapshot:()=>({position:player?.translation(),onSurface,progress,surfaceMaterials:surface.materialSnapshot(),timing:{lastMotionSteps,motionStepsTotal,droppedMotionTime},render:{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,batching,lighting:lightBudget.snapshot()},doors:doors.map(d=>({open:d.open,height:d.mesh.position.y})),active,dialogueOpen,nearest:nearest?.name,crew:crew.map(c=>({name:c.name,position:c.body?.translation(),mode:c.state.mode,visitorVisible:c.visitorVisible,duty:c.duty?(c.duty.phase==='watch'?'containment-watch':'returning-to-patrol'):'patrol',dutyPath:c.duty?.path,dutyCursor:c.duty?.cursor,gait:c.gait,walkBlend:c.walkBlend,yaw:c.mesh.rotation.y})),touchMove:{x:touchMove.x,y:touchMove.y},reactorColor:reactorMaterial.emissive.getHex(),habitatLight:ceilingSpot.intensity}),place:(x:number,z:number,angle=0)=>{player.setTranslation({x,y:onSurface?terrainHeight(x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=angle;pitch=-.12;velocity.set(0,0,0);verticalSpeed=0;},target:(name:string)=>{const t=targets.find(t=>t.name===name);if(!t)throw new Error('Unknown test target');const z=t.position.z+1.65;player.setTranslation({x:t.position.x,y:onSurface?terrainHeight(t.position.x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=0;pitch=-.3;velocity.set(0,0,0);}}});
 }

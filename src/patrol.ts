@@ -1,3 +1,4 @@
+import {attendVisitor} from './visibility';
 /** Deterministic local waypoint behavior. No pathfinder or remote AI service. */
 export interface Point { x: number; z: number }
 export interface PatrolState {
@@ -9,11 +10,11 @@ export interface PatrolState {
 export const freshPatrol = (): PatrolState => ({waypoint: 0, wait: 0, blocked: 0, mode: 'patrolling'});
 export function planPatrol(
   previous: PatrolState, position: Point, route: readonly [Point, Point],
-  visitor: Point, dt: number, speaking = false,
+  visitor: Point, dt: number, speaking = false, visible = true,
 ) {
   const state = {...previous};
   const visitorDistance = Math.hypot(visitor.x-position.x, visitor.z-position.z);
-  if (speaking || visitorDistance < (previous.mode === 'attending' ? 2.2 : 1.8)) {
+  if (attendVisitor(visitorDistance,previous.mode==='attending',speaking,visible)) {
     state.mode = 'attending'; state.blocked = 0;
     return {state, displacement: {x: 0, z: 0}, facing: visitor};
   }

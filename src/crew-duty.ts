@@ -1,3 +1,4 @@
+import {attendVisitor} from './visibility';
 import {planPatrol,type Point,type PatrolState} from './patrol';
 
 /** Engineering-only authored graph; no arbitrary obstacle avoidance or remote AI. */
@@ -20,18 +21,18 @@ export function engineeringPath(position:Point,goal:DutyNode='watch'):DutyNode[]
   }
   return [];
 }
-export function planEngineeringDuty(previous:EngineeringDuty|null,patrol:PatrolState,position:Point,route:readonly [Point,Point],visitor:Point,dt:number,tripped:boolean,speaking=false){
-  if(!tripped&&!previous)return {duty:null,...planPatrol(patrol,position,route,visitor,dt,speaking)};
+export function planEngineeringDuty(previous:EngineeringDuty|null,patrol:PatrolState,position:Point,route:readonly [Point,Point],visitor:Point,dt:number,tripped:boolean,speaking=false,visible=true){
+  if(!tripped&&!previous)return {duty:null,...planPatrol(patrol,position,route,visitor,dt,speaking,visible)};
   const phase=tripped?'watch':'return',goal=tripped?'watch':'junction';
   const duty:EngineeringDuty=previous?.phase===phase?{...previous,path:[...previous.path]}:{phase,path:engineeringPath(position,goal),cursor:0,blocked:0,retry:0};
   const state={...patrol,blocked:0};
-  if(speaking||distance(position,visitor)<(patrol.mode==='attending'?2.2:1.8)){
+  if(attendVisitor(distance(position,visitor),patrol.mode==='attending',speaking,visible)){
     state.mode='attending';duty.blocked=0;return {duty,state,displacement:{x:0,z:0},facing:visitor};
   }
   if(duty.retry>0){duty.retry=Math.max(0,duty.retry-dt);state.mode='waiting';return {duty,state,displacement:{x:0,z:0},facing:diagnostic};}
   while(duty.cursor<duty.path.length&&distance(position,ENGINEERING_GRAPH[duty.path[duty.cursor]].point)<.12)duty.cursor++;
   if(duty.cursor>=duty.path.length){
-    if(duty.phase==='return')return {duty:null,...planPatrol({...patrol,wait:0,blocked:0,mode:'patrolling'},position,route,visitor,dt,speaking)};
+    if(duty.phase==='return')return {duty:null,...planPatrol({...patrol,wait:0,blocked:0,mode:'patrolling'},position,route,visitor,dt,speaking,visible)};
     state.mode='inspecting';return {duty,state,displacement:{x:0,z:0},facing:diagnostic};}
   state.mode='patrolling';const facing=ENGINEERING_GRAPH[duty.path[duty.cursor]].point,dx=facing.x-position.x,dz=facing.z-position.z,len=Math.hypot(dx,dz),step=Math.min(len,.65*dt);
   return {duty,state,displacement:{x:dx/len*step,z:dz/len*step},facing};
