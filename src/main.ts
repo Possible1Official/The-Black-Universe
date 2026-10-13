@@ -1,4 +1,5 @@
 import './style.css';
+import {loadCrewVisuals,type CrewVisual} from './crew-visual';
 import {bulkheadPanels} from './bulkheads';
 import {clearSight} from './visibility';
 import {planEngineeringDuty,recordDutyMovement,type EngineeringDuty} from './crew-duty';
@@ -140,11 +141,11 @@ for(const x of [-11,11]){
   const toggle=()=>{door.open=!door.open;notify(`Bulkhead ${door.open?'opening':'closing'}`);tone(220);};
   for(const panel of bulkheadPanels(x))terminal(panel.name,panel.x,panel.z,'ACCESS','BULKHEAD CONTROL',toggle,accessScreen);
 }
-// Temporary articulated crew androids. Asset pipeline replaces these with licensed skinned characters.
+// Local Mixamo skinned crew load asynchronously; procedural androids remain a failure fallback.
 interface CrewMember {
   name: string; mesh: THREE.Group; legs: THREE.Group[]; arms: THREE.Group[];
   target: Target; route: [Point, Point]; state: PatrolState; duty: EngineeringDuty|null; visitorVisible:boolean; sightWait:number; gait: number; walkBlend: number;
-  body?: RAPIER.RigidBody; collider?: RAPIER.Collider; controller?: RAPIER.KinematicCharacterController;
+  visual?: CrewVisual; body?: RAPIER.RigidBody; collider?: RAPIER.Collider; controller?: RAPIER.KinematicCharacterController;
 }
 const crew: CrewMember[] = [];
 let speakingCrew: string | undefined;
@@ -171,6 +172,7 @@ function makeCrew(name:string,x:number,z:number,color:number){
   crew.push({name,mesh:g,legs,arms,target,route,state:freshPatrol(),duty:null,visitorVisible:false,sightWait:0,gait:0,walkBlend:0});
 }
 makeCrew('VEGA',-3,-7,0x294b62);makeCrew('ION',-16,7,0x88684d);
+void loadCrewVisuals(crew.map(c=>c.mesh)).then(visuals=>visuals.forEach((visual,i)=>crew[i].visual=visual)).catch(()=>console.warn('Crew asset unavailable; procedural fallback active.'));
 function stepCrew(){
   const visitor=player.translation();
   for(const c of crew){
@@ -196,6 +198,7 @@ function stepCrew(){
     body.setNextKinematicTranslation({x:p.x+move.x,y:p.y+move.y,z:p.z+move.z});
     c.gait+=distance/.85*Math.PI*2;
     c.walkBlend=THREE.MathUtils.damp(c.walkBlend,Math.min(1,distance/(.65*fixed)),12,fixed);
+    c.visual?.update(fixed,distance,c.walkBlend);
   }
 }
 function syncCrew(){
@@ -382,5 +385,5 @@ if(matchMedia('(pointer:coarse)').matches || new URLSearchParams(location.search
 $('play').setAttribute('disabled','');boot().catch(()=>{$('loading').textContent='Physics initialization failed. Refresh to retry.';});
 // Explicit development-only observability; stripped from the static production build.
 if(import.meta.env.DEV && new URLSearchParams(location.search).has('qa')){
-  Object.assign(window,{__erebus:{snapshot:()=>({position:player?.translation(),onSurface,progress,surfaceMaterials:surface.materialSnapshot(),timing:{lastMotionSteps,motionStepsTotal,droppedMotionTime},render:{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,batching,lighting:lightBudget.snapshot()},doors:doors.map(d=>({open:d.open,height:d.mesh.position.y})),active,dialogueOpen,nearest:nearest?.name,crew:crew.map(c=>({name:c.name,position:c.body?.translation(),mode:c.state.mode,visitorVisible:c.visitorVisible,duty:c.duty?(c.duty.phase==='watch'?'containment-watch':'returning-to-patrol'):'patrol',dutyPath:c.duty?.path,dutyCursor:c.duty?.cursor,gait:c.gait,walkBlend:c.walkBlend,yaw:c.mesh.rotation.y})),touchMove:{x:touchMove.x,y:touchMove.y},reactorColor:reactorMaterial.emissive.getHex(),habitatLight:ceilingSpot.intensity}),place:(x:number,z:number,angle=0)=>{player.setTranslation({x,y:onSurface?terrainHeight(x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=angle;pitch=-.12;velocity.set(0,0,0);verticalSpeed=0;},target:(name:string)=>{const t=targets.find(t=>t.name===name);if(!t)throw new Error('Unknown test target');const z=t.position.z+1.65;player.setTranslation({x:t.position.x,y:onSurface?terrainHeight(t.position.x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=0;pitch=-.3;velocity.set(0,0,0);}}});
+  Object.assign(window,{__erebus:{snapshot:()=>({position:player?.translation(),onSurface,progress,surfaceMaterials:surface.materialSnapshot(),timing:{lastMotionSteps,motionStepsTotal,droppedMotionTime},render:{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,batching,lighting:lightBudget.snapshot()},doors:doors.map(d=>({open:d.open,height:d.mesh.position.y})),active,dialogueOpen,nearest:nearest?.name,crew:crew.map(c=>({name:c.name,position:c.body?.translation(),mode:c.state.mode,visitorVisible:c.visitorVisible,duty:c.duty?(c.duty.phase==='watch'?'containment-watch':'returning-to-patrol'):'patrol',dutyPath:c.duty?.path,dutyCursor:c.duty?.cursor,gait:c.gait,walkBlend:c.walkBlend,visual:c.visual?.snapshot()??null,yaw:c.mesh.rotation.y})),touchMove:{x:touchMove.x,y:touchMove.y},reactorColor:reactorMaterial.emissive.getHex(),habitatLight:ceilingSpot.intensity}),place:(x:number,z:number,angle=0)=>{player.setTranslation({x,y:onSurface?terrainHeight(x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=angle;pitch=-.12;velocity.set(0,0,0);verticalSpeed=0;},target:(name:string)=>{const t=targets.find(t=>t.name===name);if(!t)throw new Error('Unknown test target');const z=t.position.z+1.65;player.setTranslation({x:t.position.x,y:onSurface?terrainHeight(t.position.x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=0;pitch=-.3;velocity.set(0,0,0);}}});
 }

@@ -64,8 +64,14 @@ Vision: an immersive, physically coherent browser universe with explorable vesse
 - Closed-door exit guidance points to the interior panel; open-door guidance retains the passage route.
 - Shared access-screen texture, physical consoles and preserved collision sight/safety release.
 
+## First Mixamo crew import (2026-10-13)
+- Visually compared Ely, Exo Gray, Vanguard and Eve in the authenticated Mixamo viewer before downloading.
+- Bundled Ely skin with in-place Idle/Walking, cloned skeletons, distance-driven walk and idle blend; physics/tasks remain local.
+- 14,808 triangles, 67 bones, four 1K textures, 4.826 MB GLB; procedural loading-failure fallback.
+- Both officers currently share one appearance; no facial animation, IK, run clip or photorealism claim.
+
 ## Next four prioritized cycles
-1. **Character pipeline:** obtain valid Mixamo access, import one approved character with idle/walk clips, optimize to GLB, add asset provenance and budgets. If access is blocked, improve lighting/materials and crew collision/animation instead.
+1. **Character polish:** inspect walking/idle transitions on hardware, add a visually distinct second crew member after preview, and evaluate foot contact/IK and LOD before increasing asset budgets.
 2. **Ship simulation expansion:** deepen the new power/containment model, ambient machinery, better doors, minimap and navigation aids. Preserve completed saves through a versioned migration.
 3. **Exploration polish and performance:** improve terrain materials/lighting and measure surface/ship rendering before expanding the biome. Evaluate instancing and frame pacing; keep the existing mission/navigation loop stable.
 4. **NPC agency:** navigation graph, schedules, perception and task execution, with explicit goals and failure recovery. Add deterministic simulation tests. Dialogue can remain local until a properly authenticated backend exists.
