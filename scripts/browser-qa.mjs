@@ -65,7 +65,16 @@ await page.evaluate(()=>window.__erebus.place(0,-9));await interact('Toggle bulk
 await interact('Toggle bulkhead');await page.waitForFunction(()=>window.__erebus.snapshot().doors[0].height>4,{},{timeout:30000});s=await page.evaluate(()=>window.__erebus.snapshot());assert.ok(s.doors[0].open&&s.doors[0].height>4,'bulkhead animates open');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.waypoint==='Port-enter');
 await page.evaluate(()=>window.__erebus.place(0,-9));await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.waypoint==='Port-outside');
 await page.evaluate(()=>window.__erebus.place(-9,6,Math.PI/2));await page.keyboard.down('KeyW');await page.waitForFunction(()=>window.__erebus.snapshot().position.x< -11.6,{},{timeout:30000});await page.keyboard.up('KeyW');s=await page.evaluate(()=>window.__erebus.snapshot());assert.ok(s.position.x< -11.5,'open doorway permits passage');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.waypoint==='engineering');
-await interact('Restore engineering relay');await interact('Restore navigation relay');await interact('Restore observatory relay');
+await interact('Restore engineering relay');
+await interact('Toggle engineering bulkhead');await page.waitForFunction(()=>!window.__erebus.snapshot().doors[0].open&&window.__erebus.snapshot().doors[0].height<1.7);
+await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.waypoint==='Port-inside-panel');
+await interact('Toggle engineering bulkhead');await page.waitForFunction(()=>window.__erebus.snapshot().doors[0].height>4);
+await interact('Restore navigation relay');await interact('Restore observatory relay');
+await interact('Toggle observatory bulkhead');await page.waitForFunction(()=>window.__erebus.snapshot().doors[1].height>4);
+await interact('Toggle observatory bulkhead');await page.waitForFunction(()=>!window.__erebus.snapshot().doors[1].open&&window.__erebus.snapshot().doors[1].height<1.7);
+await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.waypoint==='Starboard-inside-panel');
+await interact('Toggle observatory bulkhead');await page.waitForFunction(()=>window.__erebus.snapshot().doors[1].height>4);
+console.log('Checked: interior engineering/observatory controls, both shared doors and closed-door exit guidance');
 await interact('Initialize universe forge');s=await page.evaluate(()=>window.__erebus.snapshot());assert.equal(s.progress.forged,true);assert.equal(s.progress.relays.length,3);assert.equal(await page.locator('#objective').textContent(),'A universe begins');
 await interact('Scan the new world');assert.equal(await page.locator('#navigationHud').isVisible(),false,'dialogue hides guidance');assert.match(await page.locator('#speech').textContent(),/NYSA/);await page.click('#closeDialogue');
 // Deploy through actual science controls, walk over the terrain, survey and extract.

@@ -1,3 +1,4 @@
+import {bulkheadPanels} from './bulkheads';
 import type {Progress} from './state';
 import {forgeReadiness} from './power';
 import {LANDING,SAMPLE,SURFACE_ORIGIN} from './excursion';
@@ -22,8 +23,9 @@ export function routeWaypoint(destination:Waypoint,position:NavPoint,doorOpen:re
   if(current===next)return destination;
   const side=current||next,port=side<0,name=port?'Port':'Starboard',roomName=port?'engineering':'observatory';
   if(current!==0){
+    if(!doorOpen[port?0:1]){const panel=bulkheadPanels(side*11)[1];return at(`${name}-inside-panel`,`${name} interior access`,panel.x,panel.z,'Face the interior panel and press E to open the concourse passage.');}
     if(Math.abs(position.z-6)>1.2)return at(`${name}-inside`,`${name} doorway`,side*13,6,'Follow the passage to the habitat concourse.');
-    return at(`${name}-exit`,'Habitat concourse',side*8.6,6,'Walk through the bulkhead; its occupied-door safety release opens it.');
+    return at(`${name}-exit`,'Habitat concourse',side*8.6,6,'Walk through the open bulkhead to the habitat concourse.');
   }
   if(!doorOpen[port?0:1])return at(`${name}-panel`,`${name} access panel`,side*10,3.2,`Face the panel and press E to open ${roomName}.`);
   if(Math.abs(position.z-6)>1.2)return at(`${name}-outside`,`${name} doorway`,side*8.6,6,'Align with the open passage.');

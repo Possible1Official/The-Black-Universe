@@ -1,4 +1,5 @@
 import './style.css';
+import {bulkheadPanels} from './bulkheads';
 import {clearSight} from './visibility';
 import {planEngineeringDuty,recordDutyMovement,type EngineeringDuty} from './crew-duty';
 import {ShipLightBudget} from './light-budget';
@@ -110,7 +111,7 @@ function solid(w:number,h:number,d:number,x:number,y:number,z:number,target?:Tar
 let onSurface=false;
 type Target={zone?:'surface';name:string;position:THREE.Vector3;action:()=>void;screen?:THREE.Mesh;collider?:RAPIER.Collider;};
 const targets:Target[]=[];
-function terminal(name:string,x:number,z:number,title:string,subtitle:string,action:()=>void){box(1.8,.9,1,x,.5,z,dark);const screen=box(1.6,.07,.9,x,1.04,z,textPanel(title,subtitle));screen.rotation.x=.26;box(.12,.65,.12,x-.75,1.37,z-.4,cyan);const t={name,position:new THREE.Vector3(x,1.1,z),action,screen};targets.push(t);solid(1.8,1.1,1,x,.55,z,t);return t;}
+function terminal(name:string,x:number,z:number,title:string,subtitle:string,action:()=>void,screenMaterial?:THREE.Material){box(1.8,.9,1,x,.5,z,dark);const screen=box(1.6,.07,.9,x,1.04,z,screenMaterial??textPanel(title,subtitle));screen.rotation.x=.26;box(.12,.65,.12,x-.75,1.37,z-.4,cyan);const t={name,position:new THREE.Vector3(x,1.1,z),action,screen};targets.push(t);solid(1.8,1.1,1,x,.55,z,t);return t;}
 function notify(message:string){$('toast').textContent=message;$('toast').style.opacity='1';toastTimer=5;}
 let storageWarned=false;
 function save(refresh=true){try{localStorage.setItem(SAVE_KEY,JSON.stringify(progress));}catch{if(!storageWarned){notify('Storage unavailable. Progress will last for this session.');storageWarned=true;}}if(refresh){updateHud();if(player)paintNavigation();}}
@@ -132,7 +133,13 @@ solid(2.8,3,2.8,-15,1.5,4);solid(3,.7,3,15,.35,4);solid(5,.8,1.6,0,.4,19);
 solid(7,.18,5,0,.09,-10);
 for(const x of [-7,7])solid(1.1,1.55,1.1,x,.775,-7);
 const doors:{mesh:THREE.Mesh;open:boolean;collider?:RAPIER.Collider;progress:number;x:number}[]=[];
-for(const x of [-11,11]){const mesh=box(.28,3.2,3.9,x,1.6,6,dark);box(.3,.03,3.7,0,.6,0,cyan,mesh);const door={mesh,open:false,progress:0,x};doors.push(door);terminal('Toggle bulkhead',x+(x<0?1:-1),3.2,'ACCESS','BULKHEAD CONTROL',()=>{door.open=!door.open;notify(`Bulkhead ${door.open?'opening':'closing'}`);tone(220);});}
+const accessScreen=textPanel('ACCESS','BULKHEAD CONTROL');
+for(const x of [-11,11]){
+  const mesh=box(.28,3.2,3.9,x,1.6,6,dark);box(.3,.03,3.7,0,.6,0,cyan,mesh);
+  const door={mesh,open:false,progress:0,x};doors.push(door);
+  const toggle=()=>{door.open=!door.open;notify(`Bulkhead ${door.open?'opening':'closing'}`);tone(220);};
+  for(const panel of bulkheadPanels(x))terminal(panel.name,panel.x,panel.z,'ACCESS','BULKHEAD CONTROL',toggle,accessScreen);
+}
 // Temporary articulated crew androids. Asset pipeline replaces these with licensed skinned characters.
 interface CrewMember {
   name: string; mesh: THREE.Group; legs: THREE.Group[]; arms: THREE.Group[];

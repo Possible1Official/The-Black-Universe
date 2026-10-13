@@ -59,6 +59,11 @@ Vision: an immersive, physically coherent browser universe with explorable vesse
 - Nearby crew use capped eye-to-eye sight samples for patrol/watch attention, with personal-space yielding retained.
 - Collision approximations and omnidirectional nearby awareness only; richer perception and ship-wide tasks remain future work.
 
+## Interior bulkhead controls (2026-10-13)
+- Engineering and observatory access panels operate their existing bulkheads from inside.
+- Closed-door exit guidance points to the interior panel; open-door guidance retains the passage route.
+- Shared access-screen texture, physical consoles and preserved collision sight/safety release.
+
 ## Next four prioritized cycles
 1. **Character pipeline:** obtain valid Mixamo access, import one approved character with idle/walk clips, optimize to GLB, add asset provenance and budgets. If access is blocked, improve lighting/materials and crew collision/animation instead.
 2. **Ship simulation expansion:** deepen the new power/containment model, ambient machinery, better doors, minimap and navigation aids. Preserve completed saves through a versioned migration.
