@@ -1,11 +1,11 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {startFlight,stepFlight,beginApproach,canApproach,flightDistance,flightSpeed,NYSA_CENTER,NYSA_RADIUS,type FlightInput,type FlightState} from '../src/flight';
+import {startFlight,stepFlight,beginApproach,canApproach,flightDistance,flightSpeed,NYSA_CENTER,NYSA_RADIUS,SURFACE_FLIGHT_SECONDS,surfaceFlightPose,cloudOpacity,type FlightInput,type FlightState} from '../src/flight';
 import {FixedFrameClock} from '../src/timing';
 const input:FlightInput={throttle:0,boost:false,brake:false,yaw:0,pitch:0};
 const steps=(state:FlightState,n:number,controls=input)=>{for(let i=0;i<n;i++)state=stepFlight(state,controls,1/60);return state;};
 test('both takeoff legs clear their origin, are immutable and start under manual control',()=>{
-  for(const leg of ['nysa','erebus'] as const){const f=startFlight(leg),saved=JSON.stringify(f),next=steps(f,181);assert.equal(next.phase,'flying');assert.equal(flightSpeed(next),0);assert.equal(next.position.z,leg==='nysa'?-80:-980);assert.equal(JSON.stringify(f),saved);assert.equal(stepFlight(f,input,NaN),f);}
+  for(const leg of ['nysa','erebus'] as const){const f=startFlight(leg),saved=JSON.stringify(f),next=steps(f,leg==='nysa'?181:602);assert.equal(next.phase,'flying');assert.equal(flightSpeed(next),0);assert.equal(next.position.z,leg==='nysa'?-80:-980);assert.equal(JSON.stringify(f),saved);assert.equal(stepFlight(f,input,NaN),f);}
 });
 test('manual thrust, boost and braking reach Nysa; approach guards prevent remote or fast landing',()=>{
   let f=steps(startFlight('nysa'),181);assert.equal(beginApproach(f),f);
@@ -13,13 +13,25 @@ test('manual thrust, boost and braking reach Nysa; approach guards prevent remot
   while(flightDistance(f)>85)f=stepFlight(f,{...input,throttle:1},1/60);
   assert.equal(canApproach(f),false);assert.equal(beginApproach(f),f);
   f=steps(f,120,{...input,brake:true});assert.ok(flightSpeed(f)<1);assert.ok(canApproach(f));
-  f=steps(beginApproach(f),181);assert.equal(f.phase,'landed');assert.ok(Math.abs(f.position.z+1022)<.01);
+  f=steps(beginApproach(f),181);assert.equal(f.phase,'descending');f=steps(f,421);assert.equal(f.phase,'landed');assert.ok(Math.abs(f.position.z+1022)<.01);
 });
 test('surface takeoff permits manual return and guided docking without creating saved state',()=>{
-  let f=steps(startFlight('erebus'),181);
+  let f=steps(startFlight('erebus'),602);
   while(flightDistance(f)>85)f=stepFlight(f,{...input,throttle:1,yaw:Math.PI},1/60);
   f=steps(f,120,{...input,brake:true,yaw:Math.PI});assert.ok(canApproach(f));
   f=steps(beginApproach(f),181);assert.equal(f.phase,'docked');assert.equal(f.position.z,-20);
+});
+test('surface descent/ascent are bounded, reversible and pause at the same physical camera pose',()=>{
+  let last=Infinity;
+  for(let i=0;i<=420;i++){const t=i/60,down=surfaceFlightPose(t),up=surfaceFlightPose(SURFACE_FLIGHT_SECONDS-t,true);assert.ok(down.altitude<=last+1e-9);assert.ok(down.altitude>=0&&down.altitude<=46);assert.ok(Math.abs(down.position.x-up.position.x)<1e-9);assert.ok(Math.abs(down.position.y-up.position.y)<1e-9);assert.ok(down.position.z>=19.1&&down.position.z<=29);assert.ok(Number.isFinite(down.pitch)&&Number.isFinite(down.yaw));last=down.altitude;}
+  assert.equal(surfaceFlightPose(7).altitude,0);assert.equal(surfaceFlightPose(0,true).altitude,0);
+  const f=steps(startFlight('erebus'),100),saved=JSON.stringify(f);assert.equal(f.phase,'ascending');assert.equal(stepFlight(f,input,0),f);assert.equal(JSON.stringify(f),saved);
+});
+test('cloud handoffs cover representation switches and clear at ground/orbital endpoints',()=>{
+  let f={...startFlight('nysa'),phase:'landing' as const,timer:3};assert.ok(Math.abs(cloudOpacity(f)-.96)<1e-9);
+  assert.equal(cloudOpacity({...f,phase:'descending',timer:0}),.96);assert.equal(cloudOpacity({...f,phase:'descending',timer:1}),0);
+  assert.ok(Math.abs(cloudOpacity({...f,phase:'ascending',timer:7})-.96)<1e-9);
+  assert.equal(cloudOpacity({...f,phase:'launching',leg:'erebus',timer:0}),.96);assert.equal(cloudOpacity({...f,phase:'flying'}),0);
 });
 test('planet/hull collisions and sector recovery cut thrust without NaNs or planet penetration',()=>{
   let f=steps(startFlight('nysa'),181);
