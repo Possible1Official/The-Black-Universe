@@ -1,6 +1,6 @@
 # Local crew behavior
 
-Vega patrols the bridge and Ion patrols engineering using two hand-authored waypoints per officer. These are deterministic local state machines, not LLM agents, a navigation mesh, or general-purpose AI.
+Vega patrols the bridge and Ion patrols engineering using two hand-authored waypoints per officer. These are deterministic local state machines, not LLM agents, a navigation mesh, or general-purpose AI. Ion also has a containment-watch duty using a small engineering-only waypoint graph.
 
 Each officer has a Rapier kinematic capsule and character controller. Waypoint commands are checked against physical ship geometry and the player's capsule. Officers turn in place before walking, pause at endpoints, and stop/face a visitor within 1.8 meters. Once attending, they resume patrol after the visitor moves beyond 2.2 meters; this prevents rapid stop/start chatter. A conversation holds movement and turns the speaking officer toward the player.
 
@@ -9,3 +9,14 @@ Sustained lack of forward progress for two simulation seconds reverses the local
 Simulation runs at the game's existing fixed 60 Hz step. The existing frame-time cap can slow simulation under very low rendering rates; no real-device performance claim is made. Crew behavior is transient and resets when loading the game; saved mission progression now uses v2 with legacy v1 migration (see POWER.md).
 
 Tests: `tests/patrol.test.ts` covers bounded routes and endpoint waits, player attention, resumption, obstruction recovery, turn-rate/angle wrapping and attention hysteresis. `scripts/browser-qa.mjs` exercises rendered patrol displacement, yielding, solid body contact, crew dialogue and access-console collision alongside the original mission and mobile checks. Headless pointer lock is emulated; touch movement is dispatched in a mobile browser context.
+
+
+## Containment watch
+
+When containment trips, Ion temporarily prioritizes a diagnostics watch over the normal patrol. An authored three-node engineering graph joins the patrol start, a clearance junction and a safe standing point beside diagnostics. Breadth-first routing chooses the shortest edge path from the nearest authored node. The same Rapier capsule/controller checks every movement; the officer turns before walking, walks at 0.65 m/s, and uses actual travel to animate. On arrival, Ion stops and faces diagnostics while the trip stays latched. This is observation/guidance, not an automatic repair: the player must still cool and reset containment.
+
+Nearby visitors and conversations interrupt travel/watch without losing its path; leaving resumes the duty with the existing attention hysteresis. Two simulation seconds without forward progress cause a 0.4-second wait and a graph replan from the current position. There is no teleport or forced collider bypass. Reset starts a return leg through the clearance junction before the original patrol goal resumes, avoiding a direct return across the relay console. A new trip during return reprioritizes watch. Pause/dialogue/surface transfer suspend physical crew motion as before. Task state is transient and recomputed from restored power state after reload.
+
+This graph covers Ion's current engineering patrol and diagnostics only. It does not route through doors, find arbitrary detours, perceive every obstacle, schedule ship-wide tasks, diagnose real faults or plan with an LLM. Replanning may retry a persistently blocked edge; visitor yielding is based on distance and has no line-of-sight perception. Meshes and motion remain procedural placeholders. No extra geometry, textures, dependency, network request or save field is added.
+
+`tests/crew-duty.test.ts` covers trip/return/retrip priorities, station holding, attention/conversation interruption, bounded obstruction retry, immutable patrol input and actual Rapier traversal around both console colliders. With the dev server running, `node scripts/crew-duty-qa.mjs .local/qa/crew-duty.json .local/qa/crew-duty.png` installs an isolated tripped fixture, waits for physical arrival/holding, talks to Ion, resets containment through the real diagnostics UI and verifies return to patrol. Dev pose hooks only position the visitor; the officer's navigation is not teleported. Hardware FPS and real pointer lock remain unverified.

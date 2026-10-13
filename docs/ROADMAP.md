@@ -49,6 +49,11 @@ Vision: an immersive, physically coherent browser universe with explorable vesse
 - High-mode normal/roughness maps; performance mode keeps the color texture with uniform roughness.
 - Shared terrain/collision vertices and the existing sample/extraction loop remain unchanged; authored landscape and hardware measurements are future work.
 
+## Engineering crew duty (2026-10-13)
+- Ion responds to containment trips with a diagnostics watch, using a three-node engineering graph.
+- Visitor/conversation yielding, obstruction retry, station holding and safe return to patrol after reset.
+- Goal selection is local and scripted; ship-wide routing, general task planning and automatic repairs remain future work.
+
 ## Next four prioritized cycles
 1. **Character pipeline:** obtain valid Mixamo access, import one approved character with idle/walk clips, optimize to GLB, add asset provenance and budgets. If access is blocked, improve lighting/materials and crew collision/animation instead.
 2. **Ship simulation expansion:** deepen the new power/containment model, ambient machinery, better doors, minimap and navigation aids. Preserve completed saves through a versioned migration.
