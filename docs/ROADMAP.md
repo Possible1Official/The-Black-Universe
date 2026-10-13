@@ -7,7 +7,7 @@ Vision: an immersive, physically coherent browser universe with explorable vesse
 - First-person controls, touch controls, Rapier collision, functioning bulkheads.
 - Restore three relays, initialize genesis, scan resulting planet; device-local save.
 - Temporary articulated android crew with state-aware scripted dialogue.
-- Tests, automatic Pages delivery, rollback reference, hourly development task.
+- Tests, private Sites publication, rollback reference, hourly development task.
 
 ## Next four prioritized cycles
 1. **Character pipeline:** obtain valid Mixamo access, import one approved character with idle/walk clips, optimize to GLB, add asset provenance and budgets. If access is blocked, improve lighting/materials and crew collision/animation instead.
