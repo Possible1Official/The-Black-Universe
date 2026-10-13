@@ -2,9 +2,7 @@
 
 ## 2026-10-13 · Foundation released
 
-Repository started empty. Built-in hourly continuation confirmed enabled. Stack selected: TypeScript + Three.js + Rapier + Vite; static GitHub Pages delivery. No Vercel or Supabase.
-
-Validation and release evidence will be added after the playable build has been tested.
+Repository started empty. Built-in hourly continuation confirmed enabled. Stack selected: TypeScript + Three.js + Rapier + Vite; private Sites delivery (Pages setup was blocked). No Vercel or Supabase.
 
 Implemented: explorable four-area ship, first-person movement/jump/sprint, fixed-step Rapier capsule, physical walls/floors/bulkheads, auto-reopening occupied doors, bridge consoles, three power relays, forge activation, generated orbital world and scan, two temporary articulated android officers with progression-aware dialogue, local mission persistence, reset/pause/settings, synthesized audio, desktop and touch input. Cinematic rings, PBR metallic surfaces, procedural panels, real lights, a shadowed spotlight, bloom and a mobile-default performance mode.
 
@@ -25,3 +23,17 @@ Rollback starting point: `foundation-baseline` / `dd4cb58`; playable rollback ta
 - Built-in hourly task created and enabled; first scheduled cycle 2026-10-13 01:58:11 UTC. No duplicate tasks. Future runs depend on quota/access/runtime availability.
 - Release bookkeeping adds a Vite-cache ignore entry and records publication evidence; no gameplay source changes.
 - Live production browser smoke check passed with site-scoped service access: HTTP 200, title `The Black Universe · Erebus`, physics-ready canvas, enter-game UI, and zero page exceptions. Private access header requires `OAI-Sites-Authorization: Bearer <token>`; never place this service token in source or automation prompts. Anonymous visits correctly require sign-in. Production screenshot saved locally under ignored `.local/qa/production.png`.
+
+## 2026-10-13 · Crew patrol and physical interaction cycle
+
+Starting SHA: `f89548f2ab60323f71198923cebcfb6d76ecc0e7`; rollback tag: `rollback-20261013-crew-patrol`. No open PRs or dirty source were present when this cycle began. No valid local Mixamo credential was available, so the roadmap's crew-physics/animation fallback was selected without trying to reuse screenshot credentials.
+
+Implemented: two-waypoint patrols driven through Rapier kinematic capsules; turn in place before walking; endpoint waits; proximity attention with hysteresis; smooth facing during conversation; route reversal after two seconds without forward progress; movement-driven opposed arm/leg animation with a blend to rest. Added missing colliders for access consoles, bridge dais and seats. Pause/dialogue now clear held touch/look input and cached horizontal movement; movement controls ignore dialogue state.
+
+Validation: baseline three tests and production build passed. Updated eight tests pass, covering patrol bounds/waits, visitor attention/resumption, blocked-route reversal, angle wrapping and turn rates, hysteresis, progression/save invariants and crew dialogue. Full Chromium software-WebGL QA passes for rendered patrol displacement, yielding without drifting, solid crew/player contact, crew conversation, access-console collision, and the existing movement/window/floor/door/mission/genesis/scan/save/corrupt-save flow. Mobile emulation passes touch movement, responsive layout and held-input cleanup across pause/resume. No page exceptions. Crew dialogue screenshot visually inspected. TypeScript/Vite build passes (~2.77 MB JS / ~967 KB gzip); the existing bundle-size warning remains. Dev observability is absent from production output.
+
+During verification, excessive downward NPC displacement produced sideways sliding at the bridge step. Corrected it to the player controller's small fixed-step ground bias, measured progress along the intended direction for blocked-route recovery, and verified the corrected movement in-browser. No claimed GPU/FPS improvement; hardware mobile performance and real pointer lock remain unverified.
+
+Limitations: procedural androids, local waypoint state machines and scripted dialogue only; no Mixamo skinning, arbitrary navigation/pathfinding, LLM planning, IK or facial animation. Mission save v1 is unchanged; transient crew state restarts on load. See CREW.md. Release follows the passing PR merge to the existing owner-private Site; native deployment/version provenance records the final merged SHA and publication outcome. Existing hourly scheduling is unchanged and no duplicate task was created.
+
+Next improvement: power distribution and containment diagnostics with visible consequences, then surface exploration; a valid Mixamo character pipeline remains an outstanding parallel priority when asset access becomes available.

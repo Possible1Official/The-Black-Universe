@@ -15,6 +15,28 @@ await page.keyboard.down('KeyW');await page.waitForFunction(()=>window.__erebus.
 let s=await page.evaluate(()=>window.__erebus.snapshot());assert.ok(s.position.z<14,'keyboard moves player forward');assert.ok(s.position.y>.8&&s.position.y<1,'floor supports player');
 await page.evaluate(()=>window.__erebus.place(0,-14));await page.keyboard.down('KeyW');await page.waitForTimeout(1800);await page.keyboard.up('KeyW');s=await page.evaluate(()=>window.__erebus.snapshot());assert.ok(s.position.z> -15.6,'forward window collision holds');
 async function interact(name){await page.evaluate(name=>window.__erebus.target(name),name);await page.waitForFunction(name=>window.__erebus.snapshot().nearest===name,name,{timeout:30000});assert.equal(await page.evaluate(()=>window.__erebus.snapshot().nearest),name);await page.keyboard.press('KeyE');await page.waitForTimeout(300);console.log('Checked:',name);}
+// Crew walks through physics, yields to the visitor, and has a solid body.
+const patrolStart=await page.evaluate(()=>window.__erebus.snapshot().crew[0]);
+await page.waitForFunction(before=>Math.abs(window.__erebus.snapshot().crew[0].position.z-before.position.z)>.2,patrolStart,{timeout:30000});
+await page.evaluate(()=>window.__erebus.target('Speak with VEGA'));
+await page.waitForFunction(()=>window.__erebus.snapshot().crew[0].mode==='attending',{},{timeout:30000});
+const stopped=await page.evaluate(()=>window.__erebus.snapshot().crew[0]);
+await page.waitForTimeout(400);
+const stoppedLater=await page.evaluate(()=>window.__erebus.snapshot().crew[0]);
+assert.ok(Math.hypot(stopped.position.x-stoppedLater.position.x,stopped.position.z-stoppedLater.position.z)<.02,'crew yields without drifting');
+await page.keyboard.down('KeyW');await page.waitForFunction(()=>{const s=window.__erebus.snapshot();return Math.hypot(s.position.x-s.crew[0].position.x,s.position.z-s.crew[0].position.z)<.7;},{},{timeout:30000});
+await page.waitForTimeout(400);await page.keyboard.up('KeyW');
+const contact=await page.evaluate(()=>window.__erebus.snapshot());
+assert.ok(Math.hypot(contact.position.x-contact.crew[0].position.x,contact.position.z-contact.crew[0].position.z)>.5,'crew body blocks player');
+await interact('Speak with VEGA');assert.equal(await page.locator('#dialogue').isVisible(),true);
+await page.screenshot({path:'.local/qa/crew-dialogue.png'});await page.click('#closeDialogue');
+console.log('Checked: physical crew patrol, yielding, body collision and conversation');
+// Access-panel consoles used to be missing from the collider list.
+await page.evaluate(()=>window.__erebus.place(-10,4.85));await page.keyboard.down('KeyW');
+await page.waitForFunction(()=>window.__erebus.snapshot().position.z<4.15,{},{timeout:30000});
+await page.waitForTimeout(400);await page.keyboard.up('KeyW');
+assert.ok((await page.evaluate(()=>window.__erebus.snapshot())).position.z>3.95,'access console blocks passage through its mesh');
+console.log('Checked: access console collision');
 await interact('Initialize universe forge');assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.forged,false);
 // Closed bulkhead must block, then open access with the real keyboard interaction.
 await page.evaluate(()=>window.__erebus.place(-9,6,Math.PI/2));await page.keyboard.down('KeyW');await page.waitForTimeout(1200);await page.keyboard.up('KeyW');s=await page.evaluate(()=>window.__erebus.snapshot());assert.ok(s.position.x> -10.6,'closed bulkhead blocks passage');
@@ -35,6 +57,17 @@ await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:80,
 await mobile.waitForFunction(z=>window.__erebus.snapshot().position.z<z-.25,start,{timeout:30000});
 await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
 assert.ok((await mobile.evaluate(()=>window.__erebus.snapshot().position.z))<start-.25,'touch joystick moves player');
+await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:80,y:668}]});
+await mobile.waitForFunction(()=>window.__erebus.snapshot().touchMove.y<0);
+await mobile.evaluate(()=>document.getElementById('menu').click());
+assert.deepEqual(await mobile.evaluate(()=>window.__erebus.snapshot().touchMove),{x:0,y:0});
+assert.equal(await mobile.locator('#thumb').evaluate(e=>e.style.transform),'');
+await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+await mobile.click('#play');
+const afterPause=await mobile.evaluate(()=>window.__erebus.snapshot().position.z);
+await mobile.waitForTimeout(400);
+assert.ok(Math.abs((await mobile.evaluate(()=>window.__erebus.snapshot().position.z))-afterPause)<.2,'resume does not keep stale touch motion');
+console.log('Checked: held touch input clears on pause');
 console.log('PASS: keyboard movement, floor/window/door collisions, open passage, forge gating, all relays, genesis, scan dialogue, save reload, corrupt save, desktop rendering, mobile layout and touch UI.');
 
 } finally { await browser.close(); }
