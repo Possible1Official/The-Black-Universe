@@ -94,7 +94,7 @@ for(let i=0;i<12;i++){const a=i*Math.PI/6;const p=new THREE.Group();p.position.s
 const shell=new THREE.Mesh(new THREE.IcosahedronGeometry(9,1),new THREE.MeshBasicMaterial({color:0x70cbd4,wireframe:true,transparent:true,opacity:.22}));forge.add(shell);
 const halo=new THREE.Mesh(new THREE.TorusGeometry(31,.12,8,160),amber);halo.rotation.x=.7;forge.add(halo);
 const starsGeo=new THREE.BufferGeometry();const stars=new Float32Array(3500*3);for(let i=0;i<3500;i++){const a=random()*Math.PI*2,b=Math.acos(2*random()-1),r=800+random()*700;stars.set([Math.sin(b)*Math.cos(a)*r,Math.cos(b)*r,Math.sin(b)*Math.sin(a)*r],i*3);}starsGeo.setAttribute('position',new THREE.BufferAttribute(stars,3));scene.add(new THREE.Points(starsGeo,new THREE.PointsMaterial({color:0xb8d4e8,size:1.2,sizeAttenuation:true})));
-const planetMat=new THREE.MeshStandardMaterial({color:0x548cb1,roughness:.9,metalness:.05});
+const planetMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.9,metalness:.05});
 const planetTextures=createPlanetTextures();planetMat.map=planetTextures.color;
 const planet=sphere(20,95,-12,-190,planetMat);const atmosphere=sphere(20.6,95,-12,-190,new THREE.MeshBasicMaterial({color:0x67b7e9,transparent:true,opacity:.15,side:THREE.BackSide}));planet.visible=atmosphere.visible=progress.forged;
 const flightWorld=createFlightScene(camera,planetMat,planetTextures.clouds);
