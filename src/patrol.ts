@@ -4,7 +4,7 @@ export interface PatrolState {
   waypoint: 0 | 1;
   wait: number;
   blocked: number;
-  mode: 'patrolling' | 'waiting' | 'attending';
+  mode: 'patrolling' | 'waiting' | 'attending' | 'inspecting';
 }
 export const freshPatrol = (): PatrolState => ({waypoint: 0, wait: 0, blocked: 0, mode: 'patrolling'});
 export function planPatrol(
