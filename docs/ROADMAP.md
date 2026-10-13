@@ -96,6 +96,12 @@ The user has reprioritized development toward the flight, planet exploration and
 - Original ship visibility survives repeated surface views; pause, quality switching, reset/reload and docking preserve the loop.
 - This stages separate representations; full-planet streaming, freely piloted atmospheric flight and orbital-scale continuity remain future work.
 
+## Nysa field exploration (2026-10-13)
+- Expanded the bounded sector to 128×128 meters, retaining mesh/collider spacing and the original landing/sample/return loop.
+- Optional resonance arch and raised-ridge weather station, physical props, scanners and saved field-log readings.
+- Player-selected surface tracking, mission fallback and ship-readable scan history; no required side quest or new save version.
+- Procedural scenery and authored observations, not dynamic weather, global streaming or an authored photorealistic landscape. Ground triangle count increases fourfold; device budgets remain future work.
+
 ## Later
 - Physically based and baked lighting, modular authored environments, LODs, GPU timing and measured device budgets.
 - High-quality skinned characters, blend trees, IK, facial animation, interaction poses.
