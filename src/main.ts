@@ -1,4 +1,5 @@
 import './style.css';
+import {forgeReadiness,powerOutput,resetContainment,stepPower,type PowerProfile} from './power';
 import {freshPatrol, planPatrol, recordPatrolMovement, turnToward, type PatrolState, type Point} from './patrol';
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
@@ -6,12 +7,12 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { activateForge, activateRelay, crewLine, freshProgress, parseProgress, RELAYS, type Relay } from './state';
+import { activateForge, activateRelay, crewLine, freshProgress, parseProgress, RELAYS, SAVE_KEY, LEGACY_SAVE_KEY, type Relay } from './state';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = $<HTMLCanvasElement>('universe');
 let progress = freshProgress();
-try { progress = parseProgress(localStorage.getItem('black-universe-v1')); } catch { /* storage is optional */ }
+try { progress = parseProgress(localStorage.getItem(SAVE_KEY)??localStorage.getItem(LEGACY_SAVE_KEY)); } catch { /* storage is optional */ }
 let active=false, dialogueOpen=false, yaw=0, pitch=-.04, elapsed=0, toastTimer=0;
 const keys=new Set<string>(), touchMove=new THREE.Vector2();
 let renderer: THREE.WebGLRenderer;
@@ -35,7 +36,8 @@ const amber=new THREE.MeshStandardMaterial({color:0xefb475,emissive:0xdc7d39,emi
 const glass=new THREE.MeshPhysicalMaterial({color:0x8abdc5,metalness:.05,roughness:.12,transparent:true,opacity:.13,side:THREE.DoubleSide});
 function box(w:number,h:number,d:number,x:number,y:number,z:number,mat:THREE.Material=metal,parent:THREE.Object3D=scene){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
 function sphere(r:number,x:number,y:number,z:number,mat:THREE.Material,parent:THREE.Object3D=scene){const m=new THREE.Mesh(new THREE.SphereGeometry(r,32,24),mat);m.position.set(x,y,z);parent.add(m);return m;}
-function point(color:number,intensity:number,x:number,y:number,z:number,distance=15){const l=new THREE.PointLight(color,intensity,distance,2);l.position.set(x,y,z);scene.add(l);return l;}
+const shipLights:{light:THREE.PointLight;base:number}[]=[];
+function point(color:number,intensity:number,x:number,y:number,z:number,distance=15){const l=new THREE.PointLight(color,intensity,distance,2);l.position.set(x,y,z);scene.add(l);shipLights.push({light:l,base:intensity});return l;}
 function textPanel(title:string,subtitle:string,color='#79e4ed'){
   const c=document.createElement('canvas');c.width=512;c.height=256;const ctx=c.getContext('2d')!;
   ctx.fillStyle='#06141f';ctx.fillRect(0,0,512,256);ctx.strokeStyle=color;ctx.lineWidth=2;ctx.strokeRect(12,12,488,232);
@@ -85,9 +87,10 @@ const planet=sphere(20,95,-12,-190,planetMat);const atmosphere=sphere(20.6,95,-1
 sphere(65,-350,90,-850,new THREE.MeshStandardMaterial({color:0x806b78,roughness:1}));
 // Reactor with nested containment chambers.
 const reactor=new THREE.Group();reactor.position.set(-15,1.8,4);scene.add(reactor);
-const reactorCore=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,3,32),cyan);reactor.add(reactorCore);
+const reactorMaterial=cyan.clone();
+const reactorCore=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,3,32),reactorMaterial);reactor.add(reactorCore);
 for(const y of [-1.4,1.4]){const rim=new THREE.Mesh(new THREE.TorusGeometry(1.35,.16,8,48),metal);rim.rotation.x=Math.PI/2;rim.position.y=y;reactor.add(rim);}
-for(let i=0;i<6;i++){const a=i*Math.PI/3;box(.15,3.4,.15,Math.cos(a)*1.3,0,Math.sin(a)*1.3,metal,reactor);}point(0x67cfe6,18,-15,1.8,4,8);
+for(let i=0;i<6;i++){const a=i*Math.PI/3;box(.15,3.4,.15,Math.cos(a)*1.3,0,Math.sin(a)*1.3,metal,reactor);}const reactorLight=point(0x67cfe6,18,-15,1.8,4,8);
 // Star chart projection in the observatory.
 const chart=new THREE.Group();chart.position.set(15,1.5,4);scene.add(chart);box(3,.7,3,15,.35,4,dark);
 for(let i=0;i<3;i++){const r=new THREE.Mesh(new THREE.TorusGeometry(.6+i*.45,.018,6,64),cyan);r.rotation.x=Math.PI/2+i*.1;chart.add(r);}sphere(.2,0,0,0,amber,chart);
@@ -100,11 +103,13 @@ type Target={name:string;position:THREE.Vector3;action:()=>void;screen?:THREE.Me
 const targets:Target[]=[];
 function terminal(name:string,x:number,z:number,title:string,subtitle:string,action:()=>void){box(1.8,.9,1,x,.5,z,dark);const screen=box(1.6,.07,.9,x,1.04,z,textPanel(title,subtitle));screen.rotation.x=.26;box(.12,.65,.12,x-.75,1.37,z-.4,cyan);const t={name,position:new THREE.Vector3(x,1.1,z),action,screen};targets.push(t);solid(1.8,1.1,1,x,.55,z);return t;}
 function notify(message:string){$('toast').textContent=message;$('toast').style.opacity='1';toastTimer=5;}
-function save(){try{localStorage.setItem('black-universe-v1',JSON.stringify(progress));}catch{notify('Storage unavailable. Progress will last for this session.');}updateHud();}
+let storageWarned=false;
+function save(refresh=true){try{localStorage.setItem(SAVE_KEY,JSON.stringify(progress));}catch{if(!storageWarned){notify('Storage unavailable. Progress will last for this session.');storageWarned=true;}}if(refresh)updateHud();}
 function relayAction(r:Relay){if(progress.relays.includes(r)){notify(`${r.toUpperCase()} relay already online.`);return;}progress=activateRelay(progress,r);save();notify(`${r.toUpperCase()} relay online · ${progress.relays.length}/3 synchronized`);tone(330+progress.relays.length*110);}
 const relayTargets=[terminal('Restore engineering relay',-16,10,'POWER RELAY','01 / ENGINEERING',()=>relayAction('engineering')),terminal('Restore navigation relay',-5,-11,'NAVIGATION','02 / BRIDGE ARRAY',()=>relayAction('navigation')),terminal('Restore observatory relay',16,10,'SPECTRAL ARRAY','03 / OBSERVATORY',()=>relayAction('observatory'))];
-terminal('Initialize universe forge',0,-11,'THE ARCHITECT','GENESIS CONTROL',()=>{if(progress.forged){notify('Genesis complete. Your new world is visible beyond the starboard bow.');return;}if(progress.relays.length<3){notify(`Genesis locked. Restore ${3-progress.relays.length} remaining power relay(s).`);tone(120);return;}progress=activateForge(progress);planet.visible=atmosphere.visible=true;save();notify('GENESIS COMPLETE · New world designated Nysa.');tone(660);});
+terminal('Initialize universe forge',0,-11,'THE ARCHITECT','GENESIS CONTROL',()=>{if(progress.forged){notify('Genesis complete. Your new world is visible beyond the starboard bow.');return;}if(progress.relays.length<3){notify(`Genesis locked. Restore ${3-progress.relays.length} remaining power relay(s).`);tone(120);return;}const blocked=forgeReadiness(progress.power,progress.relays.length);if(blocked){notify(blocked);tone(120);return;}progress=activateForge(progress);planet.visible=atmosphere.visible=true;save();notify('GENESIS COMPLETE · New world designated Nysa.');tone(660);});
 terminal('Scan the new world',5,-11,'DEEP SCAN','TARGET / NYSA',()=>{showDialogue('EREBUS / SCIENCE ARRAY',progress.forged?'NYSA · Terrestrial world. Atmosphere: nitrogen and oxygen. Surface water detected. Orbital scan complete. Surface expeditions are planned for the next construction phase.':'No terrestrial signatures. The architect must be initialized to seed a new world.');});
+terminal('Open engineering diagnostics',-13.5,11.7,'CONTAINMENT','POWER ROUTING',showPower);
 let world:RAPIER.World, player:RAPIER.RigidBody, playerCollider:RAPIER.Collider, controller:RAPIER.KinematicCharacterController;
 solid(22,.3,38,0,-.15,3);solid(8,.3,14,-15,-.15,7);solid(8,.3,14,15,-.15,7);solid(22,5.5,.5,0,2.5,22);solid(22,5.5,.4,0,2.5,-16);
 for(const x of [-11,11]){solid(.4,5.5,20,x,2.5,-6);solid(.4,5.5,14,x,2.5,15);}
@@ -176,32 +181,88 @@ function syncCrew(){
     c.arms.forEach((arm,i)=>arm.rotation.x=-Math.sin(c.gait+i*Math.PI)*.26*c.walkBlend);
   }
 }
-function updateHud(){const spans=$('relays').children;RELAYS.forEach((r,i)=>spans[i].classList.toggle('done',progress.relays.includes(r)));$('system').textContent=progress.forged?'GENESIS STABLE':`POWER RELAYS ${progress.relays.length}/3`;$('objective').textContent=progress.forged?'A universe begins':progress.relays.length===3?'Initialize the architect':'Awaken the architect';$('missionText').textContent=progress.forged?'Nysa has formed beyond the bow. Scan the world from the bridge and speak to the crew.':progress.relays.length===3?'All relays synchronized. Use the central architect terminal at the forward window.':'Restore three power relays, then initialize the universe forge from the bridge.';relayTargets.forEach((t,i)=>{const relay:Relay[]=['engineering','navigation','observatory'];if(t.screen){const old=t.screen.material as THREE.Material;old.dispose();t.screen.material=textPanel(relay[i].toUpperCase(),progress.relays.includes(relay[i])?'RELAY / ONLINE':'RELAY / STANDBY',progress.relays.includes(relay[i])?'#83f0c1':'#79e4ed');}});}
+function updateHud(){const spans=$('relays').children;RELAYS.forEach((r,i)=>spans[i].classList.toggle('done',progress.relays.includes(r)));$('system').textContent=progress.forged?'GENESIS STABLE':`POWER RELAYS ${progress.relays.length}/3`;$('objective').textContent=progress.forged?'A universe begins':progress.relays.length===3?'Initialize the architect':'Awaken the architect';$('missionText').textContent=progress.forged?'Nysa has formed beyond the bow. Scan the world from the bridge and speak to the crew.':progress.relays.length===3?'All relays synchronized. Use the central architect terminal at the forward window.':'Restore three power relays, then initialize the universe forge from the bridge.';relayTargets.forEach((t,i)=>{const relay:Relay[]=['engineering','navigation','observatory'];if(t.screen&&t.screen.userData.online!==progress.relays.includes(relay[i])){const old=t.screen.material as THREE.MeshBasicMaterial;old.map?.dispose();old.dispose();t.screen.userData.online=progress.relays.includes(relay[i]);t.screen.material=textPanel(relay[i].toUpperCase(),progress.relays.includes(relay[i])?'RELAY / ONLINE':'RELAY / STANDBY',progress.relays.includes(relay[i])?'#83f0c1':'#79e4ed');}});}
 let audioContext:AudioContext|undefined,hum:GainNode|undefined;
 function initAudio(){try{audioContext??=new AudioContext();void audioContext.resume();if(!hum){hum=audioContext.createGain();hum.gain.value=.018;hum.connect(audioContext.destination);for(const f of [48,72]){const o=audioContext.createOscillator();o.frequency.value=f;o.connect(hum);o.start();}}hum.gain.value=$<HTMLInputElement>('audio').checked?.018:0;}catch{ /* silent fallback */ }}
 function tone(frequency:number){if(!audioContext||!$<HTMLInputElement>('audio').checked)return;const o=audioContext.createOscillator(),g=audioContext.createGain();o.frequency.value=frequency;g.gain.setValueAtTime(.05,audioContext.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+.4);o.connect(g);g.connect(audioContext.destination);o.start();o.stop(audioContext.currentTime+.4);}
-function showDialogue(name:string,line:string){dialogueOpen=true;clearInput();$('speaker').textContent=name;$('speech').textContent=line;$('dialogue').hidden=false;document.exitPointerLock?.();}
-function closeDialogue(){dialogueOpen=false;speakingCrew=undefined;$('dialogue').hidden=true;if(active&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});}
+function showDialogue(name:string,line:string){$('powerPanel').hidden=true;dialogueOpen=true;clearInput();$('speaker').textContent=name;$('speech').textContent=line;$('dialogue').hidden=false;document.exitPointerLock?.();}
+function closeDialogue(){save(false);$('powerPanel').hidden=true;dialogueOpen=false;speakingCrew=undefined;$('dialogue').hidden=true;if(active&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});}
 $('closeDialogue').onclick=closeDialogue;
-function pause(){active=false;clearInput();$('overlay').hidden=false;$('play').innerHTML='RESUME EXPEDITION <span>↗</span>';document.exitPointerLock?.();if(hum)hum.gain.value=0;}
+function pause(){save(false);active=false;clearInput();$('overlay').hidden=false;$('play').innerHTML='RESUME EXPEDITION <span>↗</span>';document.exitPointerLock?.();if(hum)hum.gain.value=0;}
 $('menu').onclick=pause;
 $('play').onclick=()=>{active=true;$('overlay').hidden=true;initAudio();if(!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>notify('Click the scene to enable mouse look.'));};
 canvas.onclick=()=>{if(active&&!dialogueOpen&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});};
 $('audio').onchange=()=>{if(active)initAudio();};
 $('quality').onchange=()=>{const high=$<HTMLSelectElement>('quality').value==='high';renderer.setPixelRatio(Math.min(devicePixelRatio,high?1.75:1));renderer.shadowMap.enabled=high;bloom.enabled=high;resize();};
 $('reset').onclick=()=>{progress=freshProgress();save();planet.visible=atmosphere.visible=false;notify('Mission progress reset.');};
+function showPower(){
+  speakingCrew=undefined;
+  showDialogue('ENGINEERING / POWER DISTRIBUTION','Balance the forge bus against thermal load. Sustained Genesis routing reduces cooling and can trip containment. Life support remains on emergency power during a trip.');
+  $('powerPanel').hidden=false;paintPower();
+}
+for(const button of Array.from(document.querySelectorAll<HTMLButtonElement>('[data-profile]')))button.onclick=()=>{
+  if(!active||!dialogueOpen||$('powerPanel').hidden)return;
+  const profile=button.dataset.profile as PowerProfile;
+  if(!['balanced','genesis','cooling'].includes(profile))return;
+  progress={...progress,power:{...progress.power,profile}};save(false);paintPower();tone(330);
+};
+$('resetContainment').onclick=()=>{
+  if(!active||!dialogueOpen||$('powerPanel').hidden)return;
+  const next=resetContainment(progress.power);
+  if(progress.power.tripped&&!next.tripped){progress={...progress,power:next};save(false);paintPower();notify('Containment reset. Balanced routing restored.');tone(440);}
+};
+const thermalCold=new THREE.Color(0x44bed1),thermalHot=new THREE.Color(0xff4c32);
+function paintPower(){
+  const p=progress.power,output=powerOutput(p,progress.relays.length);
+  const heat=Math.round(p.heat);
+  $('powerSummary').textContent=`${p.profile.toUpperCase()} · FORGE ${Math.round(output.forge)}%`;
+  $('thermalSummary').textContent=`THERMAL ${heat}% · ${output.status.toUpperCase()}`;
+  $('powerHud').dataset.status=output.status;
+  $('system').textContent=p.tripped?'CONTAINMENT TRIPPED':progress.forged?'GENESIS STABLE':`POWER RELAYS ${progress.relays.length}/3`;
+  if(!$('powerPanel').hidden){
+    $('heatValue').textContent=`${heat}%`;$<HTMLMeterElement>('heatMeter').value=p.heat;
+    $('forgeValue').textContent=`${Math.round(output.forge)}%`;
+    $('containmentStatus').textContent=p.tripped?'CONTAINMENT TRIPPED · Forge isolated':p.heat>=75?'THERMAL WARNING · Switch to Cooling':'CONTAINMENT NOMINAL';
+    $<HTMLButtonElement>('resetContainment').disabled=!p.tripped||p.heat>40;
+    for(const button of Array.from(document.querySelectorAll<HTMLButtonElement>('[data-profile]')))button.setAttribute('aria-pressed',String(button.dataset.profile===p.profile));
+  }
+}
+function powerVisuals(){
+  const p=progress.power,output=powerOutput(p,progress.relays.length);
+  for(const {light,base} of shipLights)light.intensity=base*output.habitat;
+  ceilingSpot.intensity=110*output.habitat;
+  reactorMaterial.emissive.copy(thermalCold).lerp(thermalHot,p.tripped?1:THREE.MathUtils.clamp((p.heat-55)/40,0,1));
+  reactorMaterial.emissiveIntensity=p.tripped?1.4:2.5+.4*Math.sin(elapsed*(p.profile==='genesis'?6:2));
+  reactorLight.color.copy(reactorMaterial.emissive);
+  (forgeLight.material as THREE.MeshBasicMaterial).color.setHex(0xb3efff).multiplyScalar(.3+output.forge/100);
+}
+let powerAccumulator=0,powerSaveTimer=0,powerPaintTimer=0;
+function advancePower(dt:number){
+  powerAccumulator+=dt;
+  while(powerAccumulator>=fixed){
+    const wasTripped=progress.power.tripped;
+    progress={...progress,power:stepPower(progress.power,progress.relays.length,fixed)};
+    if(!wasTripped&&progress.power.tripped){notify('CONTAINMENT TRIPPED · Cool and reset at engineering diagnostics.');tone(110);save(false);}
+    powerAccumulator-=fixed;powerSaveTimer+=fixed;
+  }
+  if(powerSaveTimer>=15){save(false);powerSaveTimer=0;}
+  powerPaintTimer+=dt;if(powerPaintTimer>=.2){paintPower();powerPaintTimer=0;}
+}
 let nearest:Target|undefined;
 function interact(){if(!active||dialogueOpen)return;nearest?.action();}
 $('touchAction').onclick=interact;
-window.addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)&&active)e.preventDefault();if(e.code==='Escape'){if(dialogueOpen)closeDialogue();else if(active)pause();return;}if(!active||dialogueOpen)return;if(e.code==='KeyE'&&!e.repeat)interact();keys.add(e.code);});
+window.addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)&&active&&!dialogueOpen)e.preventDefault();if(e.code==='Escape'){if(dialogueOpen)closeDialogue();else if(active)pause();return;}if(!active||dialogueOpen)return;if(e.code==='KeyE'&&!e.repeat)interact();keys.add(e.code);});
 window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{if(active)pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&active)pause();});
 document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&active&&!dialogueOpen&&!matchMedia('(pointer:coarse)').matches)pause();});
 window.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas&&active&&!dialogueOpen){yaw-=e.movementX*.002;pitch=THREE.MathUtils.clamp(pitch-e.movementY*.002,-1.35,1.35);}});
 let lookPointer:number|undefined,lastLook=new THREE.Vector2();canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||!active||dialogueOpen)return;lookPointer=e.pointerId;lastLook.set(e.clientX,e.clientY);canvas.setPointerCapture(e.pointerId);});canvas.addEventListener('pointermove',e=>{if(e.pointerId!==lookPointer)return;yaw-=(e.clientX-lastLook.x)*.004;pitch=THREE.MathUtils.clamp(pitch-(e.clientY-lastLook.y)*.004,-1.35,1.35);lastLook.set(e.clientX,e.clientY);});canvas.addEventListener('pointerup',()=>lookPointer=undefined);canvas.addEventListener('pointercancel',()=>lookPointer=undefined);
 const stick=$('stick'),thumb=$('thumb');let stickPointer:number|undefined;
-stick.onpointerdown=e=>{if(!active||dialogueOpen)return;stickPointer=e.pointerId;stick.setPointerCapture(e.pointerId);moveStick(e);};
+const joystickClicks=new Set<number>();
+document.addEventListener('pointerdown',e=>{if(!stick.contains(e.target as Node))joystickClicks.delete(e.pointerId);},true);
+document.addEventListener('click',e=>{if(e instanceof PointerEvent&&joystickClicks.has(e.pointerId)){e.preventDefault();e.stopImmediatePropagation();joystickClicks.delete(e.pointerId);}},true);
+stick.onpointerdown=e=>{if(!active||dialogueOpen)return;stickPointer=e.pointerId;joystickClicks.add(e.pointerId);stick.setPointerCapture(e.pointerId);moveStick(e);};
 function moveStick(e:PointerEvent){const r=stick.getBoundingClientRect();touchMove.set((e.clientX-r.left-r.width/2)/38,(e.clientY-r.top-r.height/2)/38);if(touchMove.length()>1)touchMove.normalize();thumb.style.transform=`translate(${touchMove.x*32}px,${touchMove.y*32}px)`;}
-stick.onpointermove=e=>{if(e.pointerId===stickPointer)moveStick(e);};stick.onpointerup=stick.onpointercancel=()=>{stickPointer=undefined;touchMove.set(0,0);thumb.style.transform='';};
+stick.onpointermove=e=>{if(e.pointerId===stickPointer)moveStick(e);};stick.onpointerup=stick.onpointercancel=e=>{stickPointer=undefined;touchMove.set(0,0);thumb.style.transform='';if(e.type==='pointercancel')joystickClicks.delete(e.pointerId);else setTimeout(()=>joystickClicks.delete(e.pointerId),500);};
 function clearInput(){velocity.set(0,0,0);keys.clear();touchMove.set(0,0);stickPointer=undefined;lookPointer=undefined;thumb.style.transform='';}
 function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(innerWidth,innerHeight);}window.addEventListener('resize',resize);
 let verticalSpeed=0,accumulator=0;const fixed=1/60;const velocity=new THREE.Vector3();
@@ -214,13 +275,14 @@ function physicsStep(){
   if(player.translation().y< -4){player.setTranslation({x:0,y:.9,z:16},true);verticalSpeed=0;}
 }
 const clock=new THREE.Clock();let frames=0,fpsTime=0;
-function frame(){requestAnimationFrame(frame);const dt=Math.min(clock.getDelta(),.05);elapsed+=dt;toastTimer-=dt;if(toastTimer<=0)$('toast').style.opacity='0';
+function frame(){requestAnimationFrame(frame);const rawDt=clock.getDelta(),dt=Math.min(rawDt,.05);elapsed+=dt;toastTimer-=dt;if(toastTimer<=0)$('toast').style.opacity='0';
+  if(active)advancePower(Math.min(rawDt,.25));powerVisuals();
   if(active&&!dialogueOpen){accumulator+=dt;while(accumulator>=fixed){physicsStep();accumulator-=fixed;}const p=player.translation();const moving=velocity.length();camera.position.set(p.x,p.y+.74+Math.sin(elapsed*9)*.018*Math.min(moving,1),p.z);camera.rotation.set(pitch,yaw,0);$('location').textContent=p.x< -11?'ENGINEERING':p.x>11?'OBSERVATORY':p.z< -5?'COMMAND DECK':'HABITAT CONCOURSE';$('coordinates').textContent=`SECTOR 00.00 / X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)}`;
     nearest=undefined;let best=2.65;const forward=camera.getWorldDirection(new THREE.Vector3());for(const t of targets){const direction=t.position.clone().sub(camera.position),distance=direction.length();if(distance<best&&direction.normalize().dot(forward)>.45){nearest=t;best=distance;}}$('interaction').style.display=nearest?'block':'none';$('interaction').textContent=nearest?`[ E ] ${nearest.name}`:'';
   }else{$('interaction').style.display='none';}
   for(let i=0;i<rings.length;i++){rings[i].rotation.z+=dt*.035*(i%2?-1:1);rings[i].rotation.y+=dt*.012;}pylons.rotation.z=elapsed*.018;shell.rotation.y=elapsed*.06;forgeBody.rotation.y=elapsed*.03;forgeLight.scale.setScalar(.96+Math.sin(elapsed*1.4)*.04+(progress.forged?.12:0));chart.rotation.y=elapsed*.15;reactorCore.rotation.y=elapsed*.25;planet.rotation.y=elapsed*.008;
   if(dialogueOpen&&speakingCrew){const c=crew.find(c=>c.name===speakingCrew)!;const p=player.translation();c.mesh.rotation.y=turnToward(c.mesh.rotation.y,Math.atan2(p.x-c.mesh.position.x,p.z-c.mesh.position.z),dt);}
-  if(bloom.enabled)composer.render();else renderer.render(scene,camera);frames++;fpsTime+=dt;if(fpsTime>2){canvas.dataset.fps=String(Math.round(frames/fpsTime));frames=0;fpsTime=0;}
+  if(bloom.enabled)composer.render();else renderer.render(scene,camera);frames++;fpsTime+=rawDt;if(fpsTime>2){canvas.dataset.fps=String(Math.round(frames/fpsTime));frames=0;fpsTime=0;}
 }
 async function boot(){await RAPIER.init();world=new RAPIER.World({x:0,y:-9.81,z:0});world.timestep=fixed;for(const s of solids)world.createCollider(RAPIER.ColliderDesc.cuboid(s.size[0]/2,s.size[1]/2,s.size[2]/2).setTranslation(s.pos[0],s.pos[1],s.pos[2]));for(const d of doors)d.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(.14,1.6,1.95).setTranslation(d.x,1.6,6));player=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0,.9,16));playerCollider=world.createCollider(RAPIER.ColliderDesc.capsule(.55,.3),player);controller=world.createCharacterController(.015);controller.enableAutostep(.25,.2,true);controller.enableSnapToGround(.2);controller.setMaxSlopeClimbAngle(Math.PI/4);
   for(const c of crew){
@@ -228,10 +290,10 @@ async function boot(){await RAPIER.init();world=new RAPIER.World({x:0,y:-9.81,z:
     c.collider=world.createCollider(RAPIER.ColliderDesc.capsule(.67,.24),c.body);
     c.controller=world.createCharacterController(.015);c.controller.enableSnapToGround(.2);c.controller.enableAutostep(.25,.2,true);
   }
-  syncCrew();updateHud();$('loading').textContent='Systems ready · progress saves on this device';$('play').removeAttribute('disabled');canvas.dataset.ready='true';frame();}
+  syncCrew();updateHud();paintPower();$('loading').textContent='Systems ready · progress saves on this device';$('play').removeAttribute('disabled');canvas.dataset.ready='true';frame();}
 if(matchMedia('(pointer:coarse)').matches || new URLSearchParams(location.search).has('qa')){$<HTMLSelectElement>('quality').value='low';renderer.setPixelRatio(1);renderer.shadowMap.enabled=false;bloom.enabled=false;resize();}
 $('play').setAttribute('disabled','');boot().catch(()=>{$('loading').textContent='Physics initialization failed. Refresh to retry.';});
 // Explicit development-only observability; stripped from the static production build.
 if(import.meta.env.DEV && new URLSearchParams(location.search).has('qa')){
-  Object.assign(window,{__erebus:{snapshot:()=>({position:player?.translation(),progress,doors:doors.map(d=>({open:d.open,height:d.mesh.position.y})),active,dialogueOpen,nearest:nearest?.name,crew:crew.map(c=>({name:c.name,position:c.body?.translation(),mode:c.state.mode,gait:c.gait,walkBlend:c.walkBlend,yaw:c.mesh.rotation.y})),touchMove:{x:touchMove.x,y:touchMove.y}}),place:(x:number,z:number,angle=0)=>{player.setTranslation({x,y:.9,z},true);yaw=angle;pitch=-.12;velocity.set(0,0,0);verticalSpeed=0;},target:(name:string)=>{const t=targets.find(t=>t.name===name);if(!t)throw new Error('Unknown test target');player.setTranslation({x:t.position.x,y:.9,z:t.position.z+1.65},true);yaw=0;pitch=-.3;velocity.set(0,0,0);}}});
+  Object.assign(window,{__erebus:{snapshot:()=>({position:player?.translation(),progress,doors:doors.map(d=>({open:d.open,height:d.mesh.position.y})),active,dialogueOpen,nearest:nearest?.name,crew:crew.map(c=>({name:c.name,position:c.body?.translation(),mode:c.state.mode,gait:c.gait,walkBlend:c.walkBlend,yaw:c.mesh.rotation.y})),touchMove:{x:touchMove.x,y:touchMove.y},reactorColor:reactorMaterial.emissive.getHex(),habitatLight:ceilingSpot.intensity}),place:(x:number,z:number,angle=0)=>{player.setTranslation({x,y:.9,z},true);yaw=angle;pitch=-.12;velocity.set(0,0,0);verticalSpeed=0;},target:(name:string)=>{const t=targets.find(t=>t.name===name);if(!t)throw new Error('Unknown test target');player.setTranslation({x:t.position.x,y:.9,z:t.position.z+1.65},true);yaw=0;pitch=-.3;velocity.set(0,0,0);}}});
 }

@@ -20,6 +20,8 @@ Enter the Erebus. Move with WASD/arrows, look with the mouse, sprint with Shift,
 4. Return to the central bridge console and initialize the architect. A new world, Nysa, appears outside.
 5. Scan it from the bridge and speak with the crew after genesis.
 
+Engineering also has a containment console: choose Balanced for stable operation, Genesis for a stronger forge bus at the cost of heat, or Cooling to recover an overload. If containment trips, cool to 40% and reset. See [power model and controls](docs/POWER.md).
+
 Progress saves locally on this browser/device; corrupt or unavailable storage fails safely. Reset is in the menu. Surface landing is planned, not implemented.
 
 ## Technology and scope
