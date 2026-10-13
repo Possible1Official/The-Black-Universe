@@ -29,6 +29,11 @@ Vision: an immersive, physically coherent browser universe with explorable vesse
 - Scripted room/doorway guidance, power-recovery priority and sample-to-extraction transition.
 - Compact touch HUD and modal visibility; no general pathfinding or planetary map.
 
+## Frame-pacing correction (2026-10-13)
+- Bounded 60 Hz catch-up for player/crew/door motion, clean modal/transfer time boundaries and wall-time notification expiry.
+- Measured software-renderer walking speed restored toward 3 m/s; rendering FPS is unchanged.
+- Deterministic Rapier low-frame-rate collision/jump tests and dev-only render counters.
+
 ## Next four prioritized cycles
 1. **Character pipeline:** obtain valid Mixamo access, import one approved character with idle/walk clips, optimize to GLB, add asset provenance and budgets. If access is blocked, improve lighting/materials and crew collision/animation instead.
 2. **Ship simulation expansion:** deepen the new power/containment model, ambient machinery, better doors, minimap and navigation aids. Preserve completed saves through a versioned migration.

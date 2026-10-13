@@ -1,4 +1,5 @@
 import './style.css';
+import {FixedFrameClock,FIXED_STEP,MAX_FRAME_SECONDS,JUMP_BUFFER_SECONDS,stepJumpBuffer} from './timing';
 import {missionDestination,routeWaypoint,navigationReading} from './navigation';
 import {createSurface} from './surface';
 import {LANDING,SAMPLE,SITE_HALF,SURFACE_ORIGIN,terrainHeight,landingBlock} from './excursion';
@@ -194,11 +195,11 @@ let audioContext:AudioContext|undefined,hum:GainNode|undefined;
 function initAudio(){try{audioContext??=new AudioContext();void audioContext.resume();if(!hum){hum=audioContext.createGain();hum.gain.value=.018;hum.connect(audioContext.destination);for(const f of [48,72]){const o=audioContext.createOscillator();o.frequency.value=f;o.connect(hum);o.start();}}hum.gain.value=$<HTMLInputElement>('audio').checked?.018:0;}catch{ /* silent fallback */ }}
 function tone(frequency:number){if(!audioContext||!$<HTMLInputElement>('audio').checked)return;const o=audioContext.createOscillator(),g=audioContext.createGain();o.frequency.value=frequency;g.gain.setValueAtTime(.05,audioContext.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+.4);o.connect(g);g.connect(audioContext.destination);o.start();o.stop(audioContext.currentTime+.4);}
 function showDialogue(name:string,line:string){$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;dialogueOpen=true;clearInput();$('speaker').textContent=name;$('speech').textContent=line;$('dialogue').hidden=false;paintNavigation();document.exitPointerLock?.();}
-function closeDialogue(){save(false);$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;dialogueOpen=false;speakingCrew=undefined;$('dialogue').hidden=true;paintNavigation();if(active&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});}
+function closeDialogue(){save(false);clearInput();$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;dialogueOpen=false;speakingCrew=undefined;$('dialogue').hidden=true;paintNavigation();if(active&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});}
 $('closeDialogue').onclick=closeDialogue;
-function pause(){save(false);active=false;clearInput();paintNavigation();$('overlay').hidden=false;$('play').innerHTML='RESUME EXPEDITION <span>↗</span>';document.exitPointerLock?.();if(hum)hum.gain.value=0;}
+function pause(){save(false);active=false;clearInput();powerAccumulator=0;paintNavigation();$('overlay').hidden=false;$('play').innerHTML='RESUME EXPEDITION <span>↗</span>';document.exitPointerLock?.();if(hum)hum.gain.value=0;}
 $('menu').onclick=pause;
-$('play').onclick=()=>{active=true;$('overlay').hidden=true;paintNavigation();initAudio();if(!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>notify('Click the scene to enable mouse look.'));};
+$('play').onclick=()=>{clearInput();skipPowerFrame=true;active=true;$('overlay').hidden=true;paintNavigation();initAudio();if(!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>notify('Click the scene to enable mouse look.'));};
 canvas.onclick=()=>{if(active&&!dialogueOpen&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});};
 $('audio').onchange=()=>{if(active)initAudio();};
 $('quality').onchange=()=>{const high=$<HTMLSelectElement>('quality').value==='high';renderer.setPixelRatio(Math.min(devicePixelRatio,high?1.75:1));renderer.shadowMap.enabled=high;bloom.enabled=high;resize();};
@@ -261,7 +262,7 @@ const shipVisibility=new Map<THREE.Object3D,boolean>();
 const surface=createSurface();scene.add(surface.group);
 const surfaceSky=new THREE.Color(0x678b9a);
 function travel(landing:boolean){
-  clearInput();verticalSpeed=0;accumulator=0;nearest=undefined;speakingCrew=undefined;
+  clearInput();verticalSpeed=0;nearest=undefined;speakingCrew=undefined;
   if(landing){for(const node of shipNodes){shipVisibility.set(node,node.visible);node.visible=false;}}
   else {for(const [node,visible] of shipVisibility)node.visible=visible;shipVisibility.clear();}
   onSurface=landing;surface.group.visible=landing;
@@ -300,7 +301,7 @@ function paintNavigation(){
 let nearest:Target|undefined;
 function interact(){if(!active||dialogueOpen)return;nearest?.action();}
 $('touchAction').onclick=interact;
-window.addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)&&active&&!dialogueOpen)e.preventDefault();if(e.code==='Escape'){if(dialogueOpen)closeDialogue();else if(active)pause();return;}if(!active||dialogueOpen)return;if(e.code==='KeyE'&&!e.repeat)interact();keys.add(e.code);});
+window.addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)&&active&&!dialogueOpen)e.preventDefault();if(e.code==='Escape'){if(dialogueOpen)closeDialogue();else if(active)pause();return;}if(!active||dialogueOpen)return;if(e.code==='KeyE'&&!e.repeat)interact();if(e.code==='Space'){if(!e.repeat)jumpBuffer=JUMP_BUFFER_SECONDS;return;}keys.add(e.code);});
 window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{if(active)pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&active)pause();});
 document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&active&&!dialogueOpen&&!matchMedia('(pointer:coarse)').matches)pause();});
 window.addEventListener('mousemove',e=>{if(document.pointerLockElement===canvas&&active&&!dialogueOpen){yaw-=e.movementX*.002;pitch=THREE.MathUtils.clamp(pitch-e.movementY*.002,-1.35,1.35);}});
@@ -312,22 +313,25 @@ document.addEventListener('click',e=>{if(e instanceof PointerEvent&&joystickClic
 stick.onpointerdown=e=>{if(!active||dialogueOpen)return;stickPointer=e.pointerId;joystickClicks.add(e.pointerId);stick.setPointerCapture(e.pointerId);moveStick(e);};
 function moveStick(e:PointerEvent){const r=stick.getBoundingClientRect();touchMove.set((e.clientX-r.left-r.width/2)/38,(e.clientY-r.top-r.height/2)/38);if(touchMove.length()>1)touchMove.normalize();thumb.style.transform=`translate(${touchMove.x*32}px,${touchMove.y*32}px)`;}
 stick.onpointermove=e=>{if(e.pointerId===stickPointer)moveStick(e);};stick.onpointerup=stick.onpointercancel=e=>{stickPointer=undefined;touchMove.set(0,0);thumb.style.transform='';if(e.type==='pointercancel')joystickClicks.delete(e.pointerId);else setTimeout(()=>joystickClicks.delete(e.pointerId),500);};
-function clearInput(){velocity.set(0,0,0);keys.clear();touchMove.set(0,0);stickPointer=undefined;lookPointer=undefined;thumb.style.transform='';}
+function clearInput(){jumpBuffer=0;motionClock.reset();discardMovementFrame=true;velocity.set(0,0,0);keys.clear();touchMove.set(0,0);stickPointer=undefined;lookPointer=undefined;thumb.style.transform='';}
 function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(innerWidth,innerHeight);}window.addEventListener('resize',resize);
-let verticalSpeed=0,accumulator=0;const fixed=1/60;const velocity=new THREE.Vector3();
+const motionClock=new FixedFrameClock();let discardMovementFrame=true,skipPowerFrame=true,lastMotionSteps=0,motionStepsTotal=0,droppedMotionTime=0;
+let verticalSpeed=0,jumpBuffer=0;const fixed=FIXED_STEP;const velocity=new THREE.Vector3();
 function physicsStep(){
   for(const d of doors){const occupied=Math.abs(player.translation().x-d.x)<.9&&Math.abs(player.translation().z-6)<2.4;if(!d.open&&occupied)d.open=true;d.progress=THREE.MathUtils.damp(d.progress,d.open?1:0,5,fixed);d.mesh.position.y=1.6+d.progress*3.7;d.collider?.setTranslation({x:d.x,y:d.mesh.position.y,z:6});}
   const input=new THREE.Vector2((keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+touchMove.x,(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0)+touchMove.y);if(input.length()>1)input.normalize();
   const speed=keys.has('ShiftLeft')||keys.has('ShiftRight')?5:3;const desired=new THREE.Vector3(input.x,0,input.y).applyAxisAngle(new THREE.Vector3(0,1,0),yaw).multiplyScalar(speed);velocity.lerp(desired,1-Math.exp(-12*fixed));
-  if(controller.computedGrounded()){verticalSpeed=-.2;if(keys.has('Space')){verticalSpeed=4.2;keys.delete('Space');}}else verticalSpeed-=9.81*fixed;
+  const grounded=controller.computedGrounded(),jump=stepJumpBuffer(jumpBuffer,grounded);jumpBuffer=jump.remaining;
+  if(grounded)verticalSpeed=jump.jump?4.2:-.2;else verticalSpeed-=9.81*fixed;
   controller.computeColliderMovement(playerCollider,{x:velocity.x*fixed,y:verticalSpeed*fixed,z:velocity.z*fixed});const m=controller.computedMovement(),p=player.translation();player.setNextKinematicTranslation({x:p.x+m.x,y:p.y+m.y,z:p.z+m.z});if(!onSurface)stepCrew();world.step();if(!onSurface)syncCrew();
   if(player.translation().y< -4){const spawn=onSurface?{x:SURFACE_ORIGIN,y:1.05,z:LANDING.z}:{x:0,y:.9,z:16};player.setTranslation(spawn,true);player.setNextKinematicTranslation(spawn);clearInput();verticalSpeed=0;}
 }
 const clock=new THREE.Clock();let frames=0,fpsTime=0;
-function frame(){requestAnimationFrame(frame);const rawDt=clock.getDelta(),dt=Math.min(rawDt,.05);elapsed+=dt;toastTimer-=dt;if(toastTimer<=0)$('toast').style.opacity='0';
-  if(active)advancePower(Math.min(rawDt,.25));powerVisuals();
+function frame(){requestAnimationFrame(frame);const rawDt=clock.getDelta(),dt=Math.min(rawDt,MAX_FRAME_SECONDS);elapsed+=dt;toastTimer-=Math.min(rawDt,1);
+  const movementDt=discardMovementFrame?0:rawDt,powerDt=skipPowerFrame?0:rawDt;discardMovementFrame=false;skipPowerFrame=false;lastMotionSteps=0;if(toastTimer<=0)$('toast').style.opacity='0';
+  if(active)advancePower(Math.min(powerDt,MAX_FRAME_SECONDS));powerVisuals();
   navigationTimer+=rawDt;if(navigationTimer>=.1){paintNavigation();navigationTimer=0;}
-  if(active&&!dialogueOpen){accumulator+=dt;while(accumulator>=fixed){physicsStep();accumulator-=fixed;}const p=player.translation();const moving=velocity.length();camera.position.set(p.x,p.y+.74+Math.sin(elapsed*9)*.018*Math.min(moving,1),p.z);camera.rotation.set(pitch,yaw,0);$('location').textContent=onSurface?'NYSA / SURVEY SITE':p.x< -11?'ENGINEERING':p.x>11?'OBSERVATORY':p.z< -5?'COMMAND DECK':'HABITAT CONCOURSE';$('coordinates').textContent=`${onSurface?'SURFACE':'SECTOR 00.00'} / X ${(p.x-(onSurface?SURFACE_ORIGIN:0)).toFixed(1)} · Z ${p.z.toFixed(1)}`;
+  if(active&&!dialogueOpen){const budget=motionClock.advance(movementDt);lastMotionSteps=budget.steps;motionStepsTotal+=budget.steps;droppedMotionTime+=budget.dropped;for(let i=0;i<budget.steps;i++)physicsStep();const p=player.translation();const moving=velocity.length();camera.position.set(p.x,p.y+.74+Math.sin(elapsed*9)*.018*Math.min(moving,1),p.z);camera.rotation.set(pitch,yaw,0);$('location').textContent=onSurface?'NYSA / SURVEY SITE':p.x< -11?'ENGINEERING':p.x>11?'OBSERVATORY':p.z< -5?'COMMAND DECK':'HABITAT CONCOURSE';$('coordinates').textContent=`${onSurface?'SURFACE':'SECTOR 00.00'} / X ${(p.x-(onSurface?SURFACE_ORIGIN:0)).toFixed(1)} · Z ${p.z.toFixed(1)}`;
     nearest=undefined;let best=2.65;const forward=camera.getWorldDirection(new THREE.Vector3());for(const t of targets){if((t.zone==='surface')!==onSurface)continue;const direction=t.position.clone().sub(camera.position),distance=direction.length();if(distance<best&&direction.normalize().dot(forward)>.45){nearest=t;best=distance;}}$('interaction').style.display=nearest?'block':'none';$('interaction').textContent=nearest?`[ E ] ${nearest.name}`:'';
   }else{$('interaction').style.display='none';}
   for(let i=0;i<rings.length;i++){rings[i].rotation.z+=dt*.035*(i%2?-1:1);rings[i].rotation.y+=dt*.012;}pylons.rotation.z=elapsed*.018;shell.rotation.y=elapsed*.06;forgeBody.rotation.y=elapsed*.03;forgeLight.scale.setScalar(.96+Math.sin(elapsed*1.4)*.04+(progress.forged?.12:0));chart.rotation.y=elapsed*.15;reactorCore.rotation.y=elapsed*.25;planet.rotation.y=elapsed*.008;
@@ -351,5 +355,5 @@ if(matchMedia('(pointer:coarse)').matches || new URLSearchParams(location.search
 $('play').setAttribute('disabled','');boot().catch(()=>{$('loading').textContent='Physics initialization failed. Refresh to retry.';});
 // Explicit development-only observability; stripped from the static production build.
 if(import.meta.env.DEV && new URLSearchParams(location.search).has('qa')){
-  Object.assign(window,{__erebus:{snapshot:()=>({position:player?.translation(),onSurface,progress,doors:doors.map(d=>({open:d.open,height:d.mesh.position.y})),active,dialogueOpen,nearest:nearest?.name,crew:crew.map(c=>({name:c.name,position:c.body?.translation(),mode:c.state.mode,gait:c.gait,walkBlend:c.walkBlend,yaw:c.mesh.rotation.y})),touchMove:{x:touchMove.x,y:touchMove.y},reactorColor:reactorMaterial.emissive.getHex(),habitatLight:ceilingSpot.intensity}),place:(x:number,z:number,angle=0)=>{player.setTranslation({x,y:onSurface?terrainHeight(x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=angle;pitch=-.12;velocity.set(0,0,0);verticalSpeed=0;},target:(name:string)=>{const t=targets.find(t=>t.name===name);if(!t)throw new Error('Unknown test target');const z=t.position.z+1.65;player.setTranslation({x:t.position.x,y:onSurface?terrainHeight(t.position.x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=0;pitch=-.3;velocity.set(0,0,0);}}});
+  Object.assign(window,{__erebus:{snapshot:()=>({position:player?.translation(),onSurface,progress,timing:{lastMotionSteps,motionStepsTotal,droppedMotionTime},render:{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles},doors:doors.map(d=>({open:d.open,height:d.mesh.position.y})),active,dialogueOpen,nearest:nearest?.name,crew:crew.map(c=>({name:c.name,position:c.body?.translation(),mode:c.state.mode,gait:c.gait,walkBlend:c.walkBlend,yaw:c.mesh.rotation.y})),touchMove:{x:touchMove.x,y:touchMove.y},reactorColor:reactorMaterial.emissive.getHex(),habitatLight:ceilingSpot.intensity}),place:(x:number,z:number,angle=0)=>{player.setTranslation({x,y:onSurface?terrainHeight(x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=angle;pitch=-.12;velocity.set(0,0,0);verticalSpeed=0;},target:(name:string)=>{const t=targets.find(t=>t.name===name);if(!t)throw new Error('Unknown test target');const z=t.position.z+1.65;player.setTranslation({x:t.position.x,y:onSurface?terrainHeight(t.position.x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=0;pitch=-.3;velocity.set(0,0,0);}}});
 }
