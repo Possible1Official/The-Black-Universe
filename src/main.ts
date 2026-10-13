@@ -1,4 +1,6 @@
 import './style.css';
+import {createSurface} from './surface';
+import {LANDING,SAMPLE,SITE_HALF,SURFACE_ORIGIN,terrainHeight,landingBlock} from './excursion';
 import {forgeReadiness,powerOutput,resetContainment,stepPower,type PowerProfile} from './power';
 import {freshPatrol, planPatrol, recordPatrolMovement, turnToward, type PatrolState, type Point} from './patrol';
 import * as THREE from 'three';
@@ -99,7 +101,8 @@ box(5,2,.15,-15,2.7,.23,textPanel('ENGINEERING','CONTAINMENT / NOMINAL','#edb378
 
 const solids:{size:number[];pos:number[]}[]=[];
 function solid(w:number,h:number,d:number,x:number,y:number,z:number){solids.push({size:[w,h,d],pos:[x,y,z]});}
-type Target={name:string;position:THREE.Vector3;action:()=>void;screen?:THREE.Mesh;};
+let onSurface=false;
+type Target={zone?:'surface';name:string;position:THREE.Vector3;action:()=>void;screen?:THREE.Mesh;};
 const targets:Target[]=[];
 function terminal(name:string,x:number,z:number,title:string,subtitle:string,action:()=>void){box(1.8,.9,1,x,.5,z,dark);const screen=box(1.6,.07,.9,x,1.04,z,textPanel(title,subtitle));screen.rotation.x=.26;box(.12,.65,.12,x-.75,1.37,z-.4,cyan);const t={name,position:new THREE.Vector3(x,1.1,z),action,screen};targets.push(t);solid(1.8,1.1,1,x,.55,z);return t;}
 function notify(message:string){$('toast').textContent=message;$('toast').style.opacity='1';toastTimer=5;}
@@ -108,7 +111,11 @@ function save(refresh=true){try{localStorage.setItem(SAVE_KEY,JSON.stringify(pro
 function relayAction(r:Relay){if(progress.relays.includes(r)){notify(`${r.toUpperCase()} relay already online.`);return;}progress=activateRelay(progress,r);save();notify(`${r.toUpperCase()} relay online · ${progress.relays.length}/3 synchronized`);tone(330+progress.relays.length*110);}
 const relayTargets=[terminal('Restore engineering relay',-16,10,'POWER RELAY','01 / ENGINEERING',()=>relayAction('engineering')),terminal('Restore navigation relay',-5,-11,'NAVIGATION','02 / BRIDGE ARRAY',()=>relayAction('navigation')),terminal('Restore observatory relay',16,10,'SPECTRAL ARRAY','03 / OBSERVATORY',()=>relayAction('observatory'))];
 terminal('Initialize universe forge',0,-11,'THE ARCHITECT','GENESIS CONTROL',()=>{if(progress.forged){notify('Genesis complete. Your new world is visible beyond the starboard bow.');return;}if(progress.relays.length<3){notify(`Genesis locked. Restore ${3-progress.relays.length} remaining power relay(s).`);tone(120);return;}const blocked=forgeReadiness(progress.power,progress.relays.length);if(blocked){notify(blocked);tone(120);return;}progress=activateForge(progress);planet.visible=atmosphere.visible=true;save();notify('GENESIS COMPLETE · New world designated Nysa.');tone(660);});
-terminal('Scan the new world',5,-11,'DEEP SCAN','TARGET / NYSA',()=>{showDialogue('EREBUS / SCIENCE ARRAY',progress.forged?'NYSA · Terrestrial world. Atmosphere: nitrogen and oxygen. Surface water detected. Orbital scan complete. Surface expeditions are planned for the next construction phase.':'No terrestrial signatures. The architect must be initialized to seed a new world.');});
+terminal('Scan the new world',5,-11,'DEEP SCAN','TARGET / NYSA',()=>{
+  showDialogue('EREBUS / SCIENCE ARRAY',progress.forged?'NYSA · Atmosphere: nitrogen and oxygen. Survey site located. Deploy through the transfer link, collect a luminous outcrop sample, then use the extraction beacon to return. This is a bounded survey excursion.':'No terrestrial signatures. Initialize the architect to create Nysa.');
+  $('expeditionPanel').hidden=!progress.forged;
+  $<HTMLButtonElement>('deployNysa').disabled=landingBlock(progress.forged,progress.power.tripped)!==null;
+});
 terminal('Open engineering diagnostics',-13.5,11.7,'CONTAINMENT','POWER ROUTING',showPower);
 let world:RAPIER.World, player:RAPIER.RigidBody, playerCollider:RAPIER.Collider, controller:RAPIER.KinematicCharacterController;
 solid(22,.3,38,0,-.15,3);solid(8,.3,14,-15,-.15,7);solid(8,.3,14,15,-.15,7);solid(22,5.5,.5,0,2.5,22);solid(22,5.5,.4,0,2.5,-16);
@@ -181,12 +188,12 @@ function syncCrew(){
     c.arms.forEach((arm,i)=>arm.rotation.x=-Math.sin(c.gait+i*Math.PI)*.26*c.walkBlend);
   }
 }
-function updateHud(){const spans=$('relays').children;RELAYS.forEach((r,i)=>spans[i].classList.toggle('done',progress.relays.includes(r)));$('system').textContent=progress.forged?'GENESIS STABLE':`POWER RELAYS ${progress.relays.length}/3`;$('objective').textContent=progress.forged?'A universe begins':progress.relays.length===3?'Initialize the architect':'Awaken the architect';$('missionText').textContent=progress.forged?'Nysa has formed beyond the bow. Scan the world from the bridge and speak to the crew.':progress.relays.length===3?'All relays synchronized. Use the central architect terminal at the forward window.':'Restore three power relays, then initialize the universe forge from the bridge.';relayTargets.forEach((t,i)=>{const relay:Relay[]=['engineering','navigation','observatory'];if(t.screen&&t.screen.userData.online!==progress.relays.includes(relay[i])){const old=t.screen.material as THREE.MeshBasicMaterial;old.map?.dispose();old.dispose();t.screen.userData.online=progress.relays.includes(relay[i]);t.screen.material=textPanel(relay[i].toUpperCase(),progress.relays.includes(relay[i])?'RELAY / ONLINE':'RELAY / STANDBY',progress.relays.includes(relay[i])?'#83f0c1':'#79e4ed');}});}
+function updateHud(){const spans=$('relays').children;RELAYS.forEach((r,i)=>spans[i].classList.toggle('done',progress.relays.includes(r)));$('system').textContent=progress.forged?'GENESIS STABLE':`POWER RELAYS ${progress.relays.length}/3`;$('objective').textContent=progress.forged?'A universe begins':progress.relays.length===3?'Initialize the architect':'Awaken the architect';$('missionText').textContent=progress.forged?(progress.surveyed?'Nysa sample secured. The bridge science array can redeploy you to the survey site.':'Scan Nysa from the bridge science array, deploy to the surface and survey the luminous outcrop.'):progress.relays.length===3?'All relays synchronized. Use the central architect terminal at the forward window.':'Restore three power relays, then initialize the universe forge from the bridge.';if(onSurface){$('objective').textContent=progress.surveyed?'Return to Erebus':'Survey the luminous outcrop';$('missionText').textContent=progress.surveyed?'Sample secured. Return to the extraction beacon on the circular landing pad.':'Walk toward the luminous outcrop northeast of the landing pad. Interact with E to secure a sample.';}relayTargets.forEach((t,i)=>{const relay:Relay[]=['engineering','navigation','observatory'];if(t.screen&&t.screen.userData.online!==progress.relays.includes(relay[i])){const old=t.screen.material as THREE.MeshBasicMaterial;old.map?.dispose();old.dispose();t.screen.userData.online=progress.relays.includes(relay[i]);t.screen.material=textPanel(relay[i].toUpperCase(),progress.relays.includes(relay[i])?'RELAY / ONLINE':'RELAY / STANDBY',progress.relays.includes(relay[i])?'#83f0c1':'#79e4ed');}});}
 let audioContext:AudioContext|undefined,hum:GainNode|undefined;
 function initAudio(){try{audioContext??=new AudioContext();void audioContext.resume();if(!hum){hum=audioContext.createGain();hum.gain.value=.018;hum.connect(audioContext.destination);for(const f of [48,72]){const o=audioContext.createOscillator();o.frequency.value=f;o.connect(hum);o.start();}}hum.gain.value=$<HTMLInputElement>('audio').checked?.018:0;}catch{ /* silent fallback */ }}
 function tone(frequency:number){if(!audioContext||!$<HTMLInputElement>('audio').checked)return;const o=audioContext.createOscillator(),g=audioContext.createGain();o.frequency.value=frequency;g.gain.setValueAtTime(.05,audioContext.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+.4);o.connect(g);g.connect(audioContext.destination);o.start();o.stop(audioContext.currentTime+.4);}
-function showDialogue(name:string,line:string){$('powerPanel').hidden=true;dialogueOpen=true;clearInput();$('speaker').textContent=name;$('speech').textContent=line;$('dialogue').hidden=false;document.exitPointerLock?.();}
-function closeDialogue(){save(false);$('powerPanel').hidden=true;dialogueOpen=false;speakingCrew=undefined;$('dialogue').hidden=true;if(active&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});}
+function showDialogue(name:string,line:string){$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;dialogueOpen=true;clearInput();$('speaker').textContent=name;$('speech').textContent=line;$('dialogue').hidden=false;document.exitPointerLock?.();}
+function closeDialogue(){save(false);$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;dialogueOpen=false;speakingCrew=undefined;$('dialogue').hidden=true;if(active&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});}
 $('closeDialogue').onclick=closeDialogue;
 function pause(){save(false);active=false;clearInput();$('overlay').hidden=false;$('play').innerHTML='RESUME EXPEDITION <span>↗</span>';document.exitPointerLock?.();if(hum)hum.gain.value=0;}
 $('menu').onclick=pause;
@@ -194,7 +201,7 @@ $('play').onclick=()=>{active=true;$('overlay').hidden=true;initAudio();if(!matc
 canvas.onclick=()=>{if(active&&!dialogueOpen&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});};
 $('audio').onchange=()=>{if(active)initAudio();};
 $('quality').onchange=()=>{const high=$<HTMLSelectElement>('quality').value==='high';renderer.setPixelRatio(Math.min(devicePixelRatio,high?1.75:1));renderer.shadowMap.enabled=high;bloom.enabled=high;resize();};
-$('reset').onclick=()=>{progress=freshProgress();save();planet.visible=atmosphere.visible=false;notify('Mission progress reset.');};
+$('reset').onclick=()=>{if(onSurface)travel(false);progress=freshProgress();save();planet.visible=atmosphere.visible=false;notify('Mission progress reset.');};
 function showPower(){
   speakingCrew=undefined;
   showDialogue('ENGINEERING / POWER DISTRIBUTION','Balance the forge bus against thermal load. Sustained Genesis routing reduces cooling and can trip containment. Life support remains on emergency power during a trip.');
@@ -248,6 +255,31 @@ function advancePower(dt:number){
   if(powerSaveTimer>=15){save(false);powerSaveTimer=0;}
   powerPaintTimer+=dt;if(powerPaintTimer>=.2){paintPower();powerPaintTimer=0;}
 }
+const shipNodes=scene.children.filter(node=>node!==sun&&!(node instanceof THREE.HemisphereLight));
+const shipVisibility=new Map<THREE.Object3D,boolean>();
+const surface=createSurface();scene.add(surface.group);
+const surfaceSky=new THREE.Color(0x678b9a);
+function travel(landing:boolean){
+  clearInput();verticalSpeed=0;accumulator=0;nearest=undefined;speakingCrew=undefined;
+  if(landing){for(const node of shipNodes){shipVisibility.set(node,node.visible);node.visible=false;}}
+  else {for(const [node,visible] of shipVisibility)node.visible=visible;shipVisibility.clear();}
+  onSurface=landing;surface.group.visible=landing;
+  scene.background=landing?surfaceSky:new THREE.Color('#02050d');scene.fog=landing?new THREE.FogExp2(surfaceSky,.008):null;
+  const spawn=landing?{x:SURFACE_ORIGIN+LANDING.x,y:1.05,z:LANDING.z}:{x:5,y:.9,z:-8.7};
+  player.setTranslation(spawn,true);player.setNextKinematicTranslation(spawn);yaw=0;pitch=-.08;
+  camera.position.set(spawn.x,spawn.y+.74,spawn.z);camera.rotation.set(pitch,yaw,0);
+  updateHud();save(false);notify(landing?'NYSA / SURVEY SITE · Locate the luminous outcrop.':'EREBUS / COMMAND DECK · Extraction complete.');
+}
+$('deployNysa').onclick=()=>{
+  if(!active||!dialogueOpen||$('expeditionPanel').hidden)return;
+  const blocked=landingBlock(progress.forged,progress.power.tripped);if(blocked){notify(blocked);return;}
+  closeDialogue();travel(true);
+};
+targets.push({zone:'surface',name:'Survey luminous outcrop',position:new THREE.Vector3(SURFACE_ORIGIN+SAMPLE.x,terrainHeight(SAMPLE.x,SAMPLE.z)+.8,SAMPLE.z),action:()=>{
+  if(!progress.surveyed){progress={...progress,surveyed:true};save();tone(660);notify('SAMPLE SECURED · Return to the landing beacon.');}
+  else notify('Outcrop surveyed. Return through the extraction beacon.');
+}});
+targets.push({zone:'surface',name:'Extract to Erebus',position:new THREE.Vector3(SURFACE_ORIGIN,1.2,LANDING.z+2.4),action:()=>travel(false)});
 let nearest:Target|undefined;
 function interact(){if(!active||dialogueOpen)return;nearest?.action();}
 $('touchAction').onclick=interact;
@@ -271,20 +303,26 @@ function physicsStep(){
   const input=new THREE.Vector2((keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+touchMove.x,(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0)+touchMove.y);if(input.length()>1)input.normalize();
   const speed=keys.has('ShiftLeft')||keys.has('ShiftRight')?5:3;const desired=new THREE.Vector3(input.x,0,input.y).applyAxisAngle(new THREE.Vector3(0,1,0),yaw).multiplyScalar(speed);velocity.lerp(desired,1-Math.exp(-12*fixed));
   if(controller.computedGrounded()){verticalSpeed=-.2;if(keys.has('Space')){verticalSpeed=4.2;keys.delete('Space');}}else verticalSpeed-=9.81*fixed;
-  controller.computeColliderMovement(playerCollider,{x:velocity.x*fixed,y:verticalSpeed*fixed,z:velocity.z*fixed});const m=controller.computedMovement(),p=player.translation();player.setNextKinematicTranslation({x:p.x+m.x,y:p.y+m.y,z:p.z+m.z});stepCrew();world.step();syncCrew();
-  if(player.translation().y< -4){player.setTranslation({x:0,y:.9,z:16},true);verticalSpeed=0;}
+  controller.computeColliderMovement(playerCollider,{x:velocity.x*fixed,y:verticalSpeed*fixed,z:velocity.z*fixed});const m=controller.computedMovement(),p=player.translation();player.setNextKinematicTranslation({x:p.x+m.x,y:p.y+m.y,z:p.z+m.z});if(!onSurface)stepCrew();world.step();if(!onSurface)syncCrew();
+  if(player.translation().y< -4){const spawn=onSurface?{x:SURFACE_ORIGIN,y:1.05,z:LANDING.z}:{x:0,y:.9,z:16};player.setTranslation(spawn,true);player.setNextKinematicTranslation(spawn);clearInput();verticalSpeed=0;}
 }
 const clock=new THREE.Clock();let frames=0,fpsTime=0;
 function frame(){requestAnimationFrame(frame);const rawDt=clock.getDelta(),dt=Math.min(rawDt,.05);elapsed+=dt;toastTimer-=dt;if(toastTimer<=0)$('toast').style.opacity='0';
   if(active)advancePower(Math.min(rawDt,.25));powerVisuals();
-  if(active&&!dialogueOpen){accumulator+=dt;while(accumulator>=fixed){physicsStep();accumulator-=fixed;}const p=player.translation();const moving=velocity.length();camera.position.set(p.x,p.y+.74+Math.sin(elapsed*9)*.018*Math.min(moving,1),p.z);camera.rotation.set(pitch,yaw,0);$('location').textContent=p.x< -11?'ENGINEERING':p.x>11?'OBSERVATORY':p.z< -5?'COMMAND DECK':'HABITAT CONCOURSE';$('coordinates').textContent=`SECTOR 00.00 / X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)}`;
-    nearest=undefined;let best=2.65;const forward=camera.getWorldDirection(new THREE.Vector3());for(const t of targets){const direction=t.position.clone().sub(camera.position),distance=direction.length();if(distance<best&&direction.normalize().dot(forward)>.45){nearest=t;best=distance;}}$('interaction').style.display=nearest?'block':'none';$('interaction').textContent=nearest?`[ E ] ${nearest.name}`:'';
+  if(active&&!dialogueOpen){accumulator+=dt;while(accumulator>=fixed){physicsStep();accumulator-=fixed;}const p=player.translation();const moving=velocity.length();camera.position.set(p.x,p.y+.74+Math.sin(elapsed*9)*.018*Math.min(moving,1),p.z);camera.rotation.set(pitch,yaw,0);$('location').textContent=onSurface?'NYSA / SURVEY SITE':p.x< -11?'ENGINEERING':p.x>11?'OBSERVATORY':p.z< -5?'COMMAND DECK':'HABITAT CONCOURSE';$('coordinates').textContent=`${onSurface?'SURFACE':'SECTOR 00.00'} / X ${(p.x-(onSurface?SURFACE_ORIGIN:0)).toFixed(1)} · Z ${p.z.toFixed(1)}`;
+    nearest=undefined;let best=2.65;const forward=camera.getWorldDirection(new THREE.Vector3());for(const t of targets){if((t.zone==='surface')!==onSurface)continue;const direction=t.position.clone().sub(camera.position),distance=direction.length();if(distance<best&&direction.normalize().dot(forward)>.45){nearest=t;best=distance;}}$('interaction').style.display=nearest?'block':'none';$('interaction').textContent=nearest?`[ E ] ${nearest.name}`:'';
   }else{$('interaction').style.display='none';}
   for(let i=0;i<rings.length;i++){rings[i].rotation.z+=dt*.035*(i%2?-1:1);rings[i].rotation.y+=dt*.012;}pylons.rotation.z=elapsed*.018;shell.rotation.y=elapsed*.06;forgeBody.rotation.y=elapsed*.03;forgeLight.scale.setScalar(.96+Math.sin(elapsed*1.4)*.04+(progress.forged?.12:0));chart.rotation.y=elapsed*.15;reactorCore.rotation.y=elapsed*.25;planet.rotation.y=elapsed*.008;
   if(dialogueOpen&&speakingCrew){const c=crew.find(c=>c.name===speakingCrew)!;const p=player.translation();c.mesh.rotation.y=turnToward(c.mesh.rotation.y,Math.atan2(p.x-c.mesh.position.x,p.z-c.mesh.position.z),dt);}
   if(bloom.enabled)composer.render();else renderer.render(scene,camera);frames++;fpsTime+=rawDt;if(fpsTime>2){canvas.dataset.fps=String(Math.round(frames/fpsTime));frames=0;fpsTime=0;}
 }
-async function boot(){await RAPIER.init();world=new RAPIER.World({x:0,y:-9.81,z:0});world.timestep=fixed;for(const s of solids)world.createCollider(RAPIER.ColliderDesc.cuboid(s.size[0]/2,s.size[1]/2,s.size[2]/2).setTranslation(s.pos[0],s.pos[1],s.pos[2]));for(const d of doors)d.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(.14,1.6,1.95).setTranslation(d.x,1.6,6));player=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0,.9,16));playerCollider=world.createCollider(RAPIER.ColliderDesc.capsule(.55,.3),player);controller=world.createCharacterController(.015);controller.enableAutostep(.25,.2,true);controller.enableSnapToGround(.2);controller.setMaxSlopeClimbAngle(Math.PI/4);
+async function boot(){await RAPIER.init();world=new RAPIER.World({x:0,y:-9.81,z:0});world.timestep=fixed;
+  world.createCollider(RAPIER.ColliderDesc.trimesh(surface.mesh.vertices,surface.mesh.indices).setTranslation(SURFACE_ORIGIN,0,0));
+  for(const axis of ['x','z'])for(const sign of [-1,1])world.createCollider(RAPIER.ColliderDesc.cuboid(axis==='x'?1:SITE_HALF+1,4,axis==='z'?1:SITE_HALF+1).setTranslation(SURFACE_ORIGIN+(axis==='x'?sign*(SITE_HALF+1):0),2,axis==='z'?sign*(SITE_HALF+1):0));
+  world.createCollider(RAPIER.ColliderDesc.cuboid(.16,1.2,.16).setTranslation(SURFACE_ORIGIN,1.2,LANDING.z+2.4));
+  world.createCollider(RAPIER.ColliderDesc.ball(.6).setTranslation(SURFACE_ORIGIN+SAMPLE.x,terrainHeight(SAMPLE.x,SAMPLE.z)+.45,SAMPLE.z));
+  for(const rock of surface.obstacles)world.createCollider(RAPIER.ColliderDesc.ball(rock.radius).setTranslation(rock.x,rock.y,rock.z));
+  for(const s of solids)world.createCollider(RAPIER.ColliderDesc.cuboid(s.size[0]/2,s.size[1]/2,s.size[2]/2).setTranslation(s.pos[0],s.pos[1],s.pos[2]));for(const d of doors)d.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(.14,1.6,1.95).setTranslation(d.x,1.6,6));player=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0,.9,16));playerCollider=world.createCollider(RAPIER.ColliderDesc.capsule(.55,.3),player);controller=world.createCharacterController(.015);controller.enableAutostep(.25,.2,true);controller.enableSnapToGround(.2);controller.setMaxSlopeClimbAngle(Math.PI/4);
   for(const c of crew){
     c.body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(c.mesh.position.x,.94,c.mesh.position.z));
     c.collider=world.createCollider(RAPIER.ColliderDesc.capsule(.67,.24),c.body);
@@ -295,5 +333,5 @@ if(matchMedia('(pointer:coarse)').matches || new URLSearchParams(location.search
 $('play').setAttribute('disabled','');boot().catch(()=>{$('loading').textContent='Physics initialization failed. Refresh to retry.';});
 // Explicit development-only observability; stripped from the static production build.
 if(import.meta.env.DEV && new URLSearchParams(location.search).has('qa')){
-  Object.assign(window,{__erebus:{snapshot:()=>({position:player?.translation(),progress,doors:doors.map(d=>({open:d.open,height:d.mesh.position.y})),active,dialogueOpen,nearest:nearest?.name,crew:crew.map(c=>({name:c.name,position:c.body?.translation(),mode:c.state.mode,gait:c.gait,walkBlend:c.walkBlend,yaw:c.mesh.rotation.y})),touchMove:{x:touchMove.x,y:touchMove.y},reactorColor:reactorMaterial.emissive.getHex(),habitatLight:ceilingSpot.intensity}),place:(x:number,z:number,angle=0)=>{player.setTranslation({x,y:.9,z},true);yaw=angle;pitch=-.12;velocity.set(0,0,0);verticalSpeed=0;},target:(name:string)=>{const t=targets.find(t=>t.name===name);if(!t)throw new Error('Unknown test target');player.setTranslation({x:t.position.x,y:.9,z:t.position.z+1.65},true);yaw=0;pitch=-.3;velocity.set(0,0,0);}}});
+  Object.assign(window,{__erebus:{snapshot:()=>({position:player?.translation(),onSurface,progress,doors:doors.map(d=>({open:d.open,height:d.mesh.position.y})),active,dialogueOpen,nearest:nearest?.name,crew:crew.map(c=>({name:c.name,position:c.body?.translation(),mode:c.state.mode,gait:c.gait,walkBlend:c.walkBlend,yaw:c.mesh.rotation.y})),touchMove:{x:touchMove.x,y:touchMove.y},reactorColor:reactorMaterial.emissive.getHex(),habitatLight:ceilingSpot.intensity}),place:(x:number,z:number,angle=0)=>{player.setTranslation({x,y:onSurface?terrainHeight(x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=angle;pitch=-.12;velocity.set(0,0,0);verticalSpeed=0;},target:(name:string)=>{const t=targets.find(t=>t.name===name);if(!t)throw new Error('Unknown test target');const z=t.position.z+1.65;player.setTranslation({x:t.position.x,y:onSurface?terrainHeight(t.position.x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=0;pitch=-.3;velocity.set(0,0,0);}}});
 }
