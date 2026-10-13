@@ -12,6 +12,7 @@ await fs.mkdir('.local/qa',{recursive:true});await page.screenshot({path:'.local
 async function installPointerLock(){await page.evaluate(()=>{Object.defineProperty(document,'pointerLockElement',{get:()=>document.querySelector('canvas'),configurable:true});HTMLCanvasElement.prototype.requestPointerLock=async()=>{};document.exitPointerLock=()=>{};});}
 await installPointerLock();
 await page.click('summary');await page.selectOption('#quality','low');await page.click('#play');
+await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='navigation');assert.equal(await page.locator('#navigationHud').isVisible(),true);
 await page.keyboard.down('KeyW');await page.waitForFunction(()=>window.__erebus.snapshot().position.z<13.5,{},{timeout:30000});await page.keyboard.up('KeyW');
 let s=await page.evaluate(()=>window.__erebus.snapshot());assert.ok(s.position.z<14,'keyboard moves player forward');assert.ok(s.position.y>.8&&s.position.y<1,'floor supports player');
 await page.evaluate(()=>window.__erebus.place(0,-14));await page.keyboard.down('KeyW');await page.waitForTimeout(1800);await page.keyboard.up('KeyW');s=await page.evaluate(()=>window.__erebus.snapshot());assert.ok(s.position.z> -15.6,'forward window collision holds');
@@ -39,27 +40,29 @@ await page.waitForTimeout(400);await page.keyboard.up('KeyW');
 assert.ok((await page.evaluate(()=>window.__erebus.snapshot())).position.z>3.95,'access console blocks passage through its mesh');
 console.log('Checked: access console collision');
 await interact('Initialize universe forge');assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.forged,false);
+await interact('Restore navigation relay');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.waypoint==='Port-panel');
 // Closed bulkhead must block, then open access with the real keyboard interaction.
 await page.evaluate(()=>window.__erebus.place(-9,6,Math.PI/2));await page.keyboard.down('KeyW');await page.waitForTimeout(1200);await page.keyboard.up('KeyW');s=await page.evaluate(()=>window.__erebus.snapshot());assert.ok(s.position.x> -10.6,'closed bulkhead blocks passage');
-await interact('Toggle bulkhead');await page.waitForFunction(()=>window.__erebus.snapshot().doors[0].height>4,{},{timeout:30000});s=await page.evaluate(()=>window.__erebus.snapshot());assert.ok(s.doors[0].open&&s.doors[0].height>4,'bulkhead animates open');
-await page.evaluate(()=>window.__erebus.place(-9,6,Math.PI/2));await page.keyboard.down('KeyW');await page.waitForFunction(()=>window.__erebus.snapshot().position.x< -11.6,{},{timeout:30000});await page.keyboard.up('KeyW');s=await page.evaluate(()=>window.__erebus.snapshot());assert.ok(s.position.x< -11.5,'open doorway permits passage');
+await interact('Toggle bulkhead');await page.waitForFunction(()=>window.__erebus.snapshot().doors[0].height>4,{},{timeout:30000});s=await page.evaluate(()=>window.__erebus.snapshot());assert.ok(s.doors[0].open&&s.doors[0].height>4,'bulkhead animates open');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.waypoint==='Port-enter');
+await page.evaluate(()=>window.__erebus.place(0,-9));await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.waypoint==='Port-outside');
+await page.evaluate(()=>window.__erebus.place(-9,6,Math.PI/2));await page.keyboard.down('KeyW');await page.waitForFunction(()=>window.__erebus.snapshot().position.x< -11.6,{},{timeout:30000});await page.keyboard.up('KeyW');s=await page.evaluate(()=>window.__erebus.snapshot());assert.ok(s.position.x< -11.5,'open doorway permits passage');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.waypoint==='engineering');
 await interact('Restore engineering relay');await interact('Restore navigation relay');await interact('Restore observatory relay');
 await interact('Initialize universe forge');s=await page.evaluate(()=>window.__erebus.snapshot());assert.equal(s.progress.forged,true);assert.equal(s.progress.relays.length,3);assert.equal(await page.locator('#objective').textContent(),'A universe begins');
-await interact('Scan the new world');assert.match(await page.locator('#speech').textContent(),/NYSA/);await page.click('#closeDialogue');
+await interact('Scan the new world');assert.equal(await page.locator('#navigationHud').isVisible(),false,'dialogue hides guidance');assert.match(await page.locator('#speech').textContent(),/NYSA/);await page.click('#closeDialogue');
 // Deploy through actual science controls, walk over the terrain, survey and extract.
 await interact('Scan the new world');assert.equal(await page.locator('#deployNysa').isEnabled(),true);
 await page.click('#deployNysa');await page.waitForFunction(()=>window.__erebus.snapshot().onSurface);
 await page.waitForFunction(()=>window.__erebus.snapshot().position.y<.95);
-assert.match(await page.locator('#location').textContent(),/NYSA/);
+assert.match(await page.locator('#location').textContent(),/NYSA/);await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='sample');assert.equal(await page.locator('#navLabel').textContent(),'Luminous outcrop');const initialDistance=Number((await page.locator('#navDistance').textContent()).split(' m')[0]);
 await page.screenshot({path:'.local/qa/nysa-landing.png'});
 const landed=await page.evaluate(()=>window.__erebus.snapshot().position);
 await page.keyboard.down('KeyW');await page.waitForFunction(z=>window.__erebus.snapshot().position.z<z-3,landed.z,{timeout:30000});await page.keyboard.up('KeyW');
-assert.ok((await page.evaluate(()=>window.__erebus.snapshot().position.y))>0,'terrain supports moving capsule');
+assert.ok((await page.evaluate(()=>window.__erebus.snapshot().position.y))>0,'terrain supports moving capsule');assert.ok(Number((await page.locator('#navDistance').textContent()).split(' m')[0])<initialDistance,'sample distance decreases while approaching');
 // Perimeter collision, then the real sample interaction (teleport is QA setup only).
 await page.evaluate(()=>window.__erebus.place(430,0,-Math.PI/2));await page.keyboard.down('KeyW');await page.waitForFunction(()=>window.__erebus.snapshot().position.x>431.4,{},{timeout:30000});await page.waitForTimeout(500);await page.keyboard.up('KeyW');
 assert.ok((await page.evaluate(()=>window.__erebus.snapshot().position.x))<431.8,'basalt perimeter blocks leaving survey site');
 await interact('Survey luminous outcrop');assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
-assert.equal(await page.locator('#objective').textContent(),'Return to Erebus');await page.screenshot({path:'.local/qa/nysa-sample.png'});
+assert.equal(await page.locator('#objective').textContent(),'Return to Erebus');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='extraction');assert.equal(await page.locator('#navLabel').textContent(),'Extraction beacon');await page.screenshot({path:'.local/qa/nysa-sample.png'});
 await interact('Extract to Erebus');await page.waitForFunction(()=>!window.__erebus.snapshot().onSurface);
 assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.forged,true);
 assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
@@ -84,7 +87,7 @@ await page.reload({waitUntil:'domcontentloaded'});await page.waitForSelector('ca
 await installPointerLock();await page.click('#play');
 await page.waitForFunction(()=>window.__erebus.snapshot().progress.power.tripped,{},{timeout:30000});
 await page.waitForFunction(()=>document.getElementById('system').textContent==='CONTAINMENT TRIPPED');
-assert.equal(await page.locator('#system').textContent(),'CONTAINMENT TRIPPED');
+assert.equal(await page.locator('#system').textContent(),'CONTAINMENT TRIPPED');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='diagnostics');
 await interact('Initialize universe forge');assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.forged,false);
 await interact('Scan the new world');assert.equal(await page.locator('#expeditionPanel').isVisible(),false);await page.click('#closeDialogue');
 await interact('Open engineering diagnostics');
@@ -143,6 +146,7 @@ await mobile.waitForFunction(()=>window.__erebus.snapshot().nearest==='Scan the 
 await mobile.click('#touchAction');assert.equal(await mobile.locator('#deployNysa').isEnabled(),true);
 assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'surface controls fit mobile viewport');
 await mobile.click('#deployNysa');await mobile.waitForFunction(()=>window.__erebus.snapshot().onSurface);
+await mobile.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='sample');assert.equal(await mobile.locator('#navigationHud').isVisible(),true);
 const surfaceStart=await mobile.evaluate(()=>window.__erebus.snapshot().position.z);
 await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:80,y:668}]});
 await mobile.waitForFunction(z=>window.__erebus.snapshot().position.z<z-.7,surfaceStart,{timeout:30000});
@@ -150,13 +154,22 @@ await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
 await mobile.evaluate(()=>window.__erebus.target('Survey luminous outcrop'));
 await mobile.waitForFunction(()=>window.__erebus.snapshot().nearest==='Survey luminous outcrop');
 await mobile.click('#touchAction');assert.equal((await mobile.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
-await mobile.screenshot({path:'.local/qa/nysa-mobile.png'});
+await mobile.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='extraction');await mobile.screenshot({path:'.local/qa/nysa-mobile.png'});
 await mobile.evaluate(()=>window.__erebus.target('Extract to Erebus'));
 await mobile.waitForFunction(()=>window.__erebus.snapshot().nearest==='Extract to Erebus');
 await mobile.click('#touchAction');await mobile.waitForFunction(()=>!window.__erebus.snapshot().onSurface);
 assert.equal((await mobile.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
 assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
 console.log('Checked: mobile surface deployment, real touch walking, sample and extraction');
+for(const viewport of [{width:390,height:640},{width:844,height:390}]){
+  await mobile.setViewportSize(viewport);await mobile.waitForTimeout(500);
+  const boxes=await mobile.evaluate(()=>Object.fromEntries(['navigationHud','stick','touchAction','mission'].map(id=>{const r=document.getElementById(id).getBoundingClientRect();return [id,{x:r.x,y:r.y,right:r.right,bottom:r.bottom}];})));
+  const guide=boxes.navigationHud;assert.ok(guide.x>=0&&guide.y>=0&&guide.right<=viewport.width&&guide.bottom<=viewport.height,'guidance fits small viewport');
+  const overlaps=(a,b)=>a.x<b.right&&a.right>b.x&&a.y<b.bottom&&a.bottom>b.y;
+  assert.equal(overlaps(guide,boxes.stick),false,'guide clears joystick');assert.equal(overlaps(guide,boxes.touchAction),false,'guide clears action button');
+  await mobile.screenshot({path:`.local/qa/navigation-${viewport.width}x${viewport.height}.png`});
+}
+console.log('Checked: mission compass/distance, doorway guidance, sample-to-extraction, modal visibility and compact mobile layout');
 assert.deepEqual(errors,[],'no desktop or mobile browser exceptions');
 
 console.log('PASS: keyboard movement, floor/window/door collisions, open passage, forge gating, all relays, genesis, scan dialogue, save reload, corrupt save, Nysa terrain/sample/extraction/reload, desktop rendering, mobile layout and touch UI.');

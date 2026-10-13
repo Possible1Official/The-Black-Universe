@@ -12,7 +12,7 @@ Node.js 22+: `npm ci`, then `npm run dev`. Open the printed URL. `npm test` veri
 
 ## Expedition 001
 
-Enter the Erebus. Move with WASD/arrows, look with the mouse, sprint with Shift, jump with Space, and interact with E. Escape pauses. Touch devices have a left movement joystick, right-side drag camera, and an E action button. Open menu settings for performance mode, audio and mission reset.
+Enter the Erebus. Move with WASD/arrows, look with the mouse, sprint with Shift, jump with Space, and interact with E. Escape pauses. Touch devices have a left movement joystick, right-side drag camera, and an E action button. Open menu settings for performance mode, audio and mission reset. The navigation card shows heading, direction and distance to the next mission waypoint, routing room crossings through bulkheads. See [navigation controls and scope](docs/NAVIGATION.md).
 
 1. Walk to the forward bridge. Speak to Officer Vega and activate the navigation relay.
 2. Use the access panel beside the port bulkhead to open engineering. Activate the power relay near the reactor.

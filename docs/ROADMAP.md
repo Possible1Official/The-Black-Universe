@@ -24,10 +24,15 @@ Vision: an immersive, physically coherent browser universe with explorable vesse
 - Bridge deployment, sample objective, extraction, saved survey status and safe reload aboard.
 - Instantaneous transfer only; shuttle flight and planet-wide exploration remain future work.
 
+## Mission navigation milestone (2026-10-13)
+- Live heading, relative waypoint arrow and horizontal distance for ship and surface objectives.
+- Scripted room/doorway guidance, power-recovery priority and sample-to-extraction transition.
+- Compact touch HUD and modal visibility; no general pathfinding or planetary map.
+
 ## Next four prioritized cycles
 1. **Character pipeline:** obtain valid Mixamo access, import one approved character with idle/walk clips, optimize to GLB, add asset provenance and budgets. If access is blocked, improve lighting/materials and crew collision/animation instead.
 2. **Ship simulation expansion:** deepen the new power/containment model, ambient machinery, better doors, minimap and navigation aids. Preserve completed saves through a versioned migration.
-3. **Expedition navigation:** compass/distance markers for the outcrop and extraction beacon, clearer ship navigation and measured surface/device performance. Expand exploration only after the bounded loop stays stable.
+3. **Exploration polish and performance:** improve terrain materials/lighting and measure surface/ship rendering before expanding the biome. Evaluate instancing and frame pacing; keep the existing mission/navigation loop stable.
 4. **NPC agency:** navigation graph, schedules, perception and task execution, with explicit goals and failure recovery. Add deterministic simulation tests. Dialogue can remain local until a properly authenticated backend exists.
 
 ## Later
