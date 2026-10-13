@@ -74,6 +74,7 @@ await page.click('#deployNysa');await page.waitForFunction(()=>window.__erebus.s
 await page.waitForFunction(()=>window.__erebus.snapshot().position.y<.95);
 // Quality changes while away must not enable ship lights or restore stale flags on return.
 await page.click('#menu');await page.selectOption('#quality','high');
+assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).surfaceMaterials.normalMap,true);
 assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).render.lighting.visibleSources,0);
 assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).render.lighting.visibleProxies,0);
 await page.click('#play');
@@ -91,6 +92,7 @@ await interact('Extract to Erebus');await page.waitForFunction(()=>!window.__ere
 await page.waitForFunction(()=>window.__erebus.snapshot().render.lighting.visibleSources===9&&window.__erebus.snapshot().render.lighting.visibleProxies===0);
 await page.click('#menu');await page.selectOption('#quality','low');await page.click('#play');
 await page.waitForFunction(()=>window.__erebus.snapshot().render.lighting.visibleSources===0&&window.__erebus.snapshot().render.lighting.visibleProxies===4);
+assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).surfaceMaterials.normalMap,false);
 console.log('Checked: High 9 / performance 4 / surface 0 light policy, surface quality change and extraction restore');
 assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.forged,true);
 assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);

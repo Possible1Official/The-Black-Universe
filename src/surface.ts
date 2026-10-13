@@ -1,13 +1,19 @@
 import * as THREE from 'three';
+import {createGroundMaterial,groundTint,GROUND_TILE_METERS} from './terrain-material';
 import {LANDING,SAMPLE,SITE_HALF,SURFACE_ORIGIN,terrainHeight,terrainMesh} from './excursion';
 export function createSurface(){
   const group=new THREE.Group();group.position.x=SURFACE_ORIGIN;group.visible=false;
   const mesh=terrainMesh(),geometry=new THREE.BufferGeometry();
   geometry.setAttribute('position',new THREE.BufferAttribute(mesh.vertices,3));geometry.setIndex(new THREE.BufferAttribute(mesh.indices,1));geometry.computeVertexNormals();
-  const colors=new Float32Array(mesh.vertices.length);
-  for(let i=0;i<colors.length;i+=3){const y=mesh.vertices[i+1];const color=new THREE.Color().setHSL(.37+y*.015,.2,.25+y*.045);colors.set([color.r,color.g,color.b],i);}
+  const colors=new Float32Array(mesh.vertices.length),uv=new Float32Array(mesh.vertices.length/3*2),normals=geometry.getAttribute('normal');
+  for(let i=0;i<colors.length;i+=3){
+    const color=groundTint(mesh.vertices[i+1],normals.getY(i/3));colors.set([color.r,color.g,color.b],i);
+    uv.set([mesh.vertices[i]/GROUND_TILE_METERS,mesh.vertices[i+2]/GROUND_TILE_METERS],i/3*2);
+  }
+  geometry.setAttribute('uv',new THREE.BufferAttribute(uv,2));
   geometry.setAttribute('color',new THREE.BufferAttribute(colors,3));
-  const ground=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));ground.receiveShadow=true;group.add(ground);
+  const groundMaterial=createGroundMaterial();
+  const ground=new THREE.Mesh(geometry,groundMaterial.material);ground.receiveShadow=true;group.add(ground);
   const stone=new THREE.MeshStandardMaterial({color:0x4e6360,roughness:.94});
   const rockGeo=new THREE.DodecahedronGeometry(1,0),rocks=new THREE.InstancedMesh(rockGeo,stone,64);
   const transform=new THREE.Object3D(),obstacles:{x:number;y:number;z:number;radius:number}[]=[];
@@ -37,5 +43,5 @@ export function createSurface(){
   // Distant silhouettes are visual scenery beyond the playable crater.
   for(let i=0;i<16;i++){const mountain=new THREE.Mesh(new THREE.ConeGeometry(18,30+(i%4)*10,5),stone);const a=i*Math.PI/8;mountain.position.set(Math.cos(a)*100,10,Math.sin(a)*100);mountain.rotation.y=i;group.add(mountain);}
   const skyPlanet=new THREE.Mesh(new THREE.SphereGeometry(13,24,16),new THREE.MeshStandardMaterial({color:0x93bfc5,roughness:1}));skyPlanet.position.set(-80,68,-170);group.add(skyPlanet);
-  return {group,mesh,obstacles,sample};
+  return {group,mesh,obstacles,sample,setQuality:groundMaterial.setQuality,materialSnapshot:groundMaterial.snapshot};
 }
