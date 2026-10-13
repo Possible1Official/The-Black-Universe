@@ -46,6 +46,29 @@ await page.evaluate(()=>window.__erebus.place(-9,6,Math.PI/2));await page.keyboa
 await interact('Restore engineering relay');await interact('Restore navigation relay');await interact('Restore observatory relay');
 await interact('Initialize universe forge');s=await page.evaluate(()=>window.__erebus.snapshot());assert.equal(s.progress.forged,true);assert.equal(s.progress.relays.length,3);assert.equal(await page.locator('#objective').textContent(),'A universe begins');
 await interact('Scan the new world');assert.match(await page.locator('#speech').textContent(),/NYSA/);await page.click('#closeDialogue');
+// Deploy through actual science controls, walk over the terrain, survey and extract.
+await interact('Scan the new world');assert.equal(await page.locator('#deployNysa').isEnabled(),true);
+await page.click('#deployNysa');await page.waitForFunction(()=>window.__erebus.snapshot().onSurface);
+await page.waitForFunction(()=>window.__erebus.snapshot().position.y<.95);
+assert.match(await page.locator('#location').textContent(),/NYSA/);
+await page.screenshot({path:'.local/qa/nysa-landing.png'});
+const landed=await page.evaluate(()=>window.__erebus.snapshot().position);
+await page.keyboard.down('KeyW');await page.waitForFunction(z=>window.__erebus.snapshot().position.z<z-3,landed.z,{timeout:30000});await page.keyboard.up('KeyW');
+assert.ok((await page.evaluate(()=>window.__erebus.snapshot().position.y))>0,'terrain supports moving capsule');
+// Perimeter collision, then the real sample interaction (teleport is QA setup only).
+await page.evaluate(()=>window.__erebus.place(430,0,-Math.PI/2));await page.keyboard.down('KeyW');await page.waitForFunction(()=>window.__erebus.snapshot().position.x>431.4,{},{timeout:30000});await page.waitForTimeout(500);await page.keyboard.up('KeyW');
+assert.ok((await page.evaluate(()=>window.__erebus.snapshot().position.x))<431.8,'basalt perimeter blocks leaving survey site');
+await interact('Survey luminous outcrop');assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
+assert.equal(await page.locator('#objective').textContent(),'Return to Erebus');await page.screenshot({path:'.local/qa/nysa-sample.png'});
+await interact('Extract to Erebus');await page.waitForFunction(()=>!window.__erebus.snapshot().onSurface);
+assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.forged,true);
+assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
+// Reloading from the surface starts safely aboard while preserving the sample.
+await interact('Scan the new world');await page.click('#deployNysa');await page.click('#menu');
+await page.reload({waitUntil:'domcontentloaded'});await page.waitForSelector('canvas[data-ready="true"]');
+assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).onSurface,false);assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
+await installPointerLock();await page.click('#play');
+console.log('Checked: Nysa deployment, terrain walking, perimeter, sample, extraction and safe surface reload');
 await page.evaluate(()=>window.__erebus.place(0,-5));await page.waitForTimeout(300);await page.screenshot({path:'.local/qa/bridge.png'});
 console.log('Checking reload');await page.reload({waitUntil:'domcontentloaded'});await page.waitForSelector('canvas[data-ready="true"]');s=await page.evaluate(()=>window.__erebus.snapshot());assert.equal(s.progress.forged,true,'saved progression restores');
 // Legacy completed saves migrate without overwriting the old release's save slot.
@@ -63,6 +86,7 @@ await page.waitForFunction(()=>window.__erebus.snapshot().progress.power.tripped
 await page.waitForFunction(()=>document.getElementById('system').textContent==='CONTAINMENT TRIPPED');
 assert.equal(await page.locator('#system').textContent(),'CONTAINMENT TRIPPED');
 await interact('Initialize universe forge');assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.forged,false);
+await interact('Scan the new world');assert.equal(await page.locator('#expeditionPanel').isVisible(),false);await page.click('#closeDialogue');
 await interact('Open engineering diagnostics');
 assert.equal(await page.locator('#powerPanel').isVisible(),true);assert.equal(await page.locator('#resetContainment').isDisabled(),true);
 await page.screenshot({path:'.local/qa/containment-trip.png'});
@@ -82,7 +106,7 @@ console.log('Checked: v1 migration, legacy rollback save, thermal trip, isolatio
 await page.click('#menu'); // Freeze autosave before installing a corrupt-load fixture.
 await page.evaluate(()=>localStorage.setItem('black-universe-v2','{bad'));console.log('Checking reload');await page.reload({waitUntil:'domcontentloaded'});await page.waitForSelector('canvas[data-ready="true"]');assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.relays.length,0,'corrupt save resets safely');
 assert.deepEqual(errors,[],'no browser exceptions');
-await page.close();console.log('Checking mobile');const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});await mobile.goto('http://localhost:5173/?qa');await mobile.waitForSelector('canvas[data-ready="true"]');await mobile.click('summary');await mobile.selectOption('#quality','low');await mobile.click('#play');await mobile.screenshot({path:'.local/qa/mobile.png'});assert.equal(await mobile.locator('#touchAction').isVisible(),true);assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'mobile fits viewport');
+await page.close();console.log('Checking mobile');const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});mobile.on('pageerror',e=>errors.push(e.message));await mobile.goto('http://localhost:5173/?qa');await mobile.waitForSelector('canvas[data-ready="true"]');await mobile.click('summary');await mobile.selectOption('#quality','low');await mobile.click('#play');await mobile.screenshot({path:'.local/qa/mobile.png'});assert.equal(await mobile.locator('#touchAction').isVisible(),true);assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'mobile fits viewport');
 // Pause before seeding so visibility/pause saving cannot overwrite the completed fixture.
 await mobile.click('#menu');
 // Seed completed progress so an accidental menu-reset click cannot hide behind fresh state.
@@ -114,6 +138,27 @@ assert.equal((await mobile.evaluate(()=>window.__erebus.snapshot())).progress.po
 assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
 await mobile.screenshot({path:'.local/qa/power-mobile.png'});await mobile.click('#closeDialogue');
 console.log('Checked: mobile engineering power controls');
-console.log('PASS: keyboard movement, floor/window/door collisions, open passage, forge gating, all relays, genesis, scan dialogue, save reload, corrupt save, desktop rendering, mobile layout and touch UI.');
+await mobile.evaluate(()=>window.__erebus.target('Scan the new world'));
+await mobile.waitForFunction(()=>window.__erebus.snapshot().nearest==='Scan the new world');
+await mobile.click('#touchAction');assert.equal(await mobile.locator('#deployNysa').isEnabled(),true);
+assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'surface controls fit mobile viewport');
+await mobile.click('#deployNysa');await mobile.waitForFunction(()=>window.__erebus.snapshot().onSurface);
+const surfaceStart=await mobile.evaluate(()=>window.__erebus.snapshot().position.z);
+await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:80,y:668}]});
+await mobile.waitForFunction(z=>window.__erebus.snapshot().position.z<z-.7,surfaceStart,{timeout:30000});
+await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+await mobile.evaluate(()=>window.__erebus.target('Survey luminous outcrop'));
+await mobile.waitForFunction(()=>window.__erebus.snapshot().nearest==='Survey luminous outcrop');
+await mobile.click('#touchAction');assert.equal((await mobile.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
+await mobile.screenshot({path:'.local/qa/nysa-mobile.png'});
+await mobile.evaluate(()=>window.__erebus.target('Extract to Erebus'));
+await mobile.waitForFunction(()=>window.__erebus.snapshot().nearest==='Extract to Erebus');
+await mobile.click('#touchAction');await mobile.waitForFunction(()=>!window.__erebus.snapshot().onSurface);
+assert.equal((await mobile.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
+assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+console.log('Checked: mobile surface deployment, real touch walking, sample and extraction');
+assert.deepEqual(errors,[],'no desktop or mobile browser exceptions');
+
+console.log('PASS: keyboard movement, floor/window/door collisions, open passage, forge gating, all relays, genesis, scan dialogue, save reload, corrupt save, Nysa terrain/sample/extraction/reload, desktop rendering, mobile layout and touch UI.');
 
 } finally { await browser.close(); }

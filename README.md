@@ -4,7 +4,7 @@ An evolving browser science-fiction game: explore the starship **Erebus**, resto
 
 **Play:** https://the-black-universe-erebus.harshit-0207.chatgpt.site
 
-This is a playable foundation toward an ambitious universe simulation. It does not yet provide television-level photorealism, open planetary surfaces, multiplayer, or general-purpose AI NPCs.
+This is a playable foundation toward an ambitious universe simulation. It does not yet provide television-level photorealism, planet-wide exploration, multiplayer, or general-purpose AI NPCs.
 
 ## Run
 
@@ -18,11 +18,11 @@ Enter the Erebus. Move with WASD/arrows, look with the mouse, sprint with Shift,
 2. Use the access panel beside the port bulkhead to open engineering. Activate the power relay near the reactor.
 3. Open the starboard bulkhead and activate the observatory relay.
 4. Return to the central bridge console and initialize the architect. A new world, Nysa, appears outside.
-5. Scan it from the bridge and speak with the crew after genesis.
+5. Scan it from the bridge and deploy to the Nysa survey site. Collect a sample from the luminous outcrop with E, then return through the landing beacon.
 
 Engineering also has a containment console: choose Balanced for stable operation, Genesis for a stronger forge bus at the cost of heat, or Cooling to recover an overload. If containment trips, cool to 40% and reset. See [power model and controls](docs/POWER.md).
 
-Progress saves locally on this browser/device; corrupt or unavailable storage fails safely. Reset is in the menu. Surface landing is planned, not implemented.
+Progress saves locally on this browser/device; corrupt or unavailable storage fails safely. Reset is in the menu. Nysa offers one bounded surface excursion; reloading starts safely aboard with collected samples retained. See [surface controls and scope](docs/EXCURSION.md).
 
 ## Technology and scope
 
