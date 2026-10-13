@@ -2,7 +2,7 @@
 
 Vision: an immersive, physically coherent browser universe with explorable vessels and worlds, believable characters, and increasingly capable NPCs. This is a long-term program, not a promise of television-level realism from one build.
 
-## Foundation (current cycle)
+## Foundation (released v0.1.0)
 - Starship bridge, concourse, engineering and observatory; animated colossal universe forge.
 - First-person controls, touch controls, Rapier collision, functioning bulkheads.
 - Restore three relays, initialize genesis, scan resulting planet; device-local save.
