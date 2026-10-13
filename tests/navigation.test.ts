@@ -27,8 +27,11 @@ test('ship route traverses doorways and distinguishes both closed access panels'
   assert.equal(routeWaypoint(goal,{x:-10,z:4.85},[true,false]).id,'Port-enter');
   assert.equal(routeWaypoint(goal,{x:-12,z:6},[true,false]).id,'engineering');
   const starboard=missionDestination(activateRelay(p,'engineering'),false);
-  assert.equal(routeWaypoint(starboard,{x:-16,z:10},[false,false]).id,'Port-inside');
-  assert.equal(routeWaypoint(starboard,{x:-13,z:6},[false,false]).id,'Port-exit');
+  assert.equal(routeWaypoint(starboard,{x:-16,z:10},[true,false]).id,'Port-inside');
+  assert.equal(routeWaypoint(starboard,{x:-13,z:6},[true,false]).id,'Port-exit');
+  assert.equal(routeWaypoint(starboard,{x:-16,z:10},[false,false]).id,'Port-inside-panel');
+  assert.equal(routeWaypoint(goal,{x:16,z:10},[true,false]).id,'Starboard-inside-panel');
+  assert.equal(routeWaypoint(goal,{x:16,z:10},[true,true]).id,'Starboard-inside');
   assert.equal(routeWaypoint(starboard,{x:0,z:6},[false,false]).id,'Starboard-panel');
   assert.equal(routeWaypoint(starboard,{x:8.6,z:6},[false,true]).id,'Starboard-enter');
   assert.equal(routeWaypoint(starboard,{x:12,z:6},[false,true]).id,'observatory');

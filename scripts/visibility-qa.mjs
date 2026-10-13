@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 const browser=await chromium.launch({args:['--no-sandbox','--enable-unsafe-swiftshader']});try{
   const page=await browser.newPage({viewport:{width:640,height:400},isMobile:true,hasTouch:true});page.setDefaultTimeout(45000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://localhost:5173/?qa');await page.waitForSelector('canvas[data-ready="true"]');await page.click('#play');
-  await page.evaluate(()=>window.__erebus.place(-12,3.2,-Math.PI/2));await page.waitForFunction(()=>window.__erebus.snapshot().position.x< -11.5);await page.waitForTimeout(500);
+  await page.evaluate(()=>window.__erebus.place(-12,4.05,-Math.PI/2));await page.waitForFunction(()=>window.__erebus.snapshot().position.x< -11.5);await page.waitForTimeout(500);
   assert.notEqual((await page.evaluate(()=>window.__erebus.snapshot())).nearest,'Toggle bulkhead');await page.keyboard.press('KeyE');assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).doors[0].open,false);
   if(process.argv[3])await page.screenshot({path:process.argv[3]});
   await page.evaluate(()=>window.__erebus.target('Toggle bulkhead'));await page.waitForFunction(()=>window.__erebus.snapshot().nearest==='Toggle bulkhead');await page.keyboard.press('KeyE');await page.waitForFunction(()=>window.__erebus.snapshot().doors[0].open);

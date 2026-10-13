@@ -15,8 +15,8 @@ Node.js 22+: `npm ci`, then `npm run dev`. Open the printed URL. `npm test` veri
 Enter the Erebus. Move with WASD/arrows, look with the mouse, sprint with Shift, jump with Space, and interact with E. Solid collision geometry blocks interaction through walls; approach an unobstructed console or officer. Escape pauses. Touch devices have a left movement joystick, right-side drag camera, and an E action button. Open menu settings for performance mode, audio and mission reset. The navigation card shows heading, direction and distance to the next mission waypoint, routing room crossings through bulkheads. See [navigation controls and scope](docs/NAVIGATION.md).
 
 1. Walk to the forward bridge. Speak to Officer Vega and activate the navigation relay.
-2. Use the access panel beside the port bulkhead to open engineering. Activate the power relay near the reactor.
-3. Open the starboard bulkhead and activate the observatory relay.
+2. Use the access panel beside the port bulkhead to open engineering. Activate the power relay near the reactor. Engineering has an interior access panel for returning to the concourse.
+3. Open the starboard bulkhead and activate the observatory relay. Its interior panel controls the same bulkhead.
 4. Return to the central bridge console and initialize the architect. A new world, Nysa, appears outside.
 5. Scan it from the bridge and deploy to the Nysa survey site. Collect a sample from the luminous outcrop with E, then return through the landing beacon.
 
