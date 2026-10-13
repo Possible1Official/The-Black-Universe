@@ -102,6 +102,12 @@ The user has reprioritized development toward the flight, planet exploration and
 - Player-selected surface tracking, mission fallback and ship-readable scan history; no required side quest or new save version.
 - Procedural scenery and authored observations, not dynamic weather, global streaming or an authored photorealistic landscape. Ground triangle count increases fourfold; device budgets remain future work.
 
+## Kestrel approach instruments (2026-10-13)
+- Braking wins over held thrust/joystick/boost; fixed-step forecasts share the actual assisted velocity model.
+- Signed closing/drift readings, early BRAKE NOW warning and receding-target feedback.
+- Three shared-geometry approach beacons with cruise/brake/ready colors, plus a projected actual-velocity diamond.
+- Local guidance, not autopilot, collision avoidance or an additional landing site. Captured surface flight remains guided and global streaming is still future work.
+
 ## Later
 - Physically based and baked lighting, modular authored environments, LODs, GPU timing and measured device budgets.
 - High-quality skinned characters, blend trees, IK, facial animation, interaction poses.

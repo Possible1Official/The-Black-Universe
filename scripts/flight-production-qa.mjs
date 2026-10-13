@@ -10,14 +10,14 @@ try{
  await page.getByText('Controls & settings',{exact:true}).click();await page.selectOption('#quality','low');await page.getByText('Controls & settings',{exact:true}).click();await page.click('#play');
  await page.keyboard.down('KeyD');await page.waitForFunction(()=>document.getElementById('interaction').textContent.includes('Launch survey shuttle'));await page.keyboard.up('KeyD');await page.keyboard.press('KeyE');
  await page.waitForFunction(()=>document.getElementById('flightStatus').textContent.includes('Approach ring'));await page.keyboard.down('KeyW');
- await page.waitForFunction(()=>parseFloat(document.getElementById('navDistance').textContent)<85,{},{timeout:120000});await page.keyboard.up('KeyW');await page.keyboard.down('Space');
+ await page.waitForFunction(()=>parseFloat(document.getElementById('navDistance').textContent)<85,{},{timeout:120000});await page.waitForFunction(()=>document.getElementById('flightHud').dataset.approach==='brake');assert.equal(await page.locator('#velocityMarker').isVisible(),true);await page.keyboard.up('KeyW');await page.keyboard.down('Space');
  await page.waitForFunction(()=>parseFloat(document.getElementById('flightTelemetry').textContent)<10);await page.keyboard.up('Space');
- await fs.mkdir('.local/qa',{recursive:true});await page.screenshot({path:'.local/qa/kestrel-approach.png'});
+ await page.waitForFunction(()=>document.getElementById('flightHud').dataset.approach==='ready');await fs.mkdir('.local/qa',{recursive:true});await page.screenshot({path:'.local/qa/kestrel-approach.png'});
  await page.keyboard.press('KeyE');
  await page.waitForFunction(()=>{const t=document.getElementById('flightTelemetry').textContent;const alt=parseFloat(t.split(' ')[2]);return t.startsWith('RADAR ALT')&&alt<35&&alt>4;});
  assert.match(await page.locator('#flightStatus').textContent(),/GUIDED DESCENT/);assert.equal(await page.locator('#flightHud').isVisible(),true);
  await page.screenshot({path:'.local/qa/descent-production.png'});
- await page.waitForFunction(()=>document.getElementById('location').textContent.includes('SURVEY SITE'));assert.equal(await page.locator('#flightHud').isVisible(),false);
+ await page.waitForFunction(()=>document.getElementById('location').textContent.includes('SURVEY SITE'));assert.equal(await page.locator('#flightHud').isVisible(),false);assert.equal(await page.locator('#velocityMarker').isVisible(),false);
  await page.screenshot({path:'.local/qa/kestrel-production-landed.png'});
  await page.keyboard.press('KeyJ');assert.equal(await page.locator('#surveyPanel').isVisible(),true);assert.equal(await page.locator('#dialogue').evaluate(e=>e.scrollTop),0);assert.equal(await page.locator('[data-track="arch"]').isEnabled(),true);
  await page.click('[data-track="arch"]');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='field-arch');assert.equal(await page.locator('#navLabel').textContent(),'Resonance arch');

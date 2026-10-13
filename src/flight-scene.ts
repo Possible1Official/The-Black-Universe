@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {NYSA_CENTER,NYSA_RADIUS,flightGoal,type FlightState} from './flight';
+import {NYSA_CENTER,NYSA_RADIUS,flightGoal,canApproach,type FlightState} from './flight';
 export function makeShuttle(){
   const root=new THREE.Group(),hull=new THREE.MeshStandardMaterial({color:0x344655,metalness:.7,roughness:.35}),trim=new THREE.MeshStandardMaterial({color:0xd0d8d8,metalness:.6,roughness:.4}),glow=new THREE.MeshBasicMaterial({color:0x67e6ff});
   const box=(w:number,h:number,d:number,x:number,y:number,z:number,m:THREE.Material)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);mesh.castShadow=mesh.receiveShadow=true;root.add(mesh);return mesh;};
@@ -27,11 +27,17 @@ export function createFlightScene(camera:THREE.PerspectiveCamera,planetMaterial:
   const stars=new Float32Array(1800*3);let seed=904;const rand=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
   for(let i=0;i<1800;i++){const a=rand()*Math.PI*2,b=Math.acos(rand()*2-1),r=2100;stars.set([Math.cos(a)*Math.sin(b)*r,Math.cos(b)*r,Math.sin(a)*Math.sin(b)*r],i*3);}
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(stars,3));scene.add(new THREE.Points(geo,new THREE.PointsMaterial({color:0xbdd7ed,size:2})));
-  const marker=new THREE.Mesh(new THREE.TorusGeometry(14,.4,8,48),light);scene.add(marker);
+  const gateGeometry=new THREE.TorusGeometry(14,.4,8,48),gateMaterial=new THREE.MeshBasicMaterial({color:0x77e6ee});
+  const gates=Array.from({length:3},(_,i)=>{const gate=new THREE.Mesh(gateGeometry,gateMaterial);gate.scale.setScalar(1+i*.3);scene.add(gate);return gate;});
   // Camera-local cockpit gives a readable first-person vehicle view without obscuring the target.
   const cockpit=new THREE.Group();camera.add(cockpit);
   const dashboard=block(2.2,.2,.7,0,-.65,-1.2,metal,cockpit);dashboard.rotation.x=.12;
   block(.8,.035,.28,0,-.53,-1.3,light,cockpit);for(const x of [-.85,.85]){const strut=block(.07,1.6,.07,x,.05,-1.2,metal,cockpit);strut.rotation.z=x*.15;}
   cockpit.visible=false;
-  return {scene,cockpit,update(f:FlightState,dt:number){marker.position.copy(flightGoal(f));marker.rotation.z+=dt*.3;clouds.rotation.y+=dt*.015;forge.rotation.y+=dt*.04;cockpit.visible=true;camera.position.copy(f.position);camera.updateMatrixWorld();},hide(){cockpit.visible=false;}};
+  return {scene,cockpit,gates,update(f:FlightState,dt:number,brakeNow=false){
+    const goal=flightGoal(f),outward=f.leg==='nysa'?1:-1;
+    gates.forEach((gate,i)=>{gate.position.set(goal.x,goal.y,goal.z+outward*i*50);gate.rotation.z+=dt*.3;});
+    gateMaterial.color.setHex(canApproach(f)?0x83f0c1:brakeNow?0xffbb72:0x77e6ee);
+    clouds.rotation.y+=dt*.015;forge.rotation.y+=dt*.04;cockpit.visible=true;camera.position.copy(f.position);camera.updateMatrixWorld();
+  },hide(){cockpit.visible=false;}};
 }
