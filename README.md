@@ -22,7 +22,7 @@ Enter the Erebus. Move with WASD/arrows, look with the mouse, sprint with Shift,
 
 Engineering also has a containment console: choose Balanced for stable operation, Genesis for a stronger forge bus at the cost of heat, or Cooling to recover an overload. If containment trips, cool to 40% and reset. See [power model and controls](docs/POWER.md).
 
-Progress saves locally on this browser/device; corrupt or unavailable storage fails safely. Reset is in the menu. Nysa offers one bounded surface excursion; reloading starts safely aboard with collected samples retained. See [surface controls and scope](docs/EXCURSION.md).
+Progress saves locally on this browser/device; corrupt or unavailable storage fails safely. Reset is in the menu. Nysa offers one bounded surface excursion; reloading starts safely aboard with collected samples retained. Nysa uses slope-colored, textured ground; High mode adds fine normal and roughness detail. See [surface controls and scope](docs/EXCURSION.md).
 
 ## Technology and scope
 

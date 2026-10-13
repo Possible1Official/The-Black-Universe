@@ -44,6 +44,11 @@ Vision: an immersive, physically coherent browser universe with explorable vesse
 - Live reactor/power uniforms and surface hide/quality-change/return behavior are preserved.
 - This trades distant light spill for fewer direct-light evaluations; hardware FPS and baked lighting remain unverified.
 
+## Nysa ground material polish (2026-10-13)
+- Seamless generated ground texture, elevation/slope blending and four-meter world-space tiling.
+- High-mode normal/roughness maps; performance mode keeps the color texture with uniform roughness.
+- Shared terrain/collision vertices and the existing sample/extraction loop remain unchanged; authored landscape and hardware measurements are future work.
+
 ## Next four prioritized cycles
 1. **Character pipeline:** obtain valid Mixamo access, import one approved character with idle/walk clips, optimize to GLB, add asset provenance and budgets. If access is blocked, improve lighting/materials and crew collision/animation instead.
 2. **Ship simulation expansion:** deepen the new power/containment model, ambient machinery, better doors, minimap and navigation aids. Preserve completed saves through a versioned migration.
