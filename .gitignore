@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env*
+!.env.example
+mixamo_token.txt
+*.token
+.local/
+playwright-report/
+test-results/
+
+__pycache__/
+*.pyc
