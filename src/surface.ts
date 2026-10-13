@@ -32,6 +32,7 @@ export function createSurface(){
   const sample=new THREE.Group();sample.position.set(SAMPLE.x,terrainHeight(SAMPLE.x,SAMPLE.z),SAMPLE.z);group.add(sample);
   for(let i=0;i<5;i++){const crystal=new THREE.Mesh(new THREE.ConeGeometry(.24,.9+(i%3)*.3,5),glow);crystal.position.set(Math.sin(i)*.55,.65,Math.cos(i)*.55);crystal.rotation.z=(i-2)*.12;sample.add(crystal);}
   const pad=new THREE.Mesh(new THREE.CylinderGeometry(3.5,3.5,.06,32),new THREE.MeshStandardMaterial({color:0x344c59,metalness:.6,roughness:.6}));pad.position.set(LANDING.x,.025,LANDING.z);group.add(pad);
+  const padRing=new THREE.Mesh(new THREE.TorusGeometry(3.3,.06,6,48),glow);padRing.rotation.x=Math.PI/2;padRing.position.set(LANDING.x,.09,LANDING.z);group.add(padRing);
   const beacon=new THREE.Group();beacon.position.set(0,0,LANDING.z+2.4);group.add(beacon);
   const pole=new THREE.Mesh(new THREE.CylinderGeometry(.12,.16,2.4,8),stone);pole.position.y=1.2;beacon.add(pole);
   const lamp=new THREE.Mesh(new THREE.SphereGeometry(.25,12,8),glow);lamp.position.y=2.4;beacon.add(lamp);

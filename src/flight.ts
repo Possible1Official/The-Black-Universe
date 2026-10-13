@@ -5,8 +5,9 @@ export const NYSA_RADIUS=170;
 export const NYSA_APPROACH:Vec3={x:0,y:0,z:-980};
 export const EREBUS_APPROACH:Vec3={x:0,y:0,z:-65};
 export const APPROACH_RANGE=100,SAFE_SPEED=18;
+export const SURFACE_FLIGHT_SECONDS=7;
 export type FlightLeg='nysa'|'erebus';
-export interface FlightState {leg:FlightLeg;phase:'launching'|'flying'|'landing'|'docking'|'landed'|'docked';position:Vec3;velocity:Vec3;throttle:number;timer:number;collisions:number;start:Vec3;}
+export interface FlightState {leg:FlightLeg;phase:'launching'|'flying'|'landing'|'descending'|'ascending'|'docking'|'landed'|'docked';position:Vec3;velocity:Vec3;throttle:number;timer:number;collisions:number;start:Vec3;}
 export interface FlightInput {throttle:number;brake:boolean;boost:boolean;yaw:number;pitch:number;}
 const copy=(v:Vec3)=>({...v});
 export const flightSpeed=(f:FlightState)=>Math.hypot(f.velocity.x,f.velocity.y,f.velocity.z);
@@ -14,7 +15,23 @@ export const flightGoal=(f:FlightState)=>f.leg==='nysa'?NYSA_APPROACH:EREBUS_APP
 export const flightDistance=(f:FlightState)=>{const t=flightGoal(f),p=f.position;return Math.hypot(t.x-p.x,t.y-p.y,t.z-p.z);};
 export function startFlight(leg:FlightLeg):FlightState {
   const position=leg==='nysa'?{x:0,y:0,z:-20}:{x:0,y:0,z:-1022};
-  return {leg,phase:'launching',position,velocity:{x:0,y:0,z:0},throttle:0,timer:0,collisions:0,start:copy(position)};
+  return {leg,phase:leg==='erebus'?'ascending':'launching',position,velocity:{x:0,y:0,z:0},throttle:0,timer:0,collisions:0,start:copy(position)};
+}
+export function isSurfaceFlight(f:FlightState){return f.phase==='descending'||f.phase==='ascending';}
+// Local survey coordinates; orbital and ground representations remain separate.
+export function surfaceFlightPose(timer:number,ascending=false){
+  const t=Math.max(0,Math.min(1,timer/SURFACE_FLIGHT_SECONDS)),ease=t*t*(3-2*t),height=ascending?ease:1-ease;
+  const position={x:-8*height,y:1.65+46*height,z:19.1+9.9*height};
+  const yaw=-Math.atan2(-position.x,position.z-17);
+  const pitch=-Math.atan2(position.y-1.65,Math.max(.001,Math.hypot(position.x,position.z-17)));
+  return {position,yaw,pitch,altitude:46*height,progress:t};
+}
+export function cloudOpacity(f:FlightState):number {
+  if(f.phase==='landing')return Math.max(0,(f.timer-2.4)/.6)*.96;
+  if(f.phase==='descending')return Math.max(0,1-f.timer/.7)*.96;
+  if(f.phase==='ascending')return Math.max(0,(f.timer-(SURFACE_FLIGHT_SECONDS-.7))/.7)*.96;
+  if(f.phase==='launching'&&f.leg==='erebus')return Math.max(0,1-f.timer/.6)*.96;
+  return 0;
 }
 export function canApproach(f:FlightState){return f.phase==='flying'&&flightDistance(f)<=APPROACH_RANGE&&flightSpeed(f)<=SAFE_SPEED;}
 export function beginApproach(f:FlightState):FlightState {
@@ -26,10 +43,15 @@ export function stepFlight(previous:FlightState,input:FlightInput,dt:number):Fli
   const f={...previous,position:copy(previous.position),velocity:copy(previous.velocity),start:copy(previous.start)};
   if(f.phase!=='flying'){
     if(f.phase==='landed'||f.phase==='docked')return f;
+    if(isSurfaceFlight(f)){
+      f.timer=Math.min(SURFACE_FLIGHT_SECONDS,f.timer+dt);
+      if(f.timer>=SURFACE_FLIGHT_SECONDS){f.phase=f.phase==='descending'?'landed':'launching';f.timer=0;f.start=copy(f.position);}
+      return f;
+    }
     f.timer=Math.min(3,f.timer+dt);const t=f.timer/3,s=t*t*(3-2*t);
     const goal=f.phase==='launching'?(f.leg==='nysa'?{x:0,y:0,z:-80}:NYSA_APPROACH):f.phase==='landing'?{x:0,y:0,z:-1022}:{x:0,y:0,z:-20};
     for(const axis of ['x','y','z'] as const)f.position[axis]=f.start[axis]+(goal[axis]-f.start[axis])*s;
-    if(f.timer>=3)f.phase=f.phase==='launching'?'flying':f.phase==='landing'?'landed':'docked';
+    if(f.timer>=3){f.phase=f.phase==='launching'?'flying':f.phase==='landing'?'descending':'docked';if(f.phase==='descending')f.timer=0;}
     return f;
   }
   f.throttle=Math.max(0,Math.min(1,f.throttle+Math.max(-1,Math.min(1,input.throttle))*dt*.7));

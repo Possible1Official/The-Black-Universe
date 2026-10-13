@@ -13,7 +13,11 @@ try{
  await page.waitForFunction(()=>parseFloat(document.getElementById('navDistance').textContent)<85,{},{timeout:120000});await page.keyboard.up('KeyW');await page.keyboard.down('Space');
  await page.waitForFunction(()=>parseFloat(document.getElementById('flightTelemetry').textContent)<10);await page.keyboard.up('Space');
  await fs.mkdir('.local/qa',{recursive:true});await page.screenshot({path:'.local/qa/kestrel-approach.png'});
- await page.keyboard.press('KeyE');await page.waitForFunction(()=>document.getElementById('location').textContent.includes('NYSA'));assert.equal(await page.locator('#flightHud').isVisible(),false);
+ await page.keyboard.press('KeyE');
+ await page.waitForFunction(()=>{const t=document.getElementById('flightTelemetry').textContent;const alt=parseFloat(t.split(' ')[2]);return t.startsWith('RADAR ALT')&&alt<35&&alt>4;});
+ assert.match(await page.locator('#flightStatus').textContent(),/GUIDED DESCENT/);assert.equal(await page.locator('#flightHud').isVisible(),true);
+ await page.screenshot({path:'.local/qa/descent-production.png'});
+ await page.waitForFunction(()=>document.getElementById('location').textContent.includes('SURVEY SITE'));assert.equal(await page.locator('#flightHud').isVisible(),false);
  await page.screenshot({path:'.local/qa/kestrel-production-landed.png'});assert.deepEqual(errors,[]);
- console.log(JSON.stringify({productionHooks:false,actualWalking:true,actualPiloting:true,landed:true,errors}));
+ console.log(JSON.stringify({productionHooks:false,actualWalking:true,actualPiloting:true,visibleDescent:true,landed:true,errors}));
 }finally{await browser.close();}

@@ -5,6 +5,8 @@ Ship, forge, planets, panels, floor and terrain maps remain procedural. Vega and
 
 Kestrel's cockpit/landed mesh, exterior Erebus hangar, orbital Nysa/atmosphere and forge scenery are generated with Three.js primitives. Nysa's globe-space color map is 1024×512 RGBA and its transparent cloud map 512×256 RGBA (2.5 MiB CPU pixels total; mip/driver allocation is not measured). They are generated once without downloads. The same color map is shared with the bridge-view planet. No new licensed asset or Mixamo authentication is needed for this flight milestone; craft/exterior detail remains procedural and is not claimed to be photorealistic.
 
+Surface descent/ascent reuses the cockpit and survey terrain rather than allocating another environment. A small generated emissive torus marks the landing pad; a CSS gradient cloud veil covers the orbital/local representation switch without an image download. No additional external asset, texture map or licensed character is introduced. This is staged guided flight, not photorealistic clouds or global planetary geometry.
+
 ## Selected asset and terms
 On 2026-10-13 the user completed Adobe verification and sign-in through the explicitly requested Playwright browser. Before any export, full 3D previews of Ely, Exo Gray, Vanguard and Eve were inspected. Ely's visible face, fitted science-fiction armor and orange accents fit the Erebus crew; Vanguard's helmet/bulk better suit security, Exo has a plainer dark suit, and Eve is a promising distinct crew appearance. Only Ely was downloaded.
 

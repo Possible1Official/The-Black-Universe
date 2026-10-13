@@ -90,6 +90,12 @@ The user has reprioritized development toward the flight, planet exploration and
 - Fixed-step assisted flight, approximate planet/hull safety recovery, touch controls, pause/reset and transient location with compatible saves.
 - Three-second guided transitions and a separate local survey sector; orbital mechanics, seamless whole-planet descent and terrain streaming remain future work.
 
+## Nysa cockpit descent and ascent (2026-10-13)
+- Orbital capture flows through cloud cover into a seven-second guided descent over the actual survey terrain, with radar altitude and a lit pad.
+- Boarding shows a corresponding cockpit ascent before orbital departure and manual return.
+- Original ship visibility survives repeated surface views; pause, quality switching, reset/reload and docking preserve the loop.
+- This stages separate representations; full-planet streaming, freely piloted atmospheric flight and orbital-scale continuity remain future work.
+
 ## Later
 - Physically based and baked lighting, modular authored environments, LODs, GPU timing and measured device budgets.
 - High-quality skinned characters, blend trees, IK, facial animation, interaction poses.
