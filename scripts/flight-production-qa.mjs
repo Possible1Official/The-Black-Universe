@@ -21,6 +21,15 @@ try{
  await page.screenshot({path:'.local/qa/kestrel-production-landed.png'});
  await page.keyboard.press('KeyJ');assert.equal(await page.locator('#surveyPanel').isVisible(),true);assert.equal(await page.locator('#dialogue').evaluate(e=>e.scrollTop),0);assert.equal(await page.locator('[data-track="arch"]').isEnabled(),true);
  await page.click('[data-track="arch"]');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='field-arch');assert.equal(await page.locator('#navLabel').textContent(),'Resonance arch');
- await page.keyboard.press('KeyJ');assert.equal(await page.locator('#dialogue').evaluate(e=>e.scrollTop),0);await page.click('#trackMission');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='sample');assert.deepEqual(errors,[]);
- console.log(JSON.stringify({productionHooks:false,actualWalking:true,actualPiloting:true,visibleDescent:true,landed:true,keyboardFieldLog:true,fieldTracking:true,missionGuidanceRestore:true,errors}));
+ await page.keyboard.press('KeyJ');assert.equal(await page.locator('#dialogue').evaluate(e=>e.scrollTop),0);await page.click('#trackMission');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='sample');
+ // Actual on-foot hatch approach, return piloting and bay ingress, without pose hooks.
+ await page.keyboard.down('KeyS');await page.waitForFunction(()=>parseFloat(document.getElementById('coordinates').textContent.split(' Z ')[1])>24);await page.keyboard.up('KeyS');
+ await page.keyboard.down('KeyD');await page.waitForFunction(()=>document.getElementById('interaction').textContent.includes('Board shuttle for Erebus'));await page.keyboard.up('KeyD');await page.keyboard.press('KeyE');
+ await page.waitForFunction(()=>document.getElementById('flightStatus').textContent.includes('Approach ring'));await page.keyboard.down('KeyW');
+ await page.waitForFunction(()=>parseFloat(document.getElementById('navDistance').textContent)<85,{},{timeout:120000});await page.keyboard.up('KeyW');await page.keyboard.down('Space');await page.waitForFunction(()=>parseFloat(document.getElementById('flightTelemetry').textContent)<10);await page.keyboard.up('Space');await page.keyboard.press('KeyE');
+ await page.waitForFunction(()=>document.getElementById('flightStatus').textContent.includes('GUIDED BAY ALIGNMENT'));
+ await page.waitForFunction(()=>parseFloat(document.getElementById('navDistance').textContent.split(' ')[1])>65&&document.getElementById('flightStatus').textContent.includes('GUIDED BAY ALIGNMENT'));
+ assert.match(await page.locator('#flightTelemetry').textContent(),/GUIDED CAPTURE/);await page.screenshot({path:'.local/qa/capture-production-ingress.png'});
+ await page.waitForFunction(()=>document.getElementById('location').textContent.includes('HABITAT CONCOURSE'));assert.equal(await page.locator('#flightHud').isVisible(),false);assert.deepEqual(errors,[]);
+ console.log(JSON.stringify({productionHooks:false,actualWalking:true,actualPiloting:true,visibleDescent:true,landed:true,keyboardFieldLog:true,fieldTracking:true,missionGuidanceRestore:true,actualHatchBoarding:true,returnPiloting:true,guidedBayIngress:true,docked:true,errors}));
 }finally{await browser.close();}

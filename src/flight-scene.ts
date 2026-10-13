@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {NYSA_CENTER,NYSA_RADIUS,flightGoal,canApproach,type FlightState} from './flight';
+import {STATION_HULL} from './station';
 export function makeShuttle(){
   const root=new THREE.Group(),hull=new THREE.MeshStandardMaterial({color:0x344655,metalness:.7,roughness:.35}),trim=new THREE.MeshStandardMaterial({color:0xd0d8d8,metalness:.6,roughness:.4}),glow=new THREE.MeshBasicMaterial({color:0x67e6ff});
   const box=(w:number,h:number,d:number,x:number,y:number,z:number,m:THREE.Material)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);mesh.castShadow=mesh.receiveShadow=true;root.add(mesh);return mesh;};
@@ -11,13 +12,14 @@ export function makeShuttle(){
 }
 export function createFlightScene(camera:THREE.PerspectiveCamera,planetMaterial:THREE.Material,cloudTexture:THREE.Texture){
   const scene=new THREE.Scene();scene.background=new THREE.Color(0x01040b);scene.add(camera);
-  scene.add(new THREE.HemisphereLight(0xa3ccf2,0x0c1325,2));const sun=new THREE.DirectionalLight(0xffe9cd,3);sun.position.set(-200,300,100);scene.add(sun);
+  scene.add(new THREE.HemisphereLight(0xa3ccf2,0x60798c,2));const sun=new THREE.DirectionalLight(0xffe9cd,3);sun.position.set(-200,300,-200);scene.add(sun);
   const metal=new THREE.MeshStandardMaterial({color:0x223646,metalness:.75,roughness:.4}),light=new THREE.MeshBasicMaterial({color:0x77e6ee});
   const station=new THREE.Group();scene.add(station);
   const block=(w:number,h:number,d:number,x:number,y:number,z:number,mat:THREE.Material=metal,parent:THREE.Object3D=station)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);parent.add(m);return m;};
-  block(62,8,85,0,-9,10);block(62,8,85,0,9,10);block(10,18,85,-28,0,10);block(10,18,85,28,0,10);block(62,18,5,0,0,52);
+  for(const b of STATION_HULL)block(b.size[0],b.size[1],b.size[2],b.position[0],b.position[1],b.position[2]);
   for(const x of [-22,22])block(1,12,1,x,0,-32,light);
-  for(const x of [-45,45]){block(25,12,45,x,0,20);block(23,.4,2,x,6.3,20,light);}
+  for(const x of [-45,45])block(23,.4,2,x,6.3,20,light);
+  for(const x of [-8,0,8])block(.2,.04,28,x,-4.96,-14,light);
   const planet=new THREE.Mesh(new THREE.SphereGeometry(NYSA_RADIUS,64,40),planetMaterial);planet.position.copy(NYSA_CENTER);scene.add(planet);
   const atmosphere=new THREE.Mesh(new THREE.SphereGeometry(NYSA_RADIUS+5,48,32),new THREE.MeshBasicMaterial({color:0x67b7e9,transparent:true,opacity:.12,side:THREE.BackSide}));atmosphere.position.copy(NYSA_CENTER);scene.add(atmosphere);
   const clouds=new THREE.Mesh(new THREE.SphereGeometry(NYSA_RADIUS+2,48,32),new THREE.MeshStandardMaterial({map:cloudTexture,transparent:true,opacity:.8,roughness:1,depthWrite:false}));clouds.position.copy(NYSA_CENTER);scene.add(clouds);

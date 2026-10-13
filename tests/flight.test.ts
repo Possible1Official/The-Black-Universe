@@ -19,7 +19,7 @@ test('surface takeoff permits manual return and guided docking without creating 
   let f=steps(startFlight('erebus'),602);
   while(flightDistance(f)>85)f=stepFlight(f,{...input,throttle:1,yaw:Math.PI},1/60);
   f=steps(f,120,{...input,brake:true,yaw:Math.PI});assert.ok(canApproach(f));
-  f=steps(beginApproach(f),181);assert.equal(f.phase,'docked');assert.equal(f.position.z,-20);
+  f=steps(beginApproach(f),301);assert.equal(f.phase,'docked');assert.equal(f.position.z,-20);
 });
 test('surface descent/ascent are bounded, reversible and pause at the same physical camera pose',()=>{
   let last=Infinity;

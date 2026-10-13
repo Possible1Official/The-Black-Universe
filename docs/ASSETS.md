@@ -11,6 +11,8 @@ Nysa's expanded sector keeps existing generated ground maps and materials. It ad
 
 Approach guidance reuses one 768-triangle torus geometry across three beacon meshes instead of one, with one separate basic material so status colors do not recolor Erebus lights. Two additional visible instances add up to 1,536 submitted triangles; culling determines actual view work. The velocity diamond is CSS/DOM, and the stopping forecast is bounded local CPU work. No new model, texture, account or asset download is added; no hardware FPS benefit is claimed.
 
+Erebus's seven existing exterior boxes now share one dimension table with manual collision and guided docking validation. Three small procedural floor-strip boxes mark the hangar interior (36 additional triangles); no texture, character or imported craft asset is added. Collision uses conservative clearance around primary boxes; lights, floor markings and other trim remain decorative. The camera and orbital capture reuse the existing scenes. The existing orbital hemisphere ground fill is raised and the existing key light repositioned toward the front for bay readability; light count is unchanged. No hardware rendering-speed improvement is claimed.
+
 ## Selected asset and terms
 
 On 2026-10-13 the user completed Adobe verification and sign-in through the explicitly requested Playwright browser. Before any export, full 3D previews of Ely, Exo Gray, Vanguard and Eve were inspected. Ely's visible face, fitted science-fiction armor and orange accents fit the Erebus crew; Vanguard's helmet/bulk better suit security, Exo has a plainer dark suit, and Eve is a promising distinct crew appearance. Only Ely was downloaded.

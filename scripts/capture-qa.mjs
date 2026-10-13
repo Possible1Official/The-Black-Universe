@@ -1,0 +1,33 @@
+import {chromium} from '@playwright/test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+const browser=await chromium.launch({args:['--no-sandbox','--enable-unsafe-swiftshader']});
+try{
+ const page=await browser.newPage({viewport:{width:960,height:600},isMobile:true,hasTouch:true});page.setDefaultTimeout(90000);
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(()=>{if(!localStorage.getItem('black-universe-v2'))localStorage.setItem('black-universe-v2',JSON.stringify({version:2,relays:['engineering','navigation','observatory'],forged:true,surveyed:true,fieldScans:['arch','weather'],power:{profile:'balanced',heat:24,tripped:false}}));});
+ await page.goto('http://localhost:5173/?qa');await page.waitForSelector('canvas[data-ready="true"]');await page.click('#play');await fs.mkdir('.local/qa',{recursive:true});
+ const launch=async()=>{await page.evaluate(()=>window.__erebus.target('Launch survey shuttle'));await page.waitForFunction(()=>window.__erebus.snapshot().nearest==='Launch survey shuttle');await page.keyboard.press('KeyE');await page.waitForFunction(()=>window.__erebus.snapshot().flight?.phase==='flying');};
+ const cdp=await page.context().newCDPSession(page);
+ const drag=async(from,to)=>{await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:from,y:330,id:1}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:to,y:330,id:1}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});};
+ await launch();await page.keyboard.press('KeyT');await drag(800,15);await page.keyboard.down('KeyW');
+ await page.waitForFunction(()=>window.__erebus.snapshot().flight?.position.z> -43);await page.keyboard.up('KeyW');await page.keyboard.down('Space');
+ await page.waitForFunction(()=>window.__erebus.snapshot().flight?.speed<.5);const bay=await page.evaluate(()=>window.__erebus.snapshot().flight);await page.keyboard.up('Space');
+ assert.ok(bay.position.z> -36&&bay.position.z<35);assert.ok(Math.abs(bay.position.x)<19.5);assert.equal(bay.collisions,0);
+ await page.screenshot({path:'.local/qa/capture-manual-bay.png'});await page.keyboard.press('KeyE');await page.waitForFunction(()=>window.__erebus.snapshot().flight?.phase==='docking');await page.waitForFunction(()=>!window.__erebus.snapshot().flight);
+ assert.equal(await page.evaluate(()=>window.__erebus.snapshot().onSurface),false);
+ await launch();await page.keyboard.down('KeyW');await page.waitForFunction(()=>window.__erebus.snapshot().flight?.distance<85);await page.keyboard.up('KeyW');await page.keyboard.down('Space');await page.waitForFunction(()=>window.__erebus.snapshot().flight?.speed<10);await page.keyboard.up('Space');
+ await drag(650,710);await page.keyboard.press('KeyE');await page.waitForFunction(()=>{const f=window.__erebus.snapshot().flight;return f?.phase==='landing'&&f.timer>.9;});
+ const orbital=await page.evaluate(()=>window.__erebus.snapshot());assert.ok(Math.hypot(orbital.flight.position.x,orbital.flight.position.y,orbital.flight.position.z+1200)>=178-1e-6);assert.match(await page.locator('#flightStatus').textContent(),/GUIDED ORBITAL CAPTURE/);
+ await page.screenshot({path:'.local/qa/capture-orbital.png'});await page.click('#menu');const frozen=await page.evaluate(()=>window.__erebus.snapshot());await page.waitForTimeout(400);assert.deepEqual(await page.evaluate(()=>window.__erebus.snapshot().flight),frozen.flight);assert.deepEqual(await page.evaluate(()=>window.__erebus.snapshot().camera),frozen.camera);
+ await page.getByText('Controls & settings',{exact:true}).click();await page.selectOption('#quality','high');await page.selectOption('#quality','low');await page.getByText('Controls & settings',{exact:true}).click();await page.click('#play');
+ await page.waitForFunction(()=>window.__erebus.snapshot().onSurface&&!window.__erebus.snapshot().flight);
+ await page.evaluate(()=>window.__erebus.target('Board shuttle for Erebus'));await page.waitForFunction(()=>window.__erebus.snapshot().nearest==='Board shuttle for Erebus');await page.keyboard.press('KeyE');await page.waitForFunction(()=>window.__erebus.snapshot().flight?.phase==='flying');
+ await page.keyboard.down('KeyW');await page.waitForFunction(()=>window.__erebus.snapshot().flight?.distance<85);await page.keyboard.up('KeyW');await page.keyboard.down('Space');await page.waitForFunction(()=>window.__erebus.snapshot().flight?.speed<10);await page.keyboard.up('Space');await page.keyboard.press('KeyE');
+ await page.waitForFunction(()=>{const f=window.__erebus.snapshot().flight;return f?.phase==='docking'&&f.timer>3.6;});
+ const ingress=await page.evaluate(()=>window.__erebus.snapshot().flight);assert.ok(Math.abs(ingress.position.x)<1e-6&&Math.abs(ingress.position.y)<1e-6);assert.ok(ingress.position.z>=-40&&ingress.position.z<=-20);assert.match(await page.locator('#flightStatus').textContent(),/GUIDED BAY ALIGNMENT/);
+ await page.screenshot({path:'.local/qa/capture-ingress.png'});await page.waitForFunction(()=>!window.__erebus.snapshot().flight);
+ const returned=await page.evaluate(()=>window.__erebus.snapshot());assert.equal(returned.shipHidden,false);assert.equal(returned.surfaceView,false);assert.equal(returned.progress.surveyed,true);assert.deepEqual(returned.progress.fieldScans,['arch','weather']);
+ await page.reload();await page.waitForSelector('canvas[data-ready="true"]');assert.deepEqual(await page.evaluate(()=>window.__erebus.snapshot().progress.fieldScans),['arch','weather']);assert.deepEqual(errors,[]);
+ console.log(JSON.stringify({manualBay:bay.position,manualCollisions:bay.collisions,orbitalCapture:orbital.flight.position,ingress:ingress.position,pauseAndQuality:true,docked:true,saveReload:true,errors}));
+}finally{await browser.close();}
