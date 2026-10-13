@@ -1,6 +1,9 @@
 """Bounded local asset acquisition using pinned MixamoHarvester; never ships credentials."""
 import argparse
 import importlib.util
+import json
+import hashlib
+import logging
 import os
 import re
 import time
@@ -20,6 +23,8 @@ if not token:
     sys.exit('Set MIXAMO_BEARER_TOKEN in your local process; do not save it in Git.')
 if not args.catalog and (not args.character or not args.motion or len(args.motion)>4):
     sys.exit('Select one character and 1–4 exact motion names; bulk harvesting is intentionally disabled.')
+if args.character and not re.fullmatch(r'[a-f0-9-]{36}', args.character):
+    sys.exit('Character IDs must be Mixamo UUIDs, not file paths.')
 if any(not re.fullmatch(r'[A-Za-z0-9 _-]{1,64}', m) for m in args.motion):
     sys.exit('Motion names must be simple catalog labels without path separators.')
 checkout = ROOT / '.local' / 'MixamoHarvester'
@@ -33,6 +38,8 @@ spec.loader.exec_module(module)
 # Upstream functions are used directly; its token-file and unbounded main() paths are not invoked.
 module.get_bearer_token = lambda: token
 module.MAX_THREADS = 1
+# Upstream exceptions may contain signed asset URLs; only emit sanitized local errors.
+logging.disable(logging.CRITICAL)
 # Bound HTTP requests; replace upstream's unbounded monitor with a deadline.
 original_get, original_post = module.requests.get, module.requests.post
 module.requests.get = lambda *a, **kw: original_get(*a, **{'timeout':30, **kw})
@@ -48,8 +55,9 @@ def bounded_monitor(bearer_token, character_id):
         time.sleep(5)
     raise TimeoutError('Mixamo export polling deadline')
 module.monitor_export_progress = bounded_monitor
-output = ROOT / '.local' / 'mixamo-assets'
-output.mkdir(exist_ok=True)
+# Isolate skins/clips by character; upstream skips existing files by filename.
+output = ROOT / '.local' / 'mixamo-assets' / (args.character or 'catalog')
+output.mkdir(parents=True,exist_ok=True)
 os.chdir(output)
 try:
     if args.catalog:
@@ -64,6 +72,7 @@ try:
         skin_url = module.monitor_export_progress(token,args.character)
         module.download_animation(skin_url,str(output),'character.fbx',args.character)
         found = set()
+        provenance = {"tool_revision": REVISION, "character_id": args.character, "motions": []}
         for page in range(1,31):
             motions = module.get_animation_list(token,page).get('results',[])
             if not motions: break
@@ -73,9 +82,12 @@ try:
                     expected=output/f"{motion['name']}_{args.character}.fbx"
                     if not expected.exists(): raise RuntimeError('No downloaded animation output')
                     found.add(motion['name'])
+                    provenance['motions'].append({'id': motion['id'], 'name': motion['name']})
             if len(found)==len(set(args.motion)): break
         missing=set(args.motion)-found
         if missing: sys.exit('Requested motions not located: '+', '.join(sorted(missing)))
+        provenance['files'] = [{'name': p.name, 'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(output.glob('*.fbx'))]
+        (output/'provenance.json').write_text(json.dumps(provenance, indent=2)+'\n')
         print('Acquisition finished. Verify actual FBX outputs, terms and provenance before conversion/publication.')
 except Exception as exc:
     # Avoid exception bodies or URLs that could include credentials.

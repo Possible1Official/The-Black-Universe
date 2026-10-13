@@ -1,0 +1,31 @@
+{
+  "tool_revision": "0f9a38aa15a79110016a0a1df15f0863c8dd9e12",
+  "character_id": "f7b85d05-5f1c-47d8-9770-9a1a054bd6f6",
+  "motions": [
+    {
+      "id": "c9c609a9-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Walking"
+    },
+    {
+      "id": "c9c79c65-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Idle"
+    }
+  ],
+  "files": [
+    {
+      "name": "Idle_f7b85d05-5f1c-47d8-9770-9a1a054bd6f6.fbx",
+      "bytes": 789936,
+      "sha256": "4d8c03c447a2371d73eb6c656cc5f3b1ffbed6be20d11b31dad5ce17ade91ec0"
+    },
+    {
+      "name": "Walking_f7b85d05-5f1c-47d8-9770-9a1a054bd6f6.fbx",
+      "bytes": 334096,
+      "sha256": "de44d055dadaad099a2f0abed254d397d1ad8c80f058dae579a4ee837d9512a9"
+    },
+    {
+      "name": "character.fbx",
+      "bytes": 4928496,
+      "sha256": "72febc79e3224fdaba3e9b1caac454434408af9f62816d8d4d9518bd20c2b454"
+    }
+  ]
+}
