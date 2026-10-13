@@ -18,6 +18,9 @@ try{
  assert.match(await page.locator('#flightStatus').textContent(),/GUIDED DESCENT/);assert.equal(await page.locator('#flightHud').isVisible(),true);
  await page.screenshot({path:'.local/qa/descent-production.png'});
  await page.waitForFunction(()=>document.getElementById('location').textContent.includes('SURVEY SITE'));assert.equal(await page.locator('#flightHud').isVisible(),false);
- await page.screenshot({path:'.local/qa/kestrel-production-landed.png'});assert.deepEqual(errors,[]);
- console.log(JSON.stringify({productionHooks:false,actualWalking:true,actualPiloting:true,visibleDescent:true,landed:true,errors}));
+ await page.screenshot({path:'.local/qa/kestrel-production-landed.png'});
+ await page.keyboard.press('KeyJ');assert.equal(await page.locator('#surveyPanel').isVisible(),true);assert.equal(await page.locator('#dialogue').evaluate(e=>e.scrollTop),0);assert.equal(await page.locator('[data-track="arch"]').isEnabled(),true);
+ await page.click('[data-track="arch"]');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='field-arch');assert.equal(await page.locator('#navLabel').textContent(),'Resonance arch');
+ await page.keyboard.press('KeyJ');assert.equal(await page.locator('#dialogue').evaluate(e=>e.scrollTop),0);await page.click('#trackMission');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='sample');assert.deepEqual(errors,[]);
+ console.log(JSON.stringify({productionHooks:false,actualWalking:true,actualPiloting:true,visibleDescent:true,landed:true,keyboardFieldLog:true,fieldTracking:true,missionGuidanceRestore:true,errors}));
 }finally{await browser.close();}

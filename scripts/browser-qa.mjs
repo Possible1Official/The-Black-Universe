@@ -94,8 +94,8 @@ const landed=await page.evaluate(()=>window.__erebus.snapshot().position);
 await page.keyboard.down('KeyW');await page.waitForFunction(z=>window.__erebus.snapshot().position.z<z-3,landed.z,{timeout:30000});await page.keyboard.up('KeyW');
 assert.ok((await page.evaluate(()=>window.__erebus.snapshot().position.y))>0,'terrain supports moving capsule');assert.ok(Number((await page.locator('#navDistance').textContent()).split(' m')[0])<initialDistance,'sample distance decreases while approaching');
 // Perimeter collision, then the real sample interaction (teleport is QA setup only).
-await page.evaluate(()=>window.__erebus.place(430,0,-Math.PI/2));await page.keyboard.down('KeyW');await page.waitForFunction(()=>window.__erebus.snapshot().position.x>431.4,{},{timeout:30000});await page.waitForTimeout(500);await page.keyboard.up('KeyW');
-assert.ok((await page.evaluate(()=>window.__erebus.snapshot().position.x))<431.8,'basalt perimeter blocks leaving survey site');
+await page.evaluate(()=>window.__erebus.place(462,0,-Math.PI/2));await page.keyboard.down('KeyW');await page.waitForFunction(()=>window.__erebus.snapshot().position.x>463.4,{},{timeout:30000});await page.waitForTimeout(500);await page.keyboard.up('KeyW');
+assert.ok((await page.evaluate(()=>window.__erebus.snapshot().position.x))<463.8,'basalt perimeter blocks leaving survey site');
 await interact('Survey luminous outcrop');assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
 assert.equal(await page.locator('#objective').textContent(),'Return to Erebus');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='extraction');assert.equal(await page.locator('#navLabel').textContent(),'Kestrel shuttle hatch');await page.screenshot({path:'.local/qa/nysa-sample.png'});
 await interact('Board shuttle for Erebus');await flyLeg(page);await page.waitForFunction(()=>!window.__erebus.snapshot().onSurface);
