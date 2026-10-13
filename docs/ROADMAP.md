@@ -14,9 +14,14 @@ Vision: an immersive, physically coherent browser universe with explorable vesse
 - Movement-driven arm/leg animation, solid access consoles and pause/dialogue input cleanup.
 - Placeholder meshes and scripted dialogue remain; arbitrary pathfinding and task planning are still future work.
 
+## Ship power milestone (2026-10-13)
+- Engineering routing presets, normalized thermal dynamics, latched containment trips and manual cooling/reset.
+- Observable reactor emission and lighting changes, forge guards, crew trip guidance and v1→v2 save migration.
+- Stable defaults retain the original mission; planetary landing, navigation aids and broader ship systems remain future work.
+
 ## Next four prioritized cycles
 1. **Character pipeline:** obtain valid Mixamo access, import one approved character with idle/walk clips, optimize to GLB, add asset provenance and budgets. If access is blocked, improve lighting/materials and crew collision/animation instead.
-2. **Ship simulation:** power distribution and containment diagnostics with observable consequences, ambient machinery, better doors, minimap and navigation aids. Preserve completed saves through a versioned migration.
+2. **Ship simulation expansion:** deepen the new power/containment model, ambient machinery, better doors, minimap and navigation aids. Preserve completed saves through a versioned migration.
 3. **First planetary excursion:** a small Nysa surface with terrain collision, landing/extraction loop, atmosphere, biome detail and a meaningful exploration objective.
 4. **NPC agency:** navigation graph, schedules, perception and task execution, with explicit goals and failure recovery. Add deterministic simulation tests. Dialogue can remain local until a properly authenticated backend exists.
 
