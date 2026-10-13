@@ -12,7 +12,11 @@ await fs.mkdir('.local/qa',{recursive:true});await page.screenshot({path:'.local
 // Pointer lock is not supplied by headless contexts: emulate its successful state to test keyboard gameplay.
 async function installPointerLock(){await page.evaluate(()=>{Object.defineProperty(document,'pointerLockElement',{get:()=>document.querySelector('canvas'),configurable:true});HTMLCanvasElement.prototype.requestPointerLock=async()=>{};document.exitPointerLock=()=>{};});}
 await installPointerLock();
-await page.click('summary');await page.selectOption('#quality','low');await page.click('#play');
+await page.click('summary');await page.selectOption('#quality','high');
+await page.waitForFunction(()=>window.__erebus.snapshot().render.lighting.visibleSources===9&&window.__erebus.snapshot().render.lighting.visibleProxies===0);
+await page.selectOption('#quality','low');
+await page.waitForFunction(()=>window.__erebus.snapshot().render.lighting.visibleSources===0&&window.__erebus.snapshot().render.lighting.visibleProxies===4);
+await page.click('#play');
 await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='navigation');assert.equal(await page.locator('#navigationHud').isVisible(),true);
 await page.keyboard.down('KeyW');await page.waitForFunction(()=>window.__erebus.snapshot().position.z<13.5,{},{timeout:30000});await page.keyboard.up('KeyW');
 let s=await page.evaluate(()=>window.__erebus.snapshot());assert.ok(s.position.z<14,'keyboard moves player forward');assert.ok(s.position.y>.8&&s.position.y<1,'floor supports player');
@@ -68,6 +72,11 @@ await interact('Scan the new world');assert.equal(await page.locator('#navigatio
 await interact('Scan the new world');assert.equal(await page.locator('#deployNysa').isEnabled(),true);
 await page.click('#deployNysa');await page.waitForFunction(()=>window.__erebus.snapshot().onSurface);
 await page.waitForFunction(()=>window.__erebus.snapshot().position.y<.95);
+// Quality changes while away must not enable ship lights or restore stale flags on return.
+await page.click('#menu');await page.selectOption('#quality','high');
+assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).render.lighting.visibleSources,0);
+assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).render.lighting.visibleProxies,0);
+await page.click('#play');
 assert.match(await page.locator('#location').textContent(),/NYSA/);await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='sample');assert.equal(await page.locator('#navLabel').textContent(),'Luminous outcrop');const initialDistance=Number((await page.locator('#navDistance').textContent()).split(' m')[0]);
 await page.screenshot({path:'.local/qa/nysa-landing.png'});console.log('Render sample: Nysa',JSON.stringify((await page.evaluate(()=>window.__erebus.snapshot())).render));
 const landed=await page.evaluate(()=>window.__erebus.snapshot().position);
@@ -79,6 +88,10 @@ assert.ok((await page.evaluate(()=>window.__erebus.snapshot().position.x))<431.8
 await interact('Survey luminous outcrop');assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
 assert.equal(await page.locator('#objective').textContent(),'Return to Erebus');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='extraction');assert.equal(await page.locator('#navLabel').textContent(),'Extraction beacon');await page.screenshot({path:'.local/qa/nysa-sample.png'});
 await interact('Extract to Erebus');await page.waitForFunction(()=>!window.__erebus.snapshot().onSurface);
+await page.waitForFunction(()=>window.__erebus.snapshot().render.lighting.visibleSources===9&&window.__erebus.snapshot().render.lighting.visibleProxies===0);
+await page.click('#menu');await page.selectOption('#quality','low');await page.click('#play');
+await page.waitForFunction(()=>window.__erebus.snapshot().render.lighting.visibleSources===0&&window.__erebus.snapshot().render.lighting.visibleProxies===4);
+console.log('Checked: High 9 / performance 4 / surface 0 light policy, surface quality change and extraction restore');
 assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.forged,true);
 assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.surveyed,true);
 // Reloading from the surface starts safely aboard while preserving the sample.
@@ -109,6 +122,7 @@ await interact('Open engineering diagnostics');
 assert.equal(await page.locator('#powerPanel').isVisible(),true);assert.equal(await page.locator('#resetContainment').isDisabled(),true);
 await page.screenshot({path:'.local/qa/containment-trip.png'});
 const hotState=await page.evaluate(()=>window.__erebus.snapshot());assert.equal(hotState.reactorColor,0xff4c32);
+await page.waitForFunction(()=>window.__erebus.snapshot().render.lighting.slots.some(s=>s.source===8&&s.color===0xff4c32&&s.intensity>0));
 await page.click('[data-profile="cooling"]');
 await page.waitForFunction(()=>window.__erebus.snapshot().progress.power.heat<=40,{},{timeout:60000});
 assert.equal(await page.locator('#resetContainment').isEnabled(),true);
