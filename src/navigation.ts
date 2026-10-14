@@ -2,6 +2,7 @@ import {bulkheadPanels} from './bulkheads';
 import type {Progress} from './state';
 import {forgeReadiness} from './power';
 import {LANDING,SAMPLE,SURFACE_ORIGIN} from './excursion';
+import {SHUTTLE_HATCH_Z} from './shuttle';
 import {FIELD_SITES,type FieldScan} from './survey';
 export interface NavPoint {x:number;z:number}
 export interface Waypoint extends NavPoint {id:string;label:string;hint:string}
@@ -10,7 +11,7 @@ export function missionDestination(p:Progress,onSurface:boolean,tracked?:FieldSc
   const site=FIELD_SITES.find(s=>s.id===tracked);
   if(onSurface&&site&&!p.fieldScans.includes(site.id))return at(`field-${site.id}`,site.label,SURFACE_ORIGIN+site.x,site.z,'Approach the illuminated scanner and press E to record a reading. Field log restores mission guidance.');
   if(onSurface)return p.surveyed
-    ?at('extraction','Kestrel shuttle hatch',SURFACE_ORIGIN,LANDING.z+2.4,'Board with E, fly to Erebus and brake at the docking ring.')
+    ?at('extraction','Kestrel shuttle hatch',SURFACE_ORIGIN,LANDING.z+SHUTTLE_HATCH_Z,'Board with E, fly to Erebus and brake at the docking ring.')
     :at('sample','Luminous outcrop',SURFACE_ORIGIN+SAMPLE.x,SAMPLE.z,'Approach the crystals and interact with E to secure a sample.');
   if(p.power.tripped || (!p.forged&&p.relays.length===3&&forgeReadiness(p.power,3)!==null))return at('diagnostics','Engineering diagnostics',-13.5,11.7,'Use diagnostics to restore stable Balanced routing and containment.');
   if(!p.relays.includes('navigation'))return at('navigation','Navigation relay',-5,-11);

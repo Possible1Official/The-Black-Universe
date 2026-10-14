@@ -7,8 +7,11 @@ export const STATION_HULL=[
   {size:[25,12,45],position:[-45,0,20]}, {size:[25,12,45],position:[45,0,20]}
 ] as const;
 export const CRAFT_CLEARANCE=3.5;
+// Supplied station is the elevated habitat assembly; the open docking bay below
+// retains its tested corridor. Conservative envelope covers the imported model.
+export const STATION_ASSEMBLY={size:[88,28,120],position:[0,27,10]} as const;
 const axes=['x','y','z'] as const;
-const bounds=STATION_HULL.map(b=>({min:{x:b.position[0]-b.size[0]/2-CRAFT_CLEARANCE,y:b.position[1]-b.size[1]/2-CRAFT_CLEARANCE,z:b.position[2]-b.size[2]/2-CRAFT_CLEARANCE},max:{x:b.position[0]+b.size[0]/2+CRAFT_CLEARANCE,y:b.position[1]+b.size[1]/2+CRAFT_CLEARANCE,z:b.position[2]+b.size[2]/2+CRAFT_CLEARANCE}}));
+const bounds=[...STATION_HULL,STATION_ASSEMBLY].map(b=>({min:{x:b.position[0]-b.size[0]/2-CRAFT_CLEARANCE,y:b.position[1]-b.size[1]/2-CRAFT_CLEARANCE,z:b.position[2]-b.size[2]/2-CRAFT_CLEARANCE},max:{x:b.position[0]+b.size[0]/2+CRAFT_CLEARANCE,y:b.position[1]+b.size[1]/2+CRAFT_CLEARANCE,z:b.position[2]+b.size[2]/2+CRAFT_CLEARANCE}}));
 export const stationContains=(p:Point)=>bounds.some(b=>axes.every(a=>p[a]>b.min[a]&&p[a]<b.max[a]));
 export function stationRecovery(p:Point):Point|null {
   if(!stationContains(p))return null;

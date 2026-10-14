@@ -1,4 +1,5 @@
 import {test} from 'node:test';
+import {SHUTTLE_HATCH_Z} from '../src/shuttle';
 import assert from 'node:assert/strict';
 import {missionDestination,routeWaypoint,navigationReading} from '../src/navigation';
 import {freshProgress,activateRelay,activateForge,RELAYS} from '../src/state';
@@ -17,7 +18,7 @@ test('surface guide switches from sample to extraction and never points back thr
   const p={...freshProgress(),relays:RELAYS,forged:true};
   const sample=missionDestination(p,true);assert.equal(sample.id,'sample');assert.equal(sample.x,SURFACE_ORIGIN+SAMPLE.x);
   const extraction=missionDestination({...p,surveyed:true,power:{...p.power,tripped:true}},true);
-  assert.equal(extraction.id,'extraction');assert.equal(extraction.x,SURFACE_ORIGIN);assert.equal(extraction.z,LANDING.z+2.4);
+  assert.equal(extraction.id,'extraction');assert.equal(extraction.x,SURFACE_ORIGIN);assert.equal(extraction.z,LANDING.z+SHUTTLE_HATCH_Z);
 });
 test('ship route traverses doorways and distinguishes both closed access panels',()=>{
   const p=activateRelay(freshProgress(),'navigation'),goal=missionDestination(p,false);

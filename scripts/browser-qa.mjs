@@ -6,7 +6,7 @@ const browser=await chromium.launch({args:['--no-sandbox','--enable-unsafe-swift
 try {
 const page=await browser.newPage({viewport:{width:960,height:600}});
 page.setDefaultTimeout(45000);
-await page.addInitScript(()=>{const raf=window.requestAnimationFrame.bind(window);window.requestAnimationFrame=callback=>raf(()=>setTimeout(()=>callback(performance.now()),100));});
+await page.addInitScript(()=>{localStorage.setItem('erebus-information','visible');const raf=window.requestAnimationFrame.bind(window);window.requestAnimationFrame=callback=>raf(()=>setTimeout(()=>callback(performance.now()),100));});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.goto('http://localhost:5173/?qa');await page.waitForSelector('canvas[data-ready="true"]',{timeout:60000});
 await fs.mkdir('.local/qa',{recursive:true});await page.screenshot({path:'.local/qa/intro.png'});
@@ -150,20 +150,21 @@ console.log('Checked: v1 migration, legacy rollback save, thermal trip, isolatio
 await page.click('#menu'); // Freeze autosave before installing a corrupt-load fixture.
 await page.evaluate(()=>localStorage.setItem('black-universe-v2','{bad'));console.log('Checking reload');await page.reload({waitUntil:'domcontentloaded'});await page.waitForSelector('canvas[data-ready="true"]');assert.equal((await page.evaluate(()=>window.__erebus.snapshot())).progress.relays.length,0,'corrupt save resets safely');
 assert.deepEqual(errors,[],'no browser exceptions');
-await page.close();console.log('Checking mobile');const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});mobile.on('pageerror',e=>errors.push(e.message));await mobile.goto('http://localhost:5173/?qa');await mobile.waitForSelector('canvas[data-ready="true"]');await mobile.click('summary');await mobile.selectOption('#quality','low');await mobile.click('#play');await mobile.screenshot({path:'.local/qa/mobile.png'});assert.equal(await mobile.locator('#touchAction').isVisible(),true);assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'mobile fits viewport');
+await page.close();console.log('Checking mobile');const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});mobile.on('pageerror',e=>errors.push(e.message));await mobile.addInitScript(()=>localStorage.setItem('erebus-information','visible'));await mobile.goto('http://localhost:5173/?qa');await mobile.waitForSelector('canvas[data-ready="true"]');await mobile.click('summary');await mobile.selectOption('#quality','low');await mobile.click('#play');await mobile.screenshot({path:'.local/qa/mobile.png'});assert.equal(await mobile.locator('#touchAction').isVisible(),true);assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'mobile fits viewport');
 // Pause before seeding so visibility/pause saving cannot overwrite the completed fixture.
 await mobile.click('#menu');
 // Seed completed progress so an accidental menu-reset click cannot hide behind fresh state.
 await mobile.evaluate(()=>localStorage.setItem('black-universe-v2',JSON.stringify({version:2,relays:['engineering','navigation','observatory'],forged:true,power:{profile:'balanced',heat:24,tripped:false}})));
 await mobile.reload({waitUntil:'domcontentloaded'});await mobile.waitForSelector('canvas[data-ready="true"]');assert.equal((await mobile.evaluate(()=>window.__erebus.snapshot())).progress.forged,true,'completed fixture loads');await mobile.click('summary');await mobile.click('#play');
 const start=await mobile.evaluate(()=>window.__erebus.snapshot().position.z);
-await mobile.touchscreen.tap(80,650); // Real touch device context.
+const stickBox=await mobile.locator('#stick').boundingBox(),stickX=stickBox.x+stickBox.width/2,stickY=stickBox.y+stickBox.height/2-25;
+await mobile.touchscreen.tap(stickX,stickY); // Real touch device context, actual layout.
 const cdp=await mobile.context().newCDPSession(mobile);
-await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:80,y:668}]});
+await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:stickX,y:stickY}]});
 await mobile.waitForFunction(z=>window.__erebus.snapshot().position.z<z-.25,start,{timeout:30000});
 await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
 assert.ok((await mobile.evaluate(()=>window.__erebus.snapshot().position.z))<start-.25,'touch joystick moves player');
-await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:80,y:668}]});
+await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:stickX,y:stickY}]});
 await mobile.waitForFunction(()=>window.__erebus.snapshot().touchMove.y<0);
 await mobile.evaluate(()=>document.getElementById('menu').click());
 assert.deepEqual(await mobile.evaluate(()=>window.__erebus.snapshot().touchMove),{x:0,y:0});
@@ -189,7 +190,7 @@ assert.equal(await mobile.evaluate(()=>document.documentElement.scrollWidth<=inn
 await mobile.click('#deployNysa');await flyLeg(mobile);await mobile.waitForFunction(()=>window.__erebus.snapshot().onSurface);
 await mobile.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='sample');assert.equal(await mobile.locator('#navigationHud').isVisible(),true);
 const surfaceStart=await mobile.evaluate(()=>window.__erebus.snapshot().position.z);
-await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:80,y:668}]});
+await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:stickX,y:stickY}]});
 await mobile.waitForFunction(z=>window.__erebus.snapshot().position.z<z-.7,surfaceStart,{timeout:30000});
 await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
 await mobile.evaluate(()=>window.__erebus.target('Survey luminous outcrop'));

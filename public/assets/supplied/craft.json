@@ -1,0 +1,26 @@
+{
+  "kind": "craft",
+  "meshes": 1,
+  "source_components": 74,
+  "triangles": 50857,
+  "source_bounds": [
+    [
+      -0.37793081998825073,
+      -0.25445058941841125,
+      -0.11503155529499054
+    ],
+    [
+      0.3795476257801056,
+      0.7613968253135681,
+      0.32082974910736084
+    ]
+  ],
+  "scale": 6.4970387326735874,
+  "dimensions": [
+    4.921367168426514,
+    6.600000381469727,
+    2.8318076133728027
+  ],
+  "texture_cap": 1024,
+  "conversion": "Blender 4.3.2, static self-contained glTF; joined static components; legacy station materials reconstructed from supplied maps; craft decimation .12 above 1000 triangles"
+}

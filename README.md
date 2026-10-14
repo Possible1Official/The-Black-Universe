@@ -12,6 +12,8 @@ Node.js 22+: `npm ci`, then `npm run dev`. Open the printed URL. `npm test` veri
 
 ## Expedition 001
 
+**Clear view:** information panels start hidden. Click **INFO** / press **H** to show or hide them. Click **1P / 3P** / press **C** to switch first/third person for both walking and flying. Touch movement, E, Brake/Boost/Target and pause remain usable with panels hidden. Preferences persist locally. See [camera and HUD scope](docs/VIEWS.md).
+
 Enter the Erebus. Move with WASD/arrows, look with the mouse, sprint with Shift, jump with Space, and interact with E. Solid collision geometry blocks interaction through walls; approach an unobstructed console or officer. Escape pauses. Touch devices have a left movement joystick, right-side drag camera, and an E action button. Open menu settings for performance mode, audio and mission reset. The navigation card shows heading, direction and distance to the next mission waypoint, routing room crossings through bulkheads. See [navigation controls and scope](docs/NAVIGATION.md).
 
 1. Walk to the forward bridge. Speak to Officer Vega and activate the navigation relay.
