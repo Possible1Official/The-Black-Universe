@@ -3,9 +3,13 @@ import {FIELD_SITES} from './survey';
 export const SURFACE_ORIGIN=400;
 export const SITE_HALF=64;
 export const LANDING={x:0,z:20};
+export const LANDING_PADS={survey:{...LANDING,label:'Survey pad'},arch:{x:-34,z:-15,label:'Arch pad'}} as const;
+export type LandingSite=keyof typeof LANDING_PADS;
+export const LANDING_PLAN=Object.values(LANDING_PADS);
+export const landingPad=(site:LandingSite='survey')=>LANDING_PADS[site]??LANDING_PADS.survey;
 export const SAMPLE={x:9,z:-9};
 export function surfaceRocks(){
-  const points=[LANDING,SAMPLE,...FIELD_SITES],rocks:{x:number;z:number;radius:number}[]=[];
+  const points=[...LANDING_PLAN,SAMPLE,...FIELD_SITES],rocks:{x:number;z:number;radius:number}[]=[];
   const distanceToSegment=(x:number,z:number,a:typeof LANDING,b:typeof LANDING)=>{
     const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz)));
     return Math.hypot(x-a.x-t*dx,z-a.z-t*dz);
@@ -21,7 +25,8 @@ export function surfaceRocks(){
 export function terrainHeight(x:number,z:number):number {
   const ridge=3*Math.exp(-((x-40)**2+(z+39)**2)/280);
   const relief=1.2*Math.sin(x*.12)*Math.cos(z*.1)+.45*Math.sin((x+z)*.22)+ridge;
-  const padBlend=Math.min(1,Math.max(0,(Math.hypot(x-LANDING.x,z-LANDING.z)-4)/6));
+  let distance=Infinity;for(const pad of LANDING_PLAN)distance=Math.min(distance,Math.hypot(x-pad.x,z-pad.z));
+  const padBlend=Math.min(1,Math.max(0,(distance-4)/6));
   return padBlend===0?0:relief*padBlend;
 }
 export function terrainMesh(segments=96){

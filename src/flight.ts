@@ -1,5 +1,6 @@
 // Bounded arcade flight, in sector meters; no gravity or arbitrary orbital mechanics.
 import {inDockingZone,stationRecovery} from './station';
+import {landingPad,type LandingSite} from './excursion';
 export type Vec3={x:number;y:number;z:number};
 export const NYSA_CENTER:Vec3={x:0,y:0,z:-1200};
 export const NYSA_RADIUS=170;
@@ -10,23 +11,24 @@ export const SURFACE_FLIGHT_SECONDS=7;
 export const DOCKING_SECONDS=5;
 export const NYSA_CAPTURE:Vec3={x:0,y:0,z:-1022};
 export type FlightLeg='nysa'|'erebus';
-export interface FlightState {leg:FlightLeg;phase:'launching'|'flying'|'landing'|'descending'|'ascending'|'docking'|'landed'|'docked';position:Vec3;velocity:Vec3;throttle:number;timer:number;collisions:number;start:Vec3;}
+export interface FlightState {leg:FlightLeg;site:LandingSite;phase:'launching'|'flying'|'landing'|'descending'|'ascending'|'docking'|'landed'|'docked';position:Vec3;velocity:Vec3;throttle:number;timer:number;collisions:number;start:Vec3;}
 export interface FlightInput {throttle:number;brake:boolean;boost:boolean;yaw:number;pitch:number;}
 const copy=(v:Vec3)=>({...v});
 export const flightSpeed=(f:FlightState)=>Math.hypot(f.velocity.x,f.velocity.y,f.velocity.z);
 export const flightGoal=(f:FlightState)=>f.leg==='nysa'?NYSA_APPROACH:EREBUS_APPROACH;
 export const flightDistance=(f:FlightState)=>{const t=flightGoal(f),p=f.position;return Math.hypot(t.x-p.x,t.y-p.y,t.z-p.z);};
-export function startFlight(leg:FlightLeg):FlightState {
+export function startFlight(leg:FlightLeg,site:LandingSite='survey'):FlightState {
   const position=leg==='nysa'?{x:0,y:0,z:-20}:copy(NYSA_CAPTURE);
-  return {leg,phase:leg==='erebus'?'ascending':'launching',position,velocity:{x:0,y:0,z:0},throttle:0,timer:0,collisions:0,start:copy(position)};
+  return {leg,site,phase:leg==='erebus'?'ascending':'launching',position,velocity:{x:0,y:0,z:0},throttle:0,timer:0,collisions:0,start:copy(position)};
 }
 export function isSurfaceFlight(f:FlightState){return f.phase==='descending'||f.phase==='ascending';}
 // Local survey coordinates; orbital and ground representations remain separate.
-export function surfaceFlightPose(timer:number,ascending=false){
+export function surfaceFlightPose(timer:number,ascending=false,site:LandingSite='survey'){
   const t=Math.max(0,Math.min(1,timer/SURFACE_FLIGHT_SECONDS)),ease=t*t*(3-2*t),height=ascending?ease:1-ease;
-  const position={x:-8*height,y:1.65+46*height,z:19.1+9.9*height};
-  const yaw=-Math.atan2(-position.x,position.z-17);
-  const pitch=-Math.atan2(position.y-1.65,Math.max(.001,Math.hypot(position.x,position.z-17)));
+  const pad=landingPad(site);
+  const position={x:pad.x-8*height,y:1.65+46*height,z:pad.z-.9+9.9*height};
+  const yaw=-Math.atan2(pad.x-position.x,position.z-(pad.z-3));
+  const pitch=-Math.atan2(position.y-1.65,Math.max(.001,Math.hypot(position.x-pad.x,position.z-(pad.z-3))));
   return {position,yaw,pitch,altitude:46*height,progress:t};
 }
 export function cloudOpacity(f:FlightState):number {

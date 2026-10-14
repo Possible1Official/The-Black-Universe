@@ -36,3 +36,5 @@
 #surveyMap{display:block;width:100%;height:auto;max-width:360px;margin:12px auto;border:1px solid #79c8ce55;cursor:crosshair;touch-action:manipulation}#pinForm{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}#pinForm label{font-size:11px;color:#a5becb}#pinForm input{display:block;width:100%;min-height:44px;margin-top:4px;color:#d8f2f5;background:#0b1b28;border:1px solid #79c8ce55;padding:8px;font:inherit;box-sizing:border-box}#pinForm button{grid-column:1/-1;min-height:44px}
 
 #closeFieldLog{position:sticky;top:0;z-index:1;display:block;width:100%;min-height:44px;background:#0b1b28;margin:8px 0;border-color:#79c8ce77}
+
+#flightPad[hidden]{display:none}#flightHud div{flex-wrap:wrap}#hud[data-information="false"] #flightHud{max-width:calc(100vw - 24px)}

@@ -151,3 +151,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Tap or keyboard-coordinate temporary waypoints, safe perimeter bounds and automatic mission fallback on arrival.
 - Read-only ship overview, reachable close control and scrollable portrait/landscape layout; normal HUD stays hidden by default.
 - Charted 128 m sector, not whole-planet mapping, fog-of-war or obstacle routing. CGTrader imports remain verification-blocked.
+
+## Arch-pad flight-connected exploration (2026-10-14)
+- Two selectable pads in Nysa's existing sector, PAD/L before capture, locked guided descent/ascent.
+- Relocated parked craft/hull/beacon/hatch, matching extraction navigation and field-map markers.
+- Flat, clear pad terrain; shared goals/saves and default safe ship reload.
+- A second landing entrance rather than a second planet or seamless streaming. CGTrader import remains verification-blocked.

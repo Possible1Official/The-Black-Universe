@@ -15,7 +15,9 @@ try{
  await page.goto('http://localhost:4173/');await page.waitForSelector('canvas[data-ready="true"]');assert.equal(await page.evaluate(()=>typeof window.__erebus),'undefined');
  await page.getByText('Controls & settings',{exact:true}).click();await page.selectOption('#quality','low');await page.getByText('Controls & settings',{exact:true}).click();await page.click('#play');
  await page.keyboard.down('KeyD');await page.waitForFunction(()=>document.getElementById('interaction').textContent.includes('Launch survey shuttle'));await page.keyboard.up('KeyD');await page.keyboard.press('KeyE');
- await page.waitForFunction(()=>document.getElementById('flightStatus').textContent.includes('Approach ring'));await page.keyboard.down('KeyW');
+ await page.waitForFunction(()=>document.getElementById('flightStatus').textContent.includes('Approach ring'));
+ if(process.env.LANDING_SITE_QA==='arch'&&await page.locator('#flightPad').isVisible()){await page.click('#flightPad');assert.match(await page.locator('#flightPad').textContent(),/ARCH/);}
+ await page.keyboard.down('KeyW');
  await page.waitForFunction(()=>parseFloat(document.getElementById('navDistance').textContent)<85,{},{timeout:120000});await page.waitForFunction(()=>document.getElementById('flightHud').dataset.approach==='brake');assert.equal(await page.locator('#velocityMarker').isVisible(),true);await page.keyboard.up('KeyW');await page.keyboard.down('Space');
  await page.waitForFunction(()=>parseFloat(document.getElementById('flightTelemetry').textContent)<10);await page.keyboard.up('Space');
  await page.waitForFunction(()=>document.getElementById('flightHud').dataset.approach==='ready');await fs.mkdir('.local/qa',{recursive:true});await page.screenshot({path:'.local/qa/kestrel-approach.png'});
@@ -29,7 +31,7 @@ try{
  await page.click('[data-track="arch"]');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='field-arch');assert.equal(await page.locator('#navLabel').textContent(),'Resonance arch');
  await page.keyboard.press('KeyJ');assert.equal(await page.locator('#dialogue').evaluate(e=>e.scrollTop),0);await page.click('#trackMission');await page.waitForFunction(()=>document.getElementById('navigationHud').dataset.destination==='sample');
  // Actual on-foot hatch approach, return piloting and bay ingress, without pose hooks.
- await page.keyboard.down('KeyS');await page.waitForFunction(()=>parseFloat(document.getElementById('coordinates').textContent.split(' Z ')[1])>24);await page.keyboard.up('KeyS');
+ await page.keyboard.down('KeyS');await page.waitForFunction(threshold=>parseFloat(document.getElementById('coordinates').textContent.split(' Z ')[1])>threshold,process.env.LANDING_SITE_QA==='arch'?-11:24);await page.keyboard.up('KeyS');
  await page.keyboard.down('KeyD');await page.waitForFunction(()=>document.getElementById('interaction').textContent.includes('Board shuttle for Erebus'));await page.keyboard.up('KeyD');await page.keyboard.press('KeyE');
  await page.waitForFunction(()=>document.getElementById('flightStatus').textContent.includes('Approach ring'));await page.keyboard.down('KeyW');
  await page.waitForFunction(()=>parseFloat(document.getElementById('navDistance').textContent)<85,{},{timeout:120000});await page.keyboard.up('KeyW');await page.keyboard.down('Space');await page.waitForFunction(()=>parseFloat(document.getElementById('flightTelemetry').textContent)<10);await page.keyboard.up('Space');await page.keyboard.press('KeyE');
@@ -38,5 +40,5 @@ try{
  assert.match(await page.locator('#flightTelemetry').textContent(),/GUIDED CAPTURE/);await page.screenshot({path:'.local/qa/capture-production-ingress.png'});
  await page.waitForFunction(()=>document.getElementById('location').textContent.includes('HABITAT CONCOURSE'));assert.equal(await page.locator('#flightHud').isVisible(),false);assert.deepEqual(errors,[]);
  if(faultMode){assert.deepEqual(assetRequests,{craft:2,station:2});assert.equal(assetWarnings.length,2);}
- console.log(JSON.stringify({assetFailureRecovery:faultMode,assetRequests: faultMode?assetRequests:undefined,productionHooks:false,actualWalking:true,actualPiloting:true,visibleDescent:true,landed:true,keyboardFieldLog:true,fieldTracking:true,missionGuidanceRestore:true,actualHatchBoarding:true,returnPiloting:true,guidedBayIngress:true,docked:true,errors}));
+ console.log(JSON.stringify({landingSite:process.env.LANDING_SITE_QA==='arch'?'arch':'survey',assetFailureRecovery:faultMode,assetRequests: faultMode?assetRequests:undefined,productionHooks:false,actualWalking:true,actualPiloting:true,visibleDescent:true,landed:true,keyboardFieldLog:true,fieldTracking:true,missionGuidanceRestore:true,actualHatchBoarding:true,returnPiloting:true,guidedBayIngress:true,docked:true,errors}));
 }finally{await browser.close();}

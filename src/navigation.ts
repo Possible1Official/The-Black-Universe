@@ -1,7 +1,7 @@
 import {bulkheadPanels} from './bulkheads';
 import type {Progress} from './state';
 import {forgeReadiness} from './power';
-import {LANDING,SAMPLE,SURFACE_ORIGIN,SITE_HALF} from './excursion';
+import {LANDING,SAMPLE,SURFACE_ORIGIN,SITE_HALF,landingPad,type LandingSite} from './excursion';
 import {SHUTTLE_HATCH_Z} from './shuttle';
 import {SUPPLY_CACHE} from './supplies';
 import {FIELD_SITES,type FieldScan} from './survey';
@@ -9,13 +9,14 @@ export interface NavPoint {x:number;z:number}
 export type SurfaceTrack=FieldScan|'supplies'|NavPoint;
 export interface Waypoint extends NavPoint {id:string;label:string;hint:string}
 const at=(id:string,label:string,x:number,z:number,hint='Approach, face the console and interact with E.'):Waypoint=>({id,label,x,z,hint});
-export function missionDestination(p:Progress,onSurface:boolean,tracked?:SurfaceTrack):Waypoint {
+export function missionDestination(p:Progress,onSurface:boolean,tracked?:SurfaceTrack,landing:LandingSite='survey'):Waypoint {
+  const pad=landingPad(landing);
   if(onSurface&&typeof tracked==='object'&&Number.isFinite(tracked.x)&&Number.isFinite(tracked.z)&&Math.abs(tracked.x)<=SITE_HALF-3&&Math.abs(tracked.z)<=SITE_HALF-3)return at('surface-pin','Survey waypoint',SURFACE_ORIGIN+tracked.x,tracked.z,'Straight-line guidance only; choose a clear route around rocks. Field log restores mission guidance.');
   if(onSurface&&tracked==='supplies'&&!p.supplies.cacheClaimed)return at('supplies','Coolant supply cache',SURFACE_ORIGIN+SUPPLY_CACHE.x,SUPPLY_CACHE.z,'Recover cartridges with E when your reserve has space.');
   const site=FIELD_SITES.find(s=>s.id===tracked);
   if(onSurface&&site&&!p.fieldScans.includes(site.id))return at(`field-${site.id}`,site.label,SURFACE_ORIGIN+site.x,site.z,'Approach the illuminated scanner and press E to record a reading. Field log restores mission guidance.');
   if(onSurface)return p.surveyed
-    ?at('extraction','Kestrel shuttle hatch',SURFACE_ORIGIN,LANDING.z+SHUTTLE_HATCH_Z,'Board with E, fly to Erebus and brake at the docking ring.')
+    ?at('extraction','Kestrel shuttle hatch',SURFACE_ORIGIN+pad.x,pad.z+SHUTTLE_HATCH_Z,'Board with E, fly to Erebus and brake at the docking ring.')
     :at('sample','Luminous outcrop',SURFACE_ORIGIN+SAMPLE.x,SAMPLE.z,'Approach the crystals and interact with E to secure a sample.');
   if(p.power.tripped || (!p.forged&&p.relays.length===3&&forgeReadiness(p.power,3)!==null))return at('diagnostics','Engineering diagnostics',-13.5,11.7,'Use diagnostics to restore stable Balanced routing and containment.');
   if(!p.relays.includes('navigation'))return at('navigation','Navigation relay',-5,-11);

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {createGroundMaterial,groundTint,GROUND_TILE_METERS} from './terrain-material';
-import {LANDING,SAMPLE,SITE_HALF,SURFACE_ORIGIN,terrainHeight,terrainMesh,surfaceRocks} from './excursion';
+import {LANDING,LANDING_PLAN,landingPad,type LandingSite,SAMPLE,SITE_HALF,SURFACE_ORIGIN,terrainHeight,terrainMesh,surfaceRocks} from './excursion';
 import {FIELD_SITES,type FieldScan} from './survey';
 export function createSurface(){
   const group=new THREE.Group();group.position.x=SURFACE_ORIGIN;group.visible=false;
@@ -25,12 +25,12 @@ export function createSurface(){
   }
   rocks.castShadow=true;rocks.receiveShadow=true;group.add(rocks);
   const grass=new THREE.InstancedMesh(new THREE.ConeGeometry(.12,.75,5),new THREE.MeshStandardMaterial({color:0x61958c,roughness:.9}),240);
-  for(let i=0;i<240;i++){const spread=i<180?29:SITE_HALF-4;let x=Math.sin(i*23.3)*spread;const z=Math.cos(i*41.7)*spread;if(Math.hypot(x-LANDING.x,z-LANDING.z)<4)x=-20;transform.position.set(x,terrainHeight(x,z)+.35,z);transform.rotation.set(0,i,0);transform.scale.set(1,1+(i%3)*.3,1);transform.updateMatrix();grass.setMatrixAt(i,transform.matrix);}group.add(grass);
+  for(let i=0;i<240;i++){const spread=i<180?29:SITE_HALF-4;let x=Math.sin(i*23.3)*spread;const z=Math.cos(i*41.7)*spread;if(LANDING_PLAN.some(p=>Math.hypot(x-p.x,z-p.z)<4))x=-20;transform.position.set(x,terrainHeight(x,z)+.35,z);transform.rotation.set(0,i,0);transform.scale.set(1,1+(i%3)*.3,1);transform.updateMatrix();grass.setMatrixAt(i,transform.matrix);}group.add(grass);
   const glow=new THREE.MeshStandardMaterial({color:0x9cf1df,emissive:0x39cbb2,emissiveIntensity:2,roughness:.3,metalness:.3});
   const sample=new THREE.Group();sample.position.set(SAMPLE.x,terrainHeight(SAMPLE.x,SAMPLE.z),SAMPLE.z);group.add(sample);
   for(let i=0;i<5;i++){const crystal=new THREE.Mesh(new THREE.ConeGeometry(.24,.9+(i%3)*.3,5),glow);crystal.position.set(Math.sin(i)*.55,.65,Math.cos(i)*.55);crystal.rotation.z=(i-2)*.12;sample.add(crystal);}
-  const pad=new THREE.Mesh(new THREE.CylinderGeometry(3.5,3.5,.06,32),new THREE.MeshStandardMaterial({color:0x344c59,metalness:.6,roughness:.6}));pad.position.set(LANDING.x,.025,LANDING.z);group.add(pad);
-  const padRing=new THREE.Mesh(new THREE.TorusGeometry(3.3,.06,6,48),glow);padRing.rotation.x=Math.PI/2;padRing.position.set(LANDING.x,.09,LANDING.z);group.add(padRing);
+  const padGeo=new THREE.CylinderGeometry(3.5,3.5,.06,32),ringGeo=new THREE.TorusGeometry(3.3,.06,6,48),padMaterial=new THREE.MeshStandardMaterial({color:0x344c59,metalness:.6,roughness:.6});
+  for(const site of LANDING_PLAN){const pad=new THREE.Mesh(padGeo,padMaterial);pad.position.set(site.x,.025,site.z);group.add(pad);const ring=new THREE.Mesh(ringGeo,glow);ring.rotation.x=Math.PI/2;ring.position.set(site.x,.09,site.z);group.add(ring);}
   const beacon=new THREE.Group();beacon.position.set(0,0,LANDING.z+2.4);group.add(beacon);
   const pole=new THREE.Mesh(new THREE.CylinderGeometry(.12,.16,2.4,8),stone);pole.position.y=1.2;beacon.add(pole);
   const lamp=new THREE.Mesh(new THREE.SphereGeometry(.25,12,8),glow);lamp.position.y=2.4;beacon.add(lamp);
@@ -62,5 +62,5 @@ export function createSurface(){
   // Distant silhouettes are visual scenery beyond the playable crater.
   for(let i=0;i<16;i++){const mountain=new THREE.Mesh(new THREE.ConeGeometry(26,40+(i%4)*10,5),stone);const a=i*Math.PI/8;mountain.position.set(Math.cos(a)*150,12,Math.sin(a)*150);mountain.rotation.y=i;group.add(mountain);}
   const skyPlanet=new THREE.Mesh(new THREE.SphereGeometry(13,24,16),new THREE.MeshStandardMaterial({color:0x93bfc5,roughness:1}));skyPlanet.position.set(-80,68,-170);group.add(skyPlanet);
-  return {group,mesh,obstacles,sample,landmarkBoxes,scanners,setScans(ids:readonly FieldScan[]){for(const s of scanners)s.material.emissiveIntensity=ids.includes(s.id)?1.8:.6;},setQuality:groundMaterial.setQuality,materialSnapshot:groundMaterial.snapshot};
+  return {group,mesh,obstacles,sample,setLanding(site:LandingSite){const pad=landingPad(site);beacon.position.set(pad.x,0,pad.z+2.4);},landmarkBoxes,scanners,setScans(ids:readonly FieldScan[]){for(const s of scanners)s.material.emissiveIntensity=ids.includes(s.id)?1.8:.6;},setQuality:groundMaterial.setQuality,materialSnapshot:groundMaterial.snapshot};
 }
