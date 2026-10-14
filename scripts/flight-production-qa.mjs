@@ -5,6 +5,11 @@ const browser=await chromium.launch({args:['--no-sandbox','--enable-unsafe-swift
 try{
  const page=await browser.newPage({viewport:{width:960,height:600},isMobile:true,hasTouch:true});page.setDefaultTimeout(90000);
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const faultMode=process.env.ASSET_FAILURE_QA==='1',assetRequests={craft:0,station:0},assetWarnings=[];
+ if(faultMode){
+  page.on('console',m=>{if(/asset unavailable/.test(m.text()))assetWarnings.push(m.text());});
+  for(const kind of ['craft','station'])await page.route(`**/*${kind}*.glb`,route=>++assetRequests[kind]===1?route.abort('failed'):route.continue());
+ }
  await page.addInitScript(()=>localStorage.setItem('black-universe-v2',JSON.stringify({version:2,relays:['engineering','navigation','observatory'],forged:true,surveyed:false,power:{profile:'balanced',heat:24,tripped:false}})));
  await page.addInitScript(()=>{localStorage.setItem('erebus-information','visible');localStorage.setItem('erebus-camera','third');});
  await page.goto('http://localhost:4173/');await page.waitForSelector('canvas[data-ready="true"]');assert.equal(await page.evaluate(()=>typeof window.__erebus),'undefined');
@@ -32,5 +37,6 @@ try{
  await page.waitForFunction(()=>parseFloat(document.getElementById('navDistance').textContent.split(' ')[1])>65&&document.getElementById('flightStatus').textContent.includes('GUIDED BAY ALIGNMENT'));
  assert.match(await page.locator('#flightTelemetry').textContent(),/GUIDED CAPTURE/);await page.screenshot({path:'.local/qa/capture-production-ingress.png'});
  await page.waitForFunction(()=>document.getElementById('location').textContent.includes('HABITAT CONCOURSE'));assert.equal(await page.locator('#flightHud').isVisible(),false);assert.deepEqual(errors,[]);
- console.log(JSON.stringify({productionHooks:false,actualWalking:true,actualPiloting:true,visibleDescent:true,landed:true,keyboardFieldLog:true,fieldTracking:true,missionGuidanceRestore:true,actualHatchBoarding:true,returnPiloting:true,guidedBayIngress:true,docked:true,errors}));
+ if(faultMode){assert.deepEqual(assetRequests,{craft:2,station:2});assert.equal(assetWarnings.length,2);}
+ console.log(JSON.stringify({assetFailureRecovery:faultMode,assetRequests: faultMode?assetRequests:undefined,productionHooks:false,actualWalking:true,actualPiloting:true,visibleDescent:true,landed:true,keyboardFieldLog:true,fieldTracking:true,missionGuidanceRestore:true,actualHatchBoarding:true,returnPiloting:true,guidedBayIngress:true,docked:true,errors}));
 }finally{await browser.close();}

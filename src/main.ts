@@ -359,7 +359,6 @@ fieldLog.onclick=()=>{
 };
 const landedShuttle=makeShuttle();landedShuttle.position.set(0,0,LANDING.z);surface.group.add(landedShuttle);
 const surfaceCraft=makeShuttle();scene.add(surfaceCraft);surfaceCraft.visible=false;
-let requestedCraft=false;
 const surfaceSky=new THREE.Color(0x678b9a);
 const flightHud=document.createElement('aside');flightHud.id='flightHud';flightHud.hidden=true;flightHud.setAttribute('aria-label','Shuttle flight controls');
 flightHud.innerHTML='<span class="eyebrow">KESTREL / SURVEY SHUTTLE</span><strong id="flightTelemetry"></strong><span id="flightStatus" role="status"></span><div><button id="flightBrake">BRAKE / SPACE</button><button id="flightBoost">BOOST / SHIFT</button><button id="flightTarget">TARGET: NYSA</button></div><small>W/S throttle · A/D turn · arrows pitch · mouse/drag aim · E land/dock</small>';$('hud').append(flightHud);
@@ -369,8 +368,10 @@ const projectedVelocity=new THREE.Vector3(),velocityForward=new THREE.Vector3();
 for(const [id,set] of [['flightBrake',(v:boolean)=>flightBrake=v],['flightBoost',(v:boolean)=>flightBoost=v]] as const){const button=$(id);button.onpointerdown=e=>{button.setPointerCapture(e.pointerId);set(true);};button.onpointerup=button.onpointercancel=()=>set(false);}
 $('flightTarget').onclick=()=>{if(flight?.phase==='flying'){flight={...flight,leg:flight.leg==='nysa'?'erebus':'nysa'};paintNavigation();}};
 function launchFlight(leg:FlightLeg){
-  if(!requestedCraft){requestedCraft=true;void loadAuthoredAsset('craft',[landedShuttle,flightWorld.craft,surfaceCraft]).catch(()=>console.warn('Craft asset unavailable; procedural shuttle fallback active.'));}
-  if(flight)return;clearInput();nearest=undefined;flight=startFlight(leg);yaw=leg==='nysa'?0:Math.PI;pitch=0;
+  if(flight)return;
+  void loadAuthoredAsset('craft',[landedShuttle,flightWorld.craft,surfaceCraft]).catch(()=>console.warn('Craft asset unavailable; procedural shuttle fallback active.'));
+  void flightWorld.loadHabitat().catch(()=>console.warn('Station asset unavailable; docking habitat fallback active.'));
+  clearInput();nearest=undefined;flight=startFlight(leg);yaw=leg==='nysa'?0:Math.PI;pitch=0;
   updateHud();$('objective').textContent='Pilot Kestrel';$('missionText').textContent='Fly to the cyan approach ring. Brake below 18 m/s, then press E to land or dock.';paintNavigation();notify(leg==='nysa'?'KESTREL · Launching from Erebus shuttle bay.':'KESTREL · Lifting off Nysa. Return corridor charted.');
 }
 function travel(landing:boolean){
