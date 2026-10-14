@@ -1,0 +1,286 @@
+{
+  "format": "lossless-webp",
+  "source_sha256": "941f0fa56dcdd1ad1c6948e4ad09ab88c91a2e3bfc3be35878f18785182fc7e2",
+  "output_sha256": "057906e77b53ad17e399bc9d25e15a8c1b9032f0b6e56ab7b5f6b17999a599af",
+  "source_bytes": 4132380,
+  "output_bytes": 2742072,
+  "images": [
+    {
+      "name": "station-map-13",
+      "width": 512,
+      "height": 512,
+      "source_bytes": 417195,
+      "output_bytes": 298106,
+      "rgba_sha256": "b96edebaf8ab29d794ffd507cb598739e66b9da12903c38535f75be2a5445319",
+      "pixels_equal": true
+    },
+    {
+      "name": "station-map-12",
+      "width": 512,
+      "height": 512,
+      "source_bytes": 271115,
+      "output_bytes": 149256,
+      "rgba_sha256": "b1505a8b2070618ad22930f4c1f94b8091ebc10b897707b5664c929359ae5b80",
+      "pixels_equal": true
+    },
+    {
+      "name": "station-map-14",
+      "width": 512,
+      "height": 512,
+      "source_bytes": 273740,
+      "output_bytes": 160060,
+      "rgba_sha256": "78f41c10e7b4c74e1721281ac660758ae222864239bc67b9df2639995d4a6055",
+      "pixels_equal": true
+    },
+    {
+      "name": "station-map-16",
+      "width": 512,
+      "height": 512,
+      "source_bytes": 401421,
+      "output_bytes": 299208,
+      "rgba_sha256": "9edcaa718d82ba7e6baad40e97ef829270f115476733927e24f5368b8ff6666c",
+      "pixels_equal": true
+    },
+    {
+      "name": "station-map-15",
+      "width": 512,
+      "height": 512,
+      "source_bytes": 222899,
+      "output_bytes": 122318,
+      "rgba_sha256": "bf4de49db9b9f9b25a7ea670d4a0095ec9f59b2517d9c0d2ed87265c28a04f4a",
+      "pixels_equal": true
+    },
+    {
+      "name": "station-map-17",
+      "width": 512,
+      "height": 512,
+      "source_bytes": 271845,
+      "output_bytes": 158370,
+      "rgba_sha256": "150745142cb393a2a30f417ca4bca35054224e330bbceb1cdd5b3ad91f0f257e",
+      "pixels_equal": true
+    },
+    {
+      "name": "station-map-10",
+      "width": 512,
+      "height": 512,
+      "source_bytes": 223591,
+      "output_bytes": 154710,
+      "rgba_sha256": "1aff709aaf9130bb8a6d9c9863480ea75caca1b66c891dfa7adc45d20191d270",
+      "pixels_equal": true
+    },
+    {
+      "name": "station-map-9",
+      "width": 512,
+      "height": 512,
+      "source_bytes": 211101,
+      "output_bytes": 118476,
+      "rgba_sha256": "3648cdc0bb9b240a6bb10b1cf0b1c7179503fda467b99b03942385896ebafab1",
+      "pixels_equal": true
+    },
+    {
+      "name": "station-map-11",
+      "width": 512,
+      "height": 512,
+      "source_bytes": 263718,
+      "output_bytes": 153274,
+      "rgba_sha256": "b3a09302672b05bcc3a611523515506b357aef097a051f33333b977415bf4d55",
+      "pixels_equal": true
+    },
+    {
+      "name": "station-map-6",
+      "width": 512,
+      "height": 512,
+      "source_bytes": 283524,
+      "output_bytes": 196956,
+      "rgba_sha256": "0cfa624799ef9eb4d8c387f3f130a278fe6c93f7d8835d5005fa8f62613b483f",
+      "pixels_equal": true
+    },
+    {
+      "name": "station-map-5",
+      "width": 512,
+      "height": 512,
+      "source_bytes": 157643,
+      "output_bytes": 78694,
+      "rgba_sha256": "12ef1b124f7a4ace6d21c1470b9d551b05adb8f7645a92a617e25578a4bf2dd0",
+      "pixels_equal": true
+    },
+    {
+      "name": "station-map-8",
+      "width": 512,
+      "height": 512,
+      "source_bytes": 254519,
+      "output_bytes": 165050,
+      "rgba_sha256": "dc948506ac55bcd9acef6327256687d3abe8a80c9ef7e3e4861f3061469db20a",
+      "pixels_equal": true
+    },
+    {
+      "name": "station-map-7",
+      "width": 512,
+      "height": 512,
+      "source_bytes": 277385,
+      "output_bytes": 162084,
+      "rgba_sha256": "779944757ce7627a45a550494db09f2fb15a94be9533b210b6ba23f11780048a",
+      "pixels_equal": true
+    },
+    {
+      "name": "station-map-2",
+      "width": 512,
+      "height": 512,
+      "source_bytes": 89086,
+      "output_bytes": 54338,
+      "rgba_sha256": "85162529add3908bd5ea7ba4efb73b3a737fdb38c2f1b7a7e81ffe8a27f348c2",
+      "pixels_equal": true
+    },
+    {
+      "name": "station-map-1",
+      "width": 512,
+      "height": 512,
+      "source_bytes": 81780,
+      "output_bytes": 38732,
+      "rgba_sha256": "e7b43dbab65574a024a6704f87f84edd22bd5791303fd9ed2338bc0db4bf8d32",
+      "pixels_equal": true
+    }
+  ],
+  "retained_buffer_views": [
+    {
+      "index": 0,
+      "bytes": 25032,
+      "sha256": "2011a8376d53dfe8a65d1aa36a86a0c76ad524c03b988c8230c2c21ffc99e379"
+    },
+    {
+      "index": 1,
+      "bytes": 25032,
+      "sha256": "d382d80f364266149fdc4d6f77f5c920aa40f62c78da21026b22a10bd682ff56"
+    },
+    {
+      "index": 2,
+      "bytes": 16688,
+      "sha256": "ca030f20b2753751930dd3997df24fd23828f27eb832a7ca596fe7107793864f"
+    },
+    {
+      "index": 3,
+      "bytes": 6360,
+      "sha256": "717e4d4c4cf7f9ce3ebad541fa0c0a33c54ca0eb7b8538f088637e1346049f50"
+    },
+    {
+      "index": 7,
+      "bytes": 6336,
+      "sha256": "4fcc4dc8e3f67ea3b69937b021963320b859dbeb1d257c0c75245b4fe86f1b0a"
+    },
+    {
+      "index": 8,
+      "bytes": 6336,
+      "sha256": "6218524b5eb7a46256695561820c17491387c9e8477d92746c523401b9cdb796"
+    },
+    {
+      "index": 9,
+      "bytes": 4224,
+      "sha256": "183e0d536fdc38627cfd11893c9d2a2647d75043e6169ea35e136222ff774420"
+    },
+    {
+      "index": 10,
+      "bytes": 3696,
+      "sha256": "c6627e7c6542e6a2488c80d45498f25734f874b57856ace52a1d056dd9b1c909"
+    },
+    {
+      "index": 14,
+      "bytes": 44184,
+      "sha256": "aaf345a470e2c54514652e93aa7d1a8683a906f122f52fd70c44cf1c87389fb7"
+    },
+    {
+      "index": 15,
+      "bytes": 44184,
+      "sha256": "ed4be54b9625b24e45330814ef2d534a1e882c76b78e41040d90b3c98c1b2fce"
+    },
+    {
+      "index": 16,
+      "bytes": 29456,
+      "sha256": "58533ef668af603dec90d10d8e4b7da439e23d869e16ba49e71b09a4e159cc2a"
+    },
+    {
+      "index": 17,
+      "bytes": 17640,
+      "sha256": "ce7475d3611b7f81134ad790b15599387d5fd022c6bd8f702eb44bc1421c08ff"
+    },
+    {
+      "index": 21,
+      "bytes": 18432,
+      "sha256": "09074202b8b9156ae4fb13310f72d6d0d98c2c2ec55897c43bface1263971996"
+    },
+    {
+      "index": 22,
+      "bytes": 18432,
+      "sha256": "eb8814a70346783aaf340834763f72523a96bb8c18e1680ef80edfd314a3443d"
+    },
+    {
+      "index": 23,
+      "bytes": 12288,
+      "sha256": "906a7670394f95a3fd20c79455ac09b119591e76996ff17088bbf4d7bb9ffae2"
+    },
+    {
+      "index": 24,
+      "bytes": 7584,
+      "sha256": "73b831d9e68bdb926173b071fadc80e6f78b8d84c3ad1d1b8cdab049668b7845"
+    },
+    {
+      "index": 27,
+      "bytes": 31392,
+      "sha256": "fa8ff8d9872d1641cbc7017e43031a9a59cc6fe852aae5e38134de3cb20944b7"
+    },
+    {
+      "index": 28,
+      "bytes": 31392,
+      "sha256": "fda95c2411b91199becb00af6267bdeecdcf19b132204517ba574c785338cc5c"
+    },
+    {
+      "index": 29,
+      "bytes": 20928,
+      "sha256": "57e55729475db15e17b5a9824ae377010ac942d39d53d583b13a749c8a9af4a6"
+    },
+    {
+      "index": 30,
+      "bytes": 12528,
+      "sha256": "e0c59627f7bffaa8b2f986fb2daf4e177e82db01bc6ad78e5d907c2f5be0bd3d"
+    },
+    {
+      "index": 33,
+      "bytes": 10224,
+      "sha256": "80b8f5c9dabf17df5eb272afc607c29d787f8ce4a2a67f23e019cd4a81debf70"
+    },
+    {
+      "index": 34,
+      "bytes": 10224,
+      "sha256": "93eb7e178c4d973c41440441b00948fdab594e5b853c852426ebbcd9d059b64e"
+    },
+    {
+      "index": 35,
+      "bytes": 6816,
+      "sha256": "22aa03b5a9ae5da80b3cca2a94477c152da35c7dc570d5b089eb749a67df3574"
+    },
+    {
+      "index": 36,
+      "bytes": 6240,
+      "sha256": "cb33c5213eb28edf1070349bb698e645e167647550bf56820cbc902239f19d9d"
+    },
+    {
+      "index": 37,
+      "bytes": 2016,
+      "sha256": "aab7ff6ad6bf2190a3c23fdda4b910ef072fb66fe9ae75de65864bbfbae0c202"
+    },
+    {
+      "index": 38,
+      "bytes": 2016,
+      "sha256": "19e4210a436bbf7bfffdf2aba92934472bdf56582053b981051fc723b35fa9bd"
+    },
+    {
+      "index": 39,
+      "bytes": 1344,
+      "sha256": "f97be9d0d82aa7329a4dcffca24adbab87637ab3dc4079b79e40358c222ae82e"
+    },
+    {
+      "index": 40,
+      "bytes": 1488,
+      "sha256": "eb9e82e9785b347e878eb8b8346e37c1359765f240ca049f2477a94dbe9c013e"
+    }
+  ]
+}

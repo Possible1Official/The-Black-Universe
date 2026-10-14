@@ -1,0 +1,36 @@
+{
+  "craft": {
+    "source": "User attachment 2-space_ship_final.fbx",
+    "source_sha256": "74a6a09b3d9f3a3f126366165b6bd082c9fad64fce1d9479302f80de4c94b982",
+    "source_bytes": 8215264,
+    "terms": "User supplied for this game. Creator and original listing/license not supplied; no MIT or public redistribution license is asserted. Original files are excluded from Git.",
+    "output_bytes": 4296152,
+    "output_sha256": "3df70848895d6ccb2dd16ddfd1dba0575c94b2dfeae1110c70e63c7dfdad0ef9",
+    "triangles": 50857,
+    "primitives": 20,
+    "gltf_dimensions": [
+      4.921367168426514,
+      2.8318076133728027,
+      6.600000381469727
+    ],
+    "conversion": "Blender 4.3.2, static self-contained glTF; joined static components; legacy station materials reconstructed from supplied maps; craft decimation .12 above 1000 triangles",
+    "texture_cap": 1024
+  },
+  "station": {
+    "source": "User attachment 1-blend.zip",
+    "source_sha256": "72b47ec0dd721a2ed8ba07af51c54f8110bfe291ba5d971b0164894418d2ce9d",
+    "source_bytes": 9263039,
+    "terms": "User supplied for this game. Creator and original listing/license not supplied; no MIT or public redistribution license is asserted. Original files are excluded from Git.",
+    "output_bytes": 2742072,
+    "output_sha256": "057906e77b53ad17e399bc9d25e15a8c1b9032f0b6e56ab7b5f6b17999a599af",
+    "triangles": 9256,
+    "primitives": 7,
+    "gltf_dimensions": [
+      87.89985656738281,
+      27.900489807128906,
+      120
+    ],
+    "conversion": "Blender 4.3.2, static self-contained glTF; joined static components; legacy station materials reconstructed from supplied maps; craft decimation .12 above 1000 triangles",
+    "texture_cap": 512
+  }
+}

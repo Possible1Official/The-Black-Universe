@@ -26,8 +26,9 @@ export class CrewVisual {
   }
   snapshot(){return {idleTime:this.idle.time,walkTime:this.walk.time,walkWeight:this.walk.getEffectiveWeight()};}
 }
+let crewAsset:ReturnType<GLTFLoader['loadAsync']>|undefined;
 export async function loadCrewVisuals(actors:THREE.Group[]):Promise<CrewVisual[]> {
-  const gltf=await new GLTFLoader().loadAsync(new URL('./assets/ely.glb',import.meta.url).href);
+  const gltf=await (crewAsset??=new GLTFLoader().loadAsync(new URL('./assets/ely.glb',import.meta.url).href));
   // Validate before changing any actor so a failed asset keeps both fallback androids.
   if(!gltf.animations.some(c=>c.name==='Idle')||!gltf.animations.some(c=>c.name==='Walking'))throw new Error('Invalid crew animations');
   return actors.map(actor=>{

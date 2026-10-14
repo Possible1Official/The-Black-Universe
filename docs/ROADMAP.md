@@ -114,6 +114,14 @@ The user has reprioritized development toward the flight, planet exploration and
 - Nysa radial capture retains its safety margin instead of cutting a chord; existing surface descent/ascent and saves remain compatible.
 - Approximate boxes/spherical clearance and guided paths, not swept rigid-body craft physics, general pathfinding or global planet streaming.
 
+## Clear view and supplied model milestone (2026-10-14)
+- Hidden-by-default information with INFO/H toggle, compact touch controls and locally retained view preferences.
+- Walking third person with shared Mixamo skin, actual-distance animation, physical camera clearance and unchanged character-based interaction reach.
+- First/third-person flight, uploaded spacecraft for parked/airborne views, and a textured uploaded station habitat above the working bay.
+- Parked collision covers the imported craft; shared aft hatch/navigation sits outside the hull, with own-proxy exclusion during guided chase-camera clearance.
+- Bounded local GLBs with deferred loading; station interiors remain procedural, and animated gears/cockpit replacement/hardware budgets remain future work.
+- CGTrader email sign-in verified; compared free catalog previews and six detailed candidates. Sci-fi asset pack is the preferred next prop source after bounded acquisition and terms checks.
+
 ## Later
 - Physically based and baked lighting, modular authored environments, LODs, GPU timing and measured device budgets.
 - High-quality skinned characters, blend trees, IK, facial animation, interaction poses.

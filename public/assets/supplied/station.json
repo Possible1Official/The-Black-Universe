@@ -1,0 +1,26 @@
+{
+  "kind": "station",
+  "meshes": 1,
+  "source_components": 18,
+  "blender_base_triangles": 4646,
+  "source_bounds": [
+    [
+      -193.1503143310547,
+      -263.6868591308594,
+      -41.77017593383789
+    ],
+    [
+      193.1503143310547,
+      263.6868591308594,
+      80.84636688232422
+    ]
+  ],
+  "scale": 0.22754262460316202,
+  "dimensions": [
+    87.89985656738281,
+    120.0,
+    27.900489807128906
+  ],
+  "texture_cap": 512,
+  "conversion": "Blender 4.3.2, static self-contained glTF; joined static components; legacy station materials reconstructed from supplied maps; craft decimation .12 above 1000 triangles"
+}

@@ -44,3 +44,35 @@ Earlier screenshot-token probing returned HTTP 500 and shared-browser activation
 Next: preview a distinct second character, measure real GPU/transfer costs, and evaluate LOD/foot-contact improvements before adding more clips or larger assets.
 
 Never import all characters/animations just because upstream supports it. Raw downloads belong in ignored `.local/`; only verified, optimized, properly licensed game assets belong in `public/assets/`.
+
+## User-supplied spacecraft and station (2026-10-14)
+
+The user supplied `space_ship_final.fbx` and `blend.zip` for this game. Source hashes and exact output budgets are recorded in `public/assets/supplied/provenance.json`. No original creator, listing or explicit public redistribution license accompanied the attachments; these assets are not asserted to share the code's MIT license. Original FBX/Blend/ZIP and temporary exports stay ignored under `.local/`. No credentials or authenticated browser state are distributed.
+
+Inspected archive entries/expanded byte count and rejected unsafe paths/symlinks before extraction; opened Blender with auto-execution disabled. Both models were rendered and inspected before selecting components. The craft contains three oversized reference objects plus its detailed assembly; the game exports the 74 detailed components, removes the oversized references, applies bounded .12 decimation to components above 1,000 triangles, joins static geometry and normalizes the nose/scale. The station scene contains cinematic lasers, drones and fighters; the game selects 18 habitat/door/window/column/railing components. Modern Blender loses the old Blender Internal materials, so supplied UV color/normal/roughness maps are rebuilt as Principled materials. Scripts: `scripts/convert-supplied.py` and the existing lossless WebP optimizer.
+
+| Asset | Game geometry | Download | Materials/textures | Use |
+| --- | --- | --- | --- | --- |
+| Craft | 50,857 triangles, one mesh / 20 primitives; 4.921×2.832×6.600 m | 4,296,152 bytes | Original material colors, bounded metallic/roughness; FBX includes no image maps | Kestrel parked/orbital/surface-flight views |
+| Station | 9,256 exported triangles, one mesh / 7 primitives; 87.900×27.900×120.000 m | 2,742,072 bytes | 15 embedded 512×512 WebP maps | Elevated Erebus exterior habitat above the functional docking bay |
+
+Station's base Blender mesh reports 4,646 triangles; evaluated glTF export is 9,256, which is the authoritative rendering budget. Reducing its source 2K maps to 512 pixels is a deliberate distance-view quality tradeoff. Lossless WebP compression then reduces the resized PNG GLB from 4,132,380 to 2,742,072 bytes (33.6%), with decoded pixels checked equal to that resized intermediate, not to the original 2K source. No hardware FPS claim. Craft export is static: source turrets, fans and landing gear are not animated; first-person cockpit remains generated. Imported station rooms are not separately walkable yet.
+
+Vite ships one fingerprinted URL per model. The shared crew skin loads once for three independent rigs. Craft and station requests are deferred until flight begins; parked/orbital/surface craft clones share resources. Failed loading preserves generated fallbacks. The uploaded craft's half-extents fit the existing 3.5-meter axis clearance; the station adds a conservative elevated collision box. These approximations do not reproduce each mesh surface, rotated wing envelope or hollow section.
+
+The parked craft now has a 4.94×2.84×6.62-meter physical envelope rather than the earlier narrow generated center-body collider. Its aft boarding anchor and mission waypoint are outside that hull at local Z +3.5. Walking/camera queries use the solid hull; during guided flight, chase-camera queries exclude the craft's own parked proxy/hatch to avoid a false camera collapse at touchdown. Other surface obstacles remain camera blockers.
+
+## CGTrader sourcing review (2026-10-14)
+
+Email sign-in through the requested Playwright browser succeeded after user-provided verification. The temporary authenticated browser was closed without exporting cookies/session state. The Free filter was explicitly selected (the nominal `/free-3d-models/space` URL initially displayed both paid and free models); subscription offers were not treated as free downloads. More than a dozen free catalog previews and six detailed listing previews were compared before choosing a preferred future source. No additional CGTrader model was downloaded in this release, which integrates the two supplied attachments.
+
+| Previewed candidate | Assessment / next action |
+| --- | --- |
+| [Sci-fi asset pack · desanlisadrien1](https://www.cgtrader.com/free-3d-models/space/other/scifi-asset-pack) | Preferred next prop source: cohesive yellow/gray consoles, crates and machinery; 19 assets, textured and game-oriented, Royalty Free (no AI). Acquire only a bounded prop selection and inspect actual files/terms. |
+| [SpaceShip · jazoone](https://www.cgtrader.com/free-3d-models/space/spaceship/spaceship-d6458e2b-a39f-4c02-9f97-a841eed5fd86) | Detailed orange-cockpit design, but listing reports 540,900 polygons and procedural/no texture UV workflow; creator requests credit and commercial contact. Defer. |
+| [Realistic Earth · archmark25](https://www.cgtrader.com/free-3d-models/space/planet/realistic-earth-e9d54965-b66f-4171-ac69-8b8734e7e7f3) | Strong continents/night lights; advertised 21K maps and Cycles atmosphere are outside browser budget. Possible later texture reference after terms/size review. |
+| [SpaceSuit · cgscalrod](https://www.cgtrader.com/free-3d-models/character/sci-fi-character/spacesuit-astronaut-sci-fi-ready-for-game) | More believable surface suit; 2K maps, listed game-ready. Rig/animation compatibility must be verified before acquisition. Existing licensed Ely remains. |
+| [Spaceship Corridor Damaged · ArmTM](https://www.cgtrader.com/free-3d-models/space/spaceship/spaceship-corridor-damaged) | Rich cables/panels, but 344,393 polygons, procedural maps, no UVs/nonmanifold geometry; heavy baking/cleanup required. Defer. |
+| [Futuristic Transport Shuttle · 3DHaupt](https://www.cgtrader.com/free-3d-models/vehicle/sci-fi-vehicle/futuristic-transport-shuttle) | Distinct glass-canopy silhouette and ~16K polygons, but Editorial License (no AI); do not assume commercial-game permission. Defer. |
+
+Other catalog previews included NASA Moon, cinematic Earth, astronaut suits, clouds, several original fighters, and recognizable franchise ships. Prefer original Royalty Free assets whose actual game distribution terms and budgets are verified. CGTrader is the user's requested primary source for future authored props/environments; maintain source/creator/terms evidence per imported asset, and use MixamoHarvester for licensed motion/character acquisition when fresh credentials are available. “Free” alone is not a geometry, texture or license guarantee.
