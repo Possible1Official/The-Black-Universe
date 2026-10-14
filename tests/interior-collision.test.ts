@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import {decodeGameResource} from '../src/game-resource';
+import {PLAYER_SHAPE} from '../src/player-shape';
 import {meshColliders} from '../src/mesh-colliders';
 
 // Decode actual exported rigid geometry without a DOM/image loader.
@@ -23,4 +24,19 @@ test('actual Intrepid floors support walking and both cleared authored side door
 });
 test('actual bedroom entry leads onto a physical floor without crossing a sealed front wall',async()=>{
  await RAPIER.init();const world=new RAPIER.World({x:0,y:-9.81,z:0});try{meshColliders(world,await geometry('bedroom'));world.createCollider(RAPIER.ColliderDesc.cuboid(2,.1,2).setTranslation(0,-.1,-5.5));world.timestep=1/60;const body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0,.9,-5.5)),capsule=world.createCollider(RAPIER.ColliderDesc.capsule(.55,.3),body),controller=world.createCharacterController(.015);controller.enableSnapToGround(.2);controller.enableAutostep(.25,.2,true);world.step();for(let i=0;i<240;i++){controller.computeColliderMovement(capsule,{x:0,y:-.02,z:.025});const p=body.translation(),m=controller.computedMovement();body.setNextKinematicTranslation({x:p.x+m.x,y:p.y+m.y,z:p.z+m.z});world.step();}assert.ok(body.translation().z>-.5,`sealed bedroom at ${JSON.stringify(body.translation())}`);assert.ok(body.translation().y>.7);}finally{world.free();}
+});
+
+test('repaired authored lounge is walkable across former side wall and bow view has no opaque panel',async()=>{
+ await RAPIER.init();const world=new RAPIER.World({x:0,y:-9.81,z:0});try{
+ meshColliders(world,await geometry('interior'));world.timestep=1/60;
+ const body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0,.9,1.8));const c=world.createCollider(RAPIER.ColliderDesc.capsule(PLAYER_SHAPE.halfHeight,PLAYER_SHAPE.radius),body);const controller=world.createCharacterController(PLAYER_SHAPE.offset);controller.enableSnapToGround(.2);controller.enableAutostep(PLAYER_SHAPE.stepHeight,PLAYER_SHAPE.stepWidth,true);world.step();
+ for(let i=0;i<120;i++){controller.computeColliderMovement(c,{x:.025,y:-.02,z:0});const p=body.translation(),m=controller.computedMovement();body.setNextKinematicTranslation({x:p.x+m.x,y:p.y+m.y,z:p.z+m.z});world.step();}
+ assert.ok(body.translation().x>2.75,`old launch wall ${JSON.stringify(body.translation())}`);assert.ok(body.translation().y>.7);
+ assert.equal(world.castRay(new RAPIER.Ray({x:0,y:2,z:-18},{x:0,y:0,z:-1}),3,true),null,'bow opening reveals exterior');
+ }finally{world.free();}
+});
+test('standing player traverses a 55cm gap and remains blocked by a 40cm opening',async()=>{
+ await RAPIER.init();for(const gap of [.55,.4]){const world=new RAPIER.World({x:0,y:-9.81,z:0});try{
+ world.createCollider(RAPIER.ColliderDesc.cuboid(2,.1,3).setTranslation(0,-.1,0));for(const side of [-1,1])world.createCollider(RAPIER.ColliderDesc.cuboid(.5,1,.15).setTranslation(side*(gap/2+.5),1,0));const body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0,.9,1));const c=world.createCollider(RAPIER.ColliderDesc.capsule(PLAYER_SHAPE.halfHeight,PLAYER_SHAPE.radius),body),ctl=world.createCharacterController(PLAYER_SHAPE.offset);world.step();for(let i=0;i<100;i++){ctl.computeColliderMovement(c,{x:0,y:-.02,z:-.025});const p=body.translation(),m=ctl.computedMovement();body.setNextKinematicTranslation({x:p.x+m.x,y:p.y+m.y,z:p.z+m.z});world.step();}if(gap===.55)assert.ok(body.translation().z<-.8);else assert.ok(body.translation().z>0,JSON.stringify(body.translation()));
+ }finally{world.free();}}
 });

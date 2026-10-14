@@ -1,6 +1,7 @@
+import {PLAYER_SHAPE} from './player-shape';
 import RAPIER from '@dimforge/rapier3d-compat';
 export type VehicleKind='bike'|'rover';
-export const VEHICLE_SPEC={bike:{half:[.81,1.08,1.8],maxSpeed:12,seat:1.28},rover:{half:[1.05,1,1.8],maxSpeed:8,seat:1.8}} as const;
+export const VEHICLE_SPEC={bike:{half:[.57,.75,1.25],maxSpeed:12,seat:.9},rover:{half:[1.05,1,1.8],maxSpeed:8,seat:1.8}} as const;
 function spawnGround(world:RAPIER.World,position:{x:number;y:number;z:number},half:readonly number[],exclude?:RAPIER.Collider){
  let height=position.y;
  for(const dx of [-half[0],0,half[0]])for(const dz of [-half[2],0,half[2]]){
@@ -34,7 +35,7 @@ export function dismountPosition(world:RAPIER.World,vehicle:GroundVehicle,observ
  const p=vehicle.body.translation(),radius=vehicle.kind==='rover'?3.1:2.4;
  for(const angle of [Math.PI/2,-Math.PI/2,Math.PI,-Math.PI/4,Math.PI/4]){
   const x=p.x+Math.sin(vehicle.yaw+angle)*radius,z=p.z+Math.cos(vehicle.yaw+angle)*radius,y=ground(x,z)+.9;
-  let blocked=false;world.intersectionsWithShape({x,y,z},{x:0,y:0,z:0,w:1},new RAPIER.Capsule(.55,.3),()=>{blocked=true;return false;},undefined,undefined,observer,undefined,c=>c.handle!==vehicle.collider.handle);
+  let blocked=false;world.intersectionsWithShape({x,y,z},{x:0,y:0,z:0,w:1},new RAPIER.Capsule(PLAYER_SHAPE.halfHeight,PLAYER_SHAPE.radius),()=>{blocked=true;return false;},undefined,undefined,observer,undefined,c=>c.handle!==vehicle.collider.handle);
   if(!blocked)return {x,y,z};
  }
  return null;
