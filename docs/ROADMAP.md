@@ -130,3 +130,8 @@ The user has reprioritized development toward the flight, planet exploration and
 - Multiplayer only after a stable authoritative simulation and abuse-resistant persistence exist.
 
 Completion and evidence live in PROGRESS.md. Priorities may change based on observed bugs and performance.
+
+## Auxiliary coolant and resupply milestone (2026-10-14)
+- Two finite engineering cartridges reduce thermal load without bypassing a latched trip; normal Cooling/reset remains available.
+- Optional Nysa supply-cache tracking, one-time refill, physical cabinet/crate collision and compatible v2 persistence.
+- Fixtures remain generated. CGTrader acquisition is pending fresh verification and license/distribution review; no new imported model is claimed.
