@@ -157,3 +157,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Relocated parked craft/hull/beacon/hatch, matching extraction navigation and field-map markers.
 - Flat, clear pad terrain; shared goals/saves and default safe ship reload.
 - A second landing entrance rather than a second planet or seamless streaming. CGTrader import remains verification-blocked.
+
+
+## Contextual crew briefing milestone (2026-10-14)
+- Both officers expose objective, recorded-survey and actual-system topics, with containment-trip priority.
+- Mission/save state remains authoritative; dialogue adds no repair actions or AI-service dependency.
+- CGTrader authentication is restored after a browser restart using private cookie/local-storage export. Next authored-asset priority remains the reviewed free sci-fi props with license-compatible game packaging and measured texture/geometry budgets.

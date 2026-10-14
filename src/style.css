@@ -38,3 +38,5 @@
 #closeFieldLog{position:sticky;top:0;z-index:1;display:block;width:100%;min-height:44px;background:#0b1b28;margin:8px 0;border-color:#79c8ce77}
 
 #flightPad[hidden]{display:none}#flightHud div{flex-wrap:wrap}#hud[data-information="false"] #flightHud{max-width:calc(100vw - 24px)}
+
+#crewPanel[hidden]{display:none}#crewPanel{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}#crewPanel button{min-height:44px;padding:10px;font-size:11px}#crewPanel button[aria-pressed="true"]{border-color:#82e4dc;background:#12363e}#dialogue:has(#crewPanel:not([hidden])){max-height:84dvh;bottom:8dvh;overflow:auto}#dialogue:has(#crewPanel:not([hidden])) #speech{font-size:14px;line-height:1.6}
