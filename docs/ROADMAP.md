@@ -140,3 +140,8 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Failed craft/station downloads preserve playable fallbacks and retry on the next launch/boarding.
 - Concurrent requests and repeated trips share successful sources, with one clone per actor and no frame-driven retry storm.
 - New CGTrader prop import remains pending fresh verification and distribution checks; model detail/budgets are unchanged.
+
+## Kestrel engine and banking feedback (2026-10-14)
+- Throttle/boost emission, brake cutoff and guided downward lift plumes on the existing spacecraft.
+- Bounded smoothed third-person orbital banking, pause/reset/camera cleanup and unchanged flight/saves.
+- Stylized shader effects, not physical exhaust or a new model import; CGTrader acquisition remains blocked on verification.
