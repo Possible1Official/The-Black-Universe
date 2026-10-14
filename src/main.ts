@@ -7,6 +7,8 @@ import {loadCrewVisuals,type CrewVisual} from './crew-visual';
 import {loadAuthoredAsset} from './authored-assets';
 import {FlightFeedback} from './flight-feedback';
 import {createThrusters} from './thrusters';
+import {drawSurveyMap,mapPoint,surfacePin,PIN_LIMIT} from './survey-map';
+import type {SurfaceTrack} from './navigation';
 import {walkingCamera,flightCamera,orbitalCameraDistance,surfaceCameraDistance} from './view-camera';
 import {SHUTTLE_SIZE,SHUTTLE_HATCH_Z} from './shuttle';
 import {coolantBlock,dischargeCoolant,recoverSupplies,SUPPLY_CACHE} from './supplies';
@@ -135,7 +137,7 @@ box(5,2,.15,-15,2.7,.23,textPanel('ENGINEERING','CONTAINMENT / NOMINAL','#edb378
 const solids:{size:number[];pos:number[];target?:Target}[]=[];
 function solid(w:number,h:number,d:number,x:number,y:number,z:number,target?:Target){solids.push({size:[w,h,d],pos:[x,y,z],target});}
 let onSurface=false;
-let trackedField:FieldScan|'supplies'|undefined;
+let trackedField:SurfaceTrack|undefined;
 let flight:FlightState|null=null,flightBrake=false,flightBoost=false;
 let captureViewStart={yaw:0,pitch:0};
 type Target={zone?:'surface';name:string;position:THREE.Vector3;action:()=>void;screen?:THREE.Mesh;collider?:RAPIER.Collider;};
@@ -349,6 +351,15 @@ const surveyPanel=document.createElement('section');surveyPanel.id='surveyPanel'
 fieldLog.onclick=()=>{
   if(!active||dialogueOpen||flight||!progress.forged)return;
   speakingCrew=undefined;showDialogue('NYSA / FIELD LOG','Two optional survey sites lie beyond the outcrop. Record their readings at the illuminated scanners. You can return to Kestrel at any time.');surveyPanel.replaceChildren();surveyPanel.hidden=false;
+  const mapClose=document.createElement('button');mapClose.id='closeFieldLog';mapClose.textContent='Close field log';mapClose.onclick=closeDialogue;surveyPanel.append(mapClose);
+  const map=document.createElement('canvas');map.id='surveyMap';map.setAttribute('role','img');map.setAttribute('aria-label','Nysa terrain relief, north up. Tap to place a waypoint; coordinate controls below provide a keyboard alternative.');surveyPanel.append(map);
+  const p=player.translation();drawSurveyMap(map,progress,onSurface?{x:p.x-SURFACE_ORIGIN,z:p.z,yaw}:undefined,typeof trackedField==='object'?trackedField:undefined);
+  const hint=document.createElement('p');hint.textContent=onSurface?'White arrow: you · green: recorded · amber: pending. Tap anywhere to track a local waypoint. INFO shows guidance; rocks may obstruct the direct route.':'Sector overview · Land on Nysa to place waypoints. Green marks recorded discoveries.';surveyPanel.append(hint);
+  const pinForm=document.createElement('form');pinForm.id='pinForm';pinForm.innerHTML=`<label>Local X<input id="pinX" type="number" min="-${PIN_LIMIT}" max="${PIN_LIMIT}" step="1" value="0" required></label><label>Local Z<input id="pinZ" type="number" min="-${PIN_LIMIT}" max="${PIN_LIMIT}" step="1" value="0" required></label><button id="trackPin" type="submit">Track waypoint</button>`;surveyPanel.append(pinForm);for(const id of ['trackPin','pinX','pinZ'])$<HTMLButtonElement>(id).disabled=!onSurface;
+  const choosePin=(pin:{x:number;z:number}|undefined)=>{if(!onSurface||!pin)return;trackedField=pin;closeDialogue();notify(`TRACKING · Local X ${pin.x.toFixed(0)} / Z ${pin.z.toFixed(0)}`);};
+  pinForm.onsubmit=e=>{e.preventDefault();choosePin(surfacePin($<HTMLInputElement>('pinX').valueAsNumber,$<HTMLInputElement>('pinZ').valueAsNumber));};
+  map.onclick=e=>{const r=map.getBoundingClientRect();if(r.width>0&&r.height>0)choosePin(mapPoint((e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height));};
+
   for(const site of FIELD_SITES){
     const scanned=progress.fieldScans.includes(site.id),row=document.createElement('article'),title=document.createElement('strong'),text=document.createElement('p'),button=document.createElement('button');
     title.textContent=site.label;text.textContent=scanned?site.reading:`NOT SCANNED · Local X ${site.x} / Z ${site.z}`;
@@ -446,7 +457,9 @@ function paintNavigation(){
     if(ground){$('navLabel').textContent=flight.phase==='descending'?'Nysa landing pad':'Nysa departure';$('navDistance').textContent='LANDING GUIDANCE';$('navHint').textContent='Guided vertical flight. The terrain below is your survey sector.';}
     $('flightTarget').textContent=`TARGET: ${flight.leg.toUpperCase()} / T`;return;
   }
-  const position=player.translation(),destination=missionDestination(progress,onSurface,trackedField);
+  const position=player.translation();
+  if(onSurface&&typeof trackedField==='object'&&Math.hypot(position.x-SURFACE_ORIGIN-trackedField.x,position.z-trackedField.z)<2){trackedField=undefined;notify('SURVEY WAYPOINT REACHED · Mission guidance restored.');}
+  const destination=missionDestination(progress,onSurface,trackedField);
   const waypoint=onSurface?destination:routeWaypoint(destination,position,doors.map(d=>d.open));
   const reading=navigationReading(position,yaw,waypoint);
   $('compassHeading').textContent=`${reading.direction} / ${String(Math.round(reading.heading)%360).padStart(3,'0')}°`;

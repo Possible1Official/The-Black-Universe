@@ -145,3 +145,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Throttle/boost emission, brake cutoff and guided downward lift plumes on the existing spacecraft.
 - Bounded smoothed third-person orbital banking, pause/reset/camera cleanup and unchanged flight/saves.
 - Stylized shader effects, not physical exhaust or a new model import; CGTrader acquisition remains blocked on verification.
+
+## Nysa field-map milestone (2026-10-14)
+- On-demand north-up relief chart with mission/survey/supply markers and surface player heading.
+- Tap or keyboard-coordinate temporary waypoints, safe perimeter bounds and automatic mission fallback on arrival.
+- Read-only ship overview, reachable close control and scrollable portrait/landscape layout; normal HUD stays hidden by default.
+- Charted 128 m sector, not whole-planet mapping, fog-of-war or obstacle routing. CGTrader imports remain verification-blocked.
