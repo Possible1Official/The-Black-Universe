@@ -1,3 +1,4 @@
+import {LEGACY_SHIP_LAYOUT,type ShipLayout} from './ship-layout';
 import {bulkheadPanels} from './bulkheads';
 import type {Progress} from './state';
 import {forgeReadiness} from './power';
@@ -9,7 +10,7 @@ export interface NavPoint {x:number;z:number}
 export type SurfaceTrack=FieldScan|'supplies'|NavPoint;
 export interface Waypoint extends NavPoint {id:string;label:string;hint:string}
 const at=(id:string,label:string,x:number,z:number,hint='Approach, face the console and interact with E.'):Waypoint=>({id,label,x,z,hint});
-export function missionDestination(p:Progress,onSurface:boolean,tracked?:SurfaceTrack,landing:LandingSite='survey'):Waypoint {
+export function missionDestination(p:Progress,onSurface:boolean,tracked?:SurfaceTrack,landing:LandingSite='survey',layout:ShipLayout=LEGACY_SHIP_LAYOUT):Waypoint {
   const pad=landingPad(landing);
   if(onSurface&&typeof tracked==='object'&&Number.isFinite(tracked.x)&&Number.isFinite(tracked.z)&&Math.abs(tracked.x)<=SITE_HALF-3&&Math.abs(tracked.z)<=SITE_HALF-3)return at('surface-pin','Survey waypoint',SURFACE_ORIGIN+tracked.x,tracked.z,'Straight-line guidance only; choose a clear route around rocks. Field log restores mission guidance.');
   if(onSurface&&tracked==='supplies'&&!p.supplies.cacheClaimed)return at('supplies','Coolant supply cache',SURFACE_ORIGIN+SUPPLY_CACHE.x,SUPPLY_CACHE.z,'Recover cartridges with E when your reserve has space.');
@@ -18,27 +19,27 @@ export function missionDestination(p:Progress,onSurface:boolean,tracked?:Surface
   if(onSurface)return p.surveyed
     ?at('extraction','Kestrel shuttle hatch',SURFACE_ORIGIN+pad.x,pad.z+SHUTTLE_HATCH_Z,'Board with E, fly to Erebus and brake at the docking ring.')
     :at('sample','Luminous outcrop',SURFACE_ORIGIN+SAMPLE.x,SAMPLE.z,'Approach the crystals and interact with E to secure a sample.');
-  if(p.power.tripped || (!p.forged&&p.relays.length===3&&forgeReadiness(p.power,3)!==null))return at('diagnostics','Engineering diagnostics',-13.5,11.7,'Use diagnostics to restore stable Balanced routing and containment.');
-  if(!p.relays.includes('navigation'))return at('navigation','Navigation relay',-5,-11);
-  if(!p.relays.includes('engineering'))return at('engineering','Engineering relay',-16,10);
-  if(!p.relays.includes('observatory'))return at('observatory','Observatory relay',16,10);
-  if(!p.forged)return at('forge','Universe forge',0,-11);
-  return at('science','Nysa science array',5,-11,p.surveyed?'Survey complete. Launch Kestrel for another visit.':'Scan Nysa and launch Kestrel. Fly to the approach ring and land.');
+  if(p.power.tripped || (!p.forged&&p.relays.length===3&&forgeReadiness(p.power,3)!==null))return at('diagnostics','Engineering diagnostics',layout.diagnostics.x,layout.diagnostics.z,'Use diagnostics to restore stable Balanced routing and containment.');
+  if(!p.relays.includes('navigation'))return at('navigation','Navigation relay',layout.navigation.x,layout.navigation.z);
+  if(!p.relays.includes('engineering'))return at('engineering','Engineering relay',layout.engineering.x,layout.engineering.z);
+  if(!p.relays.includes('observatory'))return at('observatory','Observatory relay',layout.observatory.x,layout.observatory.z);
+  if(!p.forged)return at('forge','Universe forge',layout.forge.x,layout.forge.z);
+  return at('science','Nysa science array',layout.science.x,layout.science.z,p.surveyed?'Survey complete. Launch Kestrel for another visit.':'Scan Nysa and launch Kestrel. Fly to the approach ring and land.');
 }
-function room(x:number){return x< -11?-1:x>11?1:0;}
+function room(x:number,boundary:number){return x< -boundary?-1:x>boundary?1:0;}
 // Scripted doorway routing for this ship layout, not arbitrary obstacle pathfinding.
-export function routeWaypoint(destination:Waypoint,position:NavPoint,doorOpen:readonly boolean[]):Waypoint {
-  const current=room(position.x),next=room(destination.x);
+export function routeWaypoint(destination:Waypoint,position:NavPoint,doorOpen:readonly boolean[],layout:ShipLayout=LEGACY_SHIP_LAYOUT):Waypoint {
+  const current=room(position.x,layout.roomBoundary),next=room(destination.x,layout.roomBoundary);
   if(current===next)return destination;
   const side=current||next,port=side<0,name=port?'Port':'Starboard',roomName=port?'engineering':'observatory';
   if(current!==0){
-    if(!doorOpen[port?0:1]){const panel=bulkheadPanels(side*11)[1];return at(`${name}-inside-panel`,`${name} interior access`,panel.x,panel.z,'Face the interior panel and press E to open the concourse passage.');}
-    if(Math.abs(position.z-6)>1.2)return at(`${name}-inside`,`${name} doorway`,side*13,6,'Follow the passage to the habitat concourse.');
-    return at(`${name}-exit`,'Habitat concourse',side*8.6,6,'Walk through the open bulkhead to the habitat concourse.');
+    if(!doorOpen[port?0:1]){const panel=bulkheadPanels(side*layout.doorX,layout.doorZ,layout.panelOffsetZ)[1];return at(`${name}-inside-panel`,`${name} interior access`,panel.x,panel.z,'Face the interior panel and press E to open the concourse passage.');}
+    if(Math.abs(position.z-layout.doorZ)>1.2)return at(`${name}-inside`,`${name} doorway`,side*layout.insideX,layout.doorZ,'Follow the passage to the habitat concourse.');
+    return at(`${name}-exit`,'Habitat concourse',side*layout.outsideX,layout.doorZ,'Walk through the open bulkhead to the habitat concourse.');
   }
-  if(!doorOpen[port?0:1])return at(`${name}-panel`,`${name} access panel`,side*10,3.2,`Face the panel and press E to open ${roomName}.`);
-  if(Math.abs(position.z-6)>1.2)return at(`${name}-outside`,`${name} doorway`,side*8.6,6,'Align with the open passage.');
-  return at(`${name}-enter`,`${port?'Engineering':'Observatory'} entrance`,side*13,6,'Walk through the open bulkhead.');
+  if(!doorOpen[port?0:1])return at(`${name}-panel`,`${name} access panel`,side*(layout.doorX-1),layout.doorZ-layout.panelOffsetZ,`Face the panel and press E to open ${roomName}.`);
+  if(Math.abs(position.z-layout.doorZ)>1.2)return at(`${name}-outside`,`${name} doorway`,side*layout.outsideX,layout.doorZ,'Align with the open passage.');
+  return at(`${name}-enter`,`${port?'Engineering':'Observatory'} entrance`,side*layout.insideX,layout.doorZ,'Walk through the open bulkhead.');
 }
 const degrees=(radians:number)=>radians*180/Math.PI;
 export function navigationReading(position:NavPoint,yaw:number,target:NavPoint){

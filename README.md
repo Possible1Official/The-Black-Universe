@@ -10,6 +10,10 @@ This is a playable foundation toward an ambitious universe simulation. It does n
 
 Node.js 22+: `npm ci`, then `npm run dev`. Open the printed URL. `npm test` verifies progression/save invariants; `npm run build` checks TypeScript and produces static `dist/`. `npm run preview` serves that build. With the dev server running, `npm run test:browser` exercises the mission and collision flow in Chromium (first install it with `npx playwright install chromium`).
 
+## Current expansion
+
+Cyber Biker player, ridable Turbo Bike and Sci-fi Rover on Nysa, the selected flying ship and authored first-person cockpit. The Intrepid station connects to a runway corridor and crew bedroom. Nysa now has dunes, basalt mesas, wetlands and highlands within a 256-meter sector. During piloting use the **left speed slider** and **right steering joystick**; camera look is independent of heading. On foot, Shift runs. Stop vehicles with Brake/Space, then E dismounts. See [implemented scope and controls](docs/VEHICLES.md).
+
 ## Expedition 001
 
 **Clear view:** information panels start hidden. Click **INFO** / press **H** to show or hide them. Click **1P / 3P** / press **C** to switch first/third person for both walking and flying. Touch movement, E, Brake/Boost/Target and pause remain usable with panels hidden. Preferences persist locally. See [camera and HUD scope](docs/VIEWS.md).

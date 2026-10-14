@@ -1,0 +1,26 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import * as THREE from 'three';
+import RAPIER from '@dimforge/rapier3d-compat';
+import {decodeGameResource} from '../src/game-resource';
+import {meshColliders} from '../src/mesh-colliders';
+
+// Decode actual exported rigid geometry without a DOM/image loader.
+async function geometry(kind:string){
+ const packed=readFileSync(new URL(`../src/assets/requested/${kind}.ebup`,import.meta.url));const bytes=Buffer.from(await decodeGameResource(Uint8Array.from(packed).buffer)),length=bytes.readUInt32LE(12),g=JSON.parse(bytes.subarray(20,20+length).toString()),bin=bytes.subarray(28+length);
+ const accessor=(id:number)=>{const a=g.accessors[id],view=g.bufferViews[a.bufferView],size={SCALAR:1,VEC2:2,VEC3:3,VEC4:4}[a.type as string]!,component=a.componentType===5126?4:a.componentType===5125?4:a.componentType===5123?2:1,values:number[]=[];for(let i=0;i<a.count;i++)for(let j=0;j<size;j++){const offset=(view.byteOffset??0)+(a.byteOffset??0)+i*(view.byteStride??component*size)+j*component;values.push(a.componentType===5126?bin.readFloatLE(offset):a.componentType===5125?bin.readUInt32LE(offset):a.componentType===5123?bin.readUInt16LE(offset):bin.readUInt8(offset));}return values;};
+ const nodes=g.nodes.map((n:any)=>{const group=new THREE.Group();if(n.matrix)group.applyMatrix4(new THREE.Matrix4().fromArray(n.matrix));else{if(n.translation)group.position.fromArray(n.translation);if(n.rotation)group.quaternion.fromArray(n.rotation);if(n.scale)group.scale.fromArray(n.scale);}if(n.mesh!==undefined)for(const p of g.meshes[n.mesh].primitives){const b=new THREE.BufferGeometry();b.setAttribute('position',new THREE.Float32BufferAttribute(accessor(p.attributes.POSITION),3));if(p.indices!==undefined)b.setIndex(accessor(p.indices));group.add(new THREE.Mesh(b));}return group;});g.nodes.forEach((n:any,i:number)=>{for(const c of n.children??[])nodes[i].add(nodes[c]);});const root=new THREE.Group();for(const n of g.scenes[g.scene??0].nodes)root.add(nodes[n]);return root;
+}
+test('actual Intrepid floors support walking and both cleared authored side doors are traversable',async()=>{
+ await RAPIER.init();const world=new RAPIER.World({x:0,y:-9.81,z:0});try{
+ meshColliders(world,await geometry('interior'));world.timestep=1/60;
+ for(const side of [-1,1]){const body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0,.9,-6.0375)),capsule=world.createCollider(RAPIER.ColliderDesc.capsule(.55,.3),body),controller=world.createCharacterController(.015);controller.enableAutostep(.25,.2,true);controller.enableSnapToGround(.2);world.step();
+ for(let i=0;i<220;i++){controller.computeColliderMovement(capsule,{x:side*.025,y:-.02,z:0});const p=body.translation(),m=controller.computedMovement();body.setNextKinematicTranslation({x:p.x+m.x,y:p.y+m.y,z:p.z+m.z});world.step();}
+ const p=body.translation();assert.ok(side*p.x>4.8,`door ${side} blocked actual geometry at ${JSON.stringify(p)}`);assert.ok(p.y>.75&&p.y<1.1,'authored floor supports capsule');world.removeRigidBody(body);
+ }
+ }finally{world.free();}
+});
+test('actual bedroom entry leads onto a physical floor without crossing a sealed front wall',async()=>{
+ await RAPIER.init();const world=new RAPIER.World({x:0,y:-9.81,z:0});try{meshColliders(world,await geometry('bedroom'));world.createCollider(RAPIER.ColliderDesc.cuboid(2,.1,2).setTranslation(0,-.1,-5.5));world.timestep=1/60;const body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0,.9,-5.5)),capsule=world.createCollider(RAPIER.ColliderDesc.capsule(.55,.3),body),controller=world.createCharacterController(.015);controller.enableSnapToGround(.2);controller.enableAutostep(.25,.2,true);world.step();for(let i=0;i<240;i++){controller.computeColliderMovement(capsule,{x:0,y:-.02,z:.025});const p=body.translation(),m=controller.computedMovement();body.setNextKinematicTranslation({x:p.x+m.x,y:p.y+m.y,z:p.z+m.z});world.step();}assert.ok(body.translation().z>-.5,`sealed bedroom at ${JSON.stringify(body.translation())}`);assert.ok(body.translation().y>.7);}finally{world.free();}
+});

@@ -12,7 +12,7 @@ export const DOCKING_SECONDS=5;
 export const NYSA_CAPTURE:Vec3={x:0,y:0,z:-1022};
 export type FlightLeg='nysa'|'erebus';
 export interface FlightState {leg:FlightLeg;site:LandingSite;phase:'launching'|'flying'|'landing'|'descending'|'ascending'|'docking'|'landed'|'docked';position:Vec3;velocity:Vec3;throttle:number;timer:number;collisions:number;start:Vec3;}
-export interface FlightInput {throttle:number;brake:boolean;boost:boolean;yaw:number;pitch:number;}
+export interface FlightInput {targetThrottle?:number;throttle:number;brake:boolean;boost:boolean;yaw:number;pitch:number;}
 const copy=(v:Vec3)=>({...v});
 export const flightSpeed=(f:FlightState)=>Math.hypot(f.velocity.x,f.velocity.y,f.velocity.z);
 export const flightGoal=(f:FlightState)=>f.leg==='nysa'?NYSA_APPROACH:EREBUS_APPROACH;
@@ -62,7 +62,7 @@ export function beginApproach(f:FlightState):FlightState {
 }
 function advanceThrust(f:Pick<FlightState,'throttle'|'velocity'>,input:FlightInput,dt:number){
   // Brake wins over simultaneous joystick/throttle/boost intent.
-  const throttle=input.brake?Math.max(0,f.throttle-dt*1.8):Math.max(0,Math.min(1,f.throttle+Math.max(-1,Math.min(1,input.throttle))*dt*.7));
+  const throttle=input.brake?Math.max(0,f.throttle-dt*1.8):input.targetThrottle===undefined?Math.max(0,Math.min(1,f.throttle+Math.max(-1,Math.min(1,input.throttle))*dt*.7)):Math.max(0,Math.min(1,f.throttle+Math.max(-dt*.7,Math.min(dt*.7,Math.max(0,Math.min(1,input.targetThrottle))-f.throttle))));
   const speed=throttle*(input.boost&&!input.brake?180:110),pitch=Math.max(-1.35,Math.min(1.35,input.pitch));
   const desired={x:-Math.sin(input.yaw)*Math.cos(pitch)*speed,y:Math.sin(pitch)*speed,z:-Math.cos(input.yaw)*Math.cos(pitch)*speed};
   const blend=1-Math.exp(-(input.brake?5:1.4)*dt),velocity=copy(f.velocity);

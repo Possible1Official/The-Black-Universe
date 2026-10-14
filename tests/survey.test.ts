@@ -27,7 +27,7 @@ test('field tracking overrides only surface guidance and falls back after a scan
 test('expanded terrain routes reach both rendered scanners through real Rapier and reject pillar sight',async()=>{
   await RAPIER.init();const surface=createSurface(),world=new RAPIER.World({x:0,y:-9.81,z:0});world.timestep=1/60;
   try{
-    assert.equal(SITE_HALF,64);assert.equal(surface.mesh.indices.length/3,18432);assert.equal(surface.mesh.vertices.length/3,9409);
+    assert.equal(SITE_HALF,128);assert.equal(surface.mesh.indices.length/3,73728);assert.equal(surface.mesh.vertices.length/3,37249);
     assert.ok(surface.obstacles.length<=128);assert.equal(surface.landmarkBoxes.length,5);assert.equal(surface.scanners.length,2);
     world.createCollider(RAPIER.ColliderDesc.trimesh(surface.mesh.vertices,surface.mesh.indices));
     for(const r of surface.obstacles)world.createCollider(RAPIER.ColliderDesc.ball(r.radius).setTranslation(r.x-SURFACE_ORIGIN,r.y,r.z));

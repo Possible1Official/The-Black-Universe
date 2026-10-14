@@ -25,3 +25,6 @@ While asset-site verification is unanswered, avoid sending another code email in
 
 
 Session restoration now uses `scripts/browser-session.mjs`: export only CGTrader cookies and local-storage origins atomically into an ignored private directory (700), file mode 600; import before visiting CGTrader, including session cookies with expiry -1. Save only after authenticated account controls are confirmed, and recheck after a complete browser restart. Chromium profile persistence alone is insufficient for session-only cookies. The helper is Node-only and never enters the game bundle. `scripts/browser-session-qa.mjs` verifies a locally fulfilled fixture across two separate Chromium launches, without using real account credentials or contacting the site.
+
+
+Asset expansion `feature/20261014-nysa-vehicles` integrates the eight selected CGTrader derivatives, Intrepid layout, Nysa terrain, vehicles, independent view/steering and animation. Check whether its PR remains open before starting another cycle; do not overlap unmerged work. Rollback starts at b650070a76d154e8934de321ae4ed11ec68c1eaa with pushed tag `rollback-20261014-nysa-vehicles`. Account retention restored successfully without a new code; only ignored private state may retain it. Raw stock sources never enter Git/deployment.

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {requestedAsset} from './requested-assets';
 
 export type AuthoredAsset='craft'|'station';
 // Successful downloads stay shared; failures may retry on the next explicit flight.
@@ -26,6 +27,7 @@ export function createAuthoredAssetLoader(load:(kind:AuthoredAsset)=>Promise<THR
 }
 // One download per successful asset. Clones share geometry, materials and maps.
 export const loadAuthoredAsset=createAuthoredAssetLoader(async kind=>{
-  const url=kind==='craft'?new URL('./assets/craft.glb',import.meta.url):new URL('./assets/station.glb',import.meta.url);
+  if(kind==='craft')return (await requestedAsset('ship')).scene;
+  const url=new URL('./assets/station.glb',import.meta.url);
   return (await new GLTFLoader().loadAsync(url.href)).scene;
 });
