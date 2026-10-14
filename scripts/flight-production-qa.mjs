@@ -13,11 +13,18 @@ try{
  }
  await page.addInitScript(()=>localStorage.setItem('black-universe-v2',JSON.stringify({version:2,relays:['engineering','navigation','observatory'],forged:true,surveyed:false,power:{profile:'balanced',heat:24,tripped:false}})));
  await page.addInitScript(()=>{localStorage.setItem('erebus-information','visible');localStorage.setItem('erebus-camera','third');});
- await page.goto('http://localhost:4173/');await page.waitForSelector('canvas[data-ready="true"]');console.log('Production ready');assert.equal(await page.evaluate(()=>typeof window.__erebus),'undefined');
+ await page.goto('http://localhost:4173/',{waitUntil:'domcontentloaded'});await page.waitForSelector('canvas[data-ready="true"]');console.log('Production ready');assert.equal(await page.evaluate(()=>typeof window.__erebus),'undefined');
  await page.getByText('Controls & settings',{exact:true}).click();await page.selectOption('#quality','low');await page.getByText('Controls & settings',{exact:true}).click();await page.click('#play');
  // Turn toward the aft launch console with real mobile pointer input, then walk.
  const cdp=await page.context().newCDPSession(page);
- for(let i=0;i<4;i++){await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:500,y:250,id:1}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:500-Math.PI/4/.004,y:250,id:1}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
+ for(let i=0;i<8;i++){
+  const heading=await page.locator('#compassHeading').textContent();const degrees=Number(heading.split('/')[1].replace('°',''));const delta=((180-degrees+540)%360)-180;if(Math.abs(delta)<2)break;
+  const dx=Math.max(-190,Math.min(190,delta*Math.PI/180/.004));
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:500,y:250,id:1}]});await page.waitForTimeout(200);
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:500+dx,y:250,id:1}]});await page.waitForTimeout(200);
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(200);
+ }
+ assert.ok(Math.abs(Number((await page.locator('#compassHeading').textContent()).split('/')[1].replace('°',''))-180)<2,'actual touch input faces aft console');
  await page.keyboard.down('KeyW');await page.waitForFunction(()=>document.getElementById('interaction').textContent.includes('Launch survey shuttle'));await page.keyboard.up('KeyW');await page.keyboard.press('KeyE');console.log('Production launch');
  await page.waitForFunction(()=>document.getElementById('flightStatus').textContent.includes('Approach ring'));
  if(process.env.LANDING_SITE_QA==='arch'&&await page.locator('#flightPad').isVisible()){await page.click('#flightPad');assert.match(await page.locator('#flightPad').textContent(),/ARCH/);}
