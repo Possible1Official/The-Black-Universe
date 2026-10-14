@@ -7,6 +7,7 @@ import {loadCrewVisuals,type CrewVisual} from './crew-visual';
 import {loadAuthoredAsset} from './authored-assets';
 import {walkingCamera,flightCamera,orbitalCameraDistance,surfaceCameraDistance} from './view-camera';
 import {SHUTTLE_SIZE,SHUTTLE_HATCH_Z} from './shuttle';
+import {coolantBlock,dischargeCoolant,recoverSupplies,SUPPLY_CACHE} from './supplies';
 import {bulkheadPanels} from './bulkheads';
 import {clearSight} from './visibility';
 import {planEngineeringDuty,recordDutyMovement,type EngineeringDuty} from './crew-duty';
@@ -132,7 +133,7 @@ box(5,2,.15,-15,2.7,.23,textPanel('ENGINEERING','CONTAINMENT / NOMINAL','#edb378
 const solids:{size:number[];pos:number[];target?:Target}[]=[];
 function solid(w:number,h:number,d:number,x:number,y:number,z:number,target?:Target){solids.push({size:[w,h,d],pos:[x,y,z],target});}
 let onSurface=false;
-let trackedField:FieldScan|undefined;
+let trackedField:FieldScan|'supplies'|undefined;
 let flight:FlightState|null=null,flightBrake=false,flightBoost=false;
 let captureViewStart={yaw:0,pitch:0};
 type Target={zone?:'surface';name:string;position:THREE.Vector3;action:()=>void;screen?:THREE.Mesh;collider?:RAPIER.Collider;};
@@ -246,8 +247,8 @@ function updateHud(){const spans=$('relays').children;RELAYS.forEach((r,i)=>span
 let audioContext:AudioContext|undefined,hum:GainNode|undefined;
 function initAudio(){try{audioContext??=new AudioContext();void audioContext.resume();if(!hum){hum=audioContext.createGain();hum.gain.value=.018;hum.connect(audioContext.destination);for(const f of [48,72]){const o=audioContext.createOscillator();o.frequency.value=f;o.connect(hum);o.start();}}hum.gain.value=$<HTMLInputElement>('audio').checked?.018:0;}catch{ /* silent fallback */ }}
 function tone(frequency:number){if(!audioContext||!$<HTMLInputElement>('audio').checked)return;const o=audioContext.createOscillator(),g=audioContext.createGain();o.frequency.value=frequency;g.gain.setValueAtTime(.05,audioContext.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+.4);o.connect(g);g.connect(audioContext.destination);o.start();o.stop(audioContext.currentTime+.4);}
-function showDialogue(name:string,line:string){$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;$('surveyPanel').hidden=true;dialogueOpen=true;clearInput();$('speaker').textContent=name;$('speech').textContent=line;$('dialogue').hidden=false;paintNavigation();document.exitPointerLock?.();}
-function closeDialogue(){save(false);clearInput();$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;dialogueOpen=false;speakingCrew=undefined;$('dialogue').hidden=true;paintNavigation();if(active&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});}
+function showDialogue(name:string,line:string){$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;$('surveyPanel').hidden=true;$('suppliesPanel').hidden=true;dialogueOpen=true;clearInput();$('speaker').textContent=name;$('speech').textContent=line;$('dialogue').hidden=false;paintNavigation();document.exitPointerLock?.();}
+function closeDialogue(){save(false);clearInput();$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;$('suppliesPanel').hidden=true;dialogueOpen=false;speakingCrew=undefined;$('dialogue').hidden=true;paintNavigation();if(active&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});}
 $('closeDialogue').onclick=closeDialogue;
 function pause(){save(false);active=false;clearInput();powerAccumulator=0;paintNavigation();$('overlay').hidden=false;$('play').innerHTML='RESUME EXPEDITION <span>↗</span>';document.exitPointerLock?.();if(hum)hum.gain.value=0;}
 $('menu').onclick=pause;
@@ -274,6 +275,8 @@ $('resetContainment').onclick=()=>{
 };
 const thermalCold=new THREE.Color(0x44bed1),thermalHot=new THREE.Color(0xff4c32);
 function paintPower(){
+  reserveStatus.color.setHex(progress.supplies.coolant>0?0x77e5d4:0x627c88);cacheStatus.color.setHex(progress.supplies.cacheClaimed?0x627c88:0x77e5d4);
+  if(!$('suppliesPanel').hidden)paintSupplies();
   const p=progress.power,output=powerOutput(p,progress.relays.length);
   const heat=Math.round(p.heat);
   $('powerSummary').textContent=`${p.profile.toUpperCase()} · FORGE ${Math.round(output.forge)}%`;
@@ -315,6 +318,28 @@ scene.add(...lightBudget.proxies);
 const shipNodes=scene.children.filter(node=>node!==sun&&!(node instanceof THREE.HemisphereLight));
 const shipVisibility=new Map<THREE.Object3D,boolean>();
 const surface=createSurface();scene.add(surface.group);
+const suppliesPanel=document.createElement('section');suppliesPanel.id='suppliesPanel';suppliesPanel.hidden=true;suppliesPanel.setAttribute('aria-label','Reserve coolant');$('dialogue').insertBefore(suppliesPanel,$('closeDialogue'));
+// Generated fixtures remain until a licensed authored import is available.
+function equipment(kind:'canister'|'crate',x:number,y:number,z:number,parent:THREE.Object3D){const root=new THREE.Group();root.position.set(x,y,z);parent.add(root);const size=kind==='canister'?[1,1.6,1]:[1.25,.9,1];box(size[0],size[1],size[2],0,size[1]/2,0,metal,root);return root;}
+const coolantReserve=equipment('canister',-17.3,0,12,scene);shipNodes.push(coolantReserve);
+const reserveTarget:Target={name:'Open auxiliary coolant reserve',position:new THREE.Vector3(-17.3,1.1,12),action:()=>openSupplies('discharge')};targets.push(reserveTarget);solid(1,1.6,1,-17.3,.8,12,reserveTarget);
+const cacheHeight=terrainHeight(SUPPLY_CACHE.x,SUPPLY_CACHE.z),supplyCrate=equipment('crate',SUPPLY_CACHE.x,cacheHeight,SUPPLY_CACHE.z,surface.group);
+const cacheTarget:Target={zone:'surface',name:'Inspect coolant supply cache',position:new THREE.Vector3(SURFACE_ORIGIN+SUPPLY_CACHE.x,cacheHeight+.75,SUPPLY_CACHE.z),action:()=>openSupplies('recover')};targets.push(cacheTarget);
+const reserveStatus=new THREE.MeshBasicMaterial({color:0x77e5d4}),cacheStatus=reserveStatus.clone();
+box(.75,.04,.04,0,1.45,.52,reserveStatus,coolantReserve);box(.75,.04,.04,0,.7,.52,cacheStatus,supplyCrate);
+suppliesPanel.innerHTML='<p id="suppliesStatus" role="status"></p><button id="dischargeCoolant">Discharge one cartridge</button><button id="recoverCoolant">Recover cartridges</button><p class="powerHint">Each cartridge reduces thermal load by 25 points. A containment trip still needs the normal manual reset. The field cache can replenish your reserve once.</p>';
+let suppliesMode:'discharge'|'recover'='discharge';
+function paintSupplies(){
+  const reserve=progress.supplies,blocked=suppliesMode==='discharge'?coolantBlock(progress.power,reserve):reserve.cacheClaimed?'This cache has been recovered.':reserve.coolant>=2?'Reserve full. Leave the cache until needed.':null;
+  $('suppliesStatus').textContent=`RESERVE ${reserve.coolant}/2 · THERMAL ${Math.round(progress.power.heat)}%${blocked?` · ${blocked}`:''}`;
+  $('dischargeCoolant').hidden=suppliesMode!=='discharge';$('recoverCoolant').hidden=suppliesMode!=='recover';
+  $<HTMLButtonElement>(suppliesMode==='discharge'?'dischargeCoolant':'recoverCoolant').disabled=!!blocked;
+}
+function openSupplies(mode:'discharge'|'recover'){
+  suppliesMode=mode;speakingCrew=undefined;showDialogue(mode==='discharge'?'ENGINEERING / AUXILIARY COOLANT':'NYSA / FIELD SUPPLY CACHE',mode==='discharge'?'A finite emergency reserve supports the primary cooling circuit. It removes thermal load without clearing a latched containment trip.':'Two reserve cartridges were staged at this survey cache. Recover them when your ship reserve has room.');suppliesPanel.hidden=false;paintSupplies();
+}
+$('dischargeCoolant').onclick=()=>{if(!active||!dialogueOpen||suppliesPanel.hidden||suppliesMode!=='discharge')return;const next=dischargeCoolant(progress.power,progress.supplies);if(next.used){progress={...progress,power:next.power,supplies:next.supplies};save(false);paintPower();paintSupplies();tone(380);}};
+$('recoverCoolant').onclick=()=>{if(!active||!dialogueOpen||suppliesPanel.hidden||suppliesMode!=='recover'||!onSurface)return;progress={...progress,supplies:recoverSupplies(progress.supplies,progress.forged)};if(trackedField==='supplies')trackedField=undefined;save(false);paintPower();paintSupplies();tone(520);};
 scene.add(avatar);avatar.visible=false;
 surface.setScans(progress.fieldScans);
 const fieldLog=document.createElement('button');fieldLog.id='fieldLog';fieldLog.hidden=true;fieldLog.setAttribute('aria-keyshortcuts','J');$('navigationHud').append(fieldLog);
@@ -328,6 +353,7 @@ fieldLog.onclick=()=>{
     button.textContent=scanned?'Recorded':onSurface?'Track site':'Land on Nysa to scan';button.disabled=scanned||!onSurface;button.dataset.track=site.id;
     button.onclick=()=>{trackedField=site.id;closeDialogue();notify(`TRACKING · ${site.label}`);};row.append(title,text,button);surveyPanel.append(row);
   }
+  const reserveRow=document.createElement('article'),reserveTitle=document.createElement('strong'),reserveText=document.createElement('p'),trackReserve=document.createElement('button');reserveTitle.textContent='Coolant supply cache';reserveText.textContent=`Reserve ${progress.supplies.coolant}/2 · ${progress.supplies.cacheClaimed?'CACHE RECOVERED':`Local X ${SUPPLY_CACHE.x} / Z ${SUPPLY_CACHE.z} · one-time refill`}`;trackReserve.textContent=onSurface?'Track cache':'Land on Nysa to recover';trackReserve.disabled=!onSurface||progress.supplies.cacheClaimed;trackReserve.dataset.track='supplies';trackReserve.onclick=()=>{trackedField='supplies';closeDialogue();};reserveRow.append(reserveTitle,reserveText,trackReserve);surveyPanel.append(reserveRow);
   const mission=document.createElement('button');mission.id='trackMission';mission.textContent='Restore mission guidance';mission.disabled=!onSurface;mission.onclick=()=>{trackedField=undefined;closeDialogue();};surveyPanel.append(mission);
   $('speaker').tabIndex=-1;$('speaker').focus({preventScroll:true});$('dialogue').scrollTop=0;
 };
@@ -528,6 +554,7 @@ function updatePlayerView(){
   $('crosshair').hidden=thirdPerson;
 }
 async function boot(){await RAPIER.init();world=new RAPIER.World({x:0,y:-9.81,z:0});world.timestep=fixed;
+  cacheTarget.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(.625,.45,.5).setTranslation(SURFACE_ORIGIN+SUPPLY_CACHE.x,cacheHeight+.45,SUPPLY_CACHE.z));
   world.createCollider(RAPIER.ColliderDesc.trimesh(surface.mesh.vertices,surface.mesh.indices).setTranslation(SURFACE_ORIGIN,0,0));
   for(const axis of ['x','z'])for(const sign of [-1,1])world.createCollider(RAPIER.ColliderDesc.cuboid(axis==='x'?1:SITE_HALF+1,4,axis==='z'?1:SITE_HALF+1).setTranslation(SURFACE_ORIGIN+(axis==='x'?sign*(SITE_HALF+1):0),2,axis==='z'?sign*(SITE_HALF+1):0));
   extractionTarget.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(.16,1.2,.16).setTranslation(SURFACE_ORIGIN,1.2,LANDING.z+SHUTTLE_HATCH_Z));

@@ -3,11 +3,13 @@ import type {Progress} from './state';
 import {forgeReadiness} from './power';
 import {LANDING,SAMPLE,SURFACE_ORIGIN} from './excursion';
 import {SHUTTLE_HATCH_Z} from './shuttle';
+import {SUPPLY_CACHE} from './supplies';
 import {FIELD_SITES,type FieldScan} from './survey';
 export interface NavPoint {x:number;z:number}
 export interface Waypoint extends NavPoint {id:string;label:string;hint:string}
 const at=(id:string,label:string,x:number,z:number,hint='Approach, face the console and interact with E.'):Waypoint=>({id,label,x,z,hint});
-export function missionDestination(p:Progress,onSurface:boolean,tracked?:FieldScan):Waypoint {
+export function missionDestination(p:Progress,onSurface:boolean,tracked?:FieldScan|'supplies'):Waypoint {
+  if(onSurface&&tracked==='supplies'&&!p.supplies.cacheClaimed)return at('supplies','Coolant supply cache',SURFACE_ORIGIN+SUPPLY_CACHE.x,SUPPLY_CACHE.z,'Recover cartridges with E when your reserve has space.');
   const site=FIELD_SITES.find(s=>s.id===tracked);
   if(onSurface&&site&&!p.fieldScans.includes(site.id))return at(`field-${site.id}`,site.label,SURFACE_ORIGIN+site.x,site.z,'Approach the illuminated scanner and press E to record a reading. Field log restores mission guidance.');
   if(onSurface)return p.surveyed
