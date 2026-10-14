@@ -4,9 +4,8 @@ export function createWindowVista(){
  const group=new THREE.Group();group.name='Generated window vista';
  const material=new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false});
  const add=(w:number,h:number,x:number,y:number,z:number,angle=0)=>{const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w,h),material);mesh.position.set(x,y,z);mesh.rotation.y=angle;group.add(mesh);};
- // Far bow backdrop leaves the real forge in front. Cabin panels sit beyond glass.
- add(600,216,0,8,-320);
- for(const side of [-1,1])add(8,3,side*4.65,2.25,34.825,side===1?-Math.PI/2:Math.PI/2);
+ // One backdrop behind the bedroom's rear window only. The bow and other
+ // rooms retain the actual star field/forge, without generated scenery.
  add(8,3,0,2.25,39.6,Math.PI);
  new THREE.TextureLoader().load(new URL('./assets/window-vista.webp',import.meta.url).href,texture=>{texture.colorSpace=THREE.SRGBColorSpace;material.map=texture;material.needsUpdate=true;group.userData.loaded=true;},undefined,()=>console.warn('Window panorama unavailable'));
  return group;
