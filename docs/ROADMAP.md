@@ -135,3 +135,8 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Two finite engineering cartridges reduce thermal load without bypassing a latched trip; normal Cooling/reset remains available.
 - Optional Nysa supply-cache tracking, one-time refill, physical cabinet/crate collision and compatible v2 persistence.
 - Fixtures remain generated. CGTrader acquisition is pending fresh verification and license/distribution review; no new imported model is claimed.
+
+## Authored-model reliability milestone (2026-10-14)
+- Failed craft/station downloads preserve playable fallbacks and retry on the next launch/boarding.
+- Concurrent requests and repeated trips share successful sources, with one clone per actor and no frame-driven retry storm.
+- New CGTrader prop import remains pending fresh verification and distribution checks; model detail/budgets are unchanged.
