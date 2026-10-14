@@ -5,6 +5,8 @@ import {createFlightScene,makeShuttle} from './flight-scene';
 import {createPlanetTextures} from './planet';
 import {loadCrewVisuals,type CrewVisual} from './crew-visual';
 import {loadAuthoredAsset} from './authored-assets';
+import {FlightFeedback} from './flight-feedback';
+import {createThrusters} from './thrusters';
 import {walkingCamera,flightCamera,orbitalCameraDistance,surfaceCameraDistance} from './view-camera';
 import {SHUTTLE_SIZE,SHUTTLE_HATCH_Z} from './shuttle';
 import {coolantBlock,dischargeCoolant,recoverSupplies,SUPPLY_CACHE} from './supplies';
@@ -359,6 +361,7 @@ fieldLog.onclick=()=>{
 };
 const landedShuttle=makeShuttle();landedShuttle.position.set(0,0,LANDING.z);surface.group.add(landedShuttle);
 const surfaceCraft=makeShuttle();scene.add(surfaceCraft);surfaceCraft.visible=false;
+const feedback=new FlightFeedback(),orbitalThrusters=createThrusters(),surfaceThrusters=createThrusters();flightWorld.scene.add(orbitalThrusters.root);scene.add(surfaceThrusters.root);
 const surfaceSky=new THREE.Color(0x678b9a);
 const flightHud=document.createElement('aside');flightHud.id='flightHud';flightHud.hidden=true;flightHud.setAttribute('aria-label','Shuttle flight controls');
 flightHud.innerHTML='<span class="eyebrow">KESTREL / SURVEY SHUTTLE</span><strong id="flightTelemetry"></strong><span id="flightStatus" role="status"></span><div><button id="flightBrake">BRAKE / SPACE</button><button id="flightBoost">BOOST / SHIFT</button><button id="flightTarget">TARGET: NYSA</button></div><small>W/S throttle · A/D turn · arrows pitch · mouse/drag aim · E land/dock</small>';$('hud').append(flightHud);
@@ -371,10 +374,11 @@ function launchFlight(leg:FlightLeg){
   if(flight)return;
   void loadAuthoredAsset('craft',[landedShuttle,flightWorld.craft,surfaceCraft]).catch(()=>console.warn('Craft asset unavailable; procedural shuttle fallback active.'));
   void flightWorld.loadHabitat().catch(()=>console.warn('Station asset unavailable; docking habitat fallback active.'));
-  clearInput();nearest=undefined;flight=startFlight(leg);yaw=leg==='nysa'?0:Math.PI;pitch=0;
+  clearInput();nearest=undefined;flight=startFlight(leg);yaw=leg==='nysa'?0:Math.PI;pitch=0;feedback.reset(yaw);
   updateHud();$('objective').textContent='Pilot Kestrel';$('missionText').textContent='Fly to the cyan approach ring. Brake below 18 m/s, then press E to land or dock.';paintNavigation();notify(leg==='nysa'?'KESTREL · Launching from Erebus shuttle bay.':'KESTREL · Lifting off Nysa. Return corridor charted.');
 }
 function travel(landing:boolean){
+  orbitalThrusters.root.visible=surfaceThrusters.root.visible=false;
   clearInput();verticalSpeed=0;nearest=undefined;speakingCrew=undefined;trackedField=undefined;
   setSurfaceView(landing);onSurface=landing;
   lightBudget.configure($<HTMLSelectElement>('quality').value==='high',!landing);
@@ -510,6 +514,7 @@ function frame(){requestAnimationFrame(frame);const rawDt=clock.getDelta(),dt=Ma
       if(isSurfaceFlight(flight)){const pose=surfaceFlightPose(flight.timer,flight.phase==='ascending');camera.position.set(SURFACE_ORIGIN+pose.position.x,pose.position.y,pose.position.z);camera.rotation.set(pose.pitch,pose.yaw,0);$('location').textContent=flight.phase==='descending'?'NYSA / DESCENT':'NYSA / ASCENT';$('coordinates').textContent=`RADAR ALT ${pose.altitude.toFixed(1)} m`;$('flightTelemetry').textContent=`RADAR ALT ${pose.altitude.toFixed(1)} m · ${Math.round(pose.progress*100)}%`;}
       else {$('location').textContent='KESTREL / FREE FLIGHT';$('coordinates').textContent=`SECTOR / X ${flight.position.x.toFixed(0)} · Y ${flight.position.y.toFixed(0)} · Z ${flight.position.z.toFixed(0)}`;}nearest=undefined;}
     else {camera.position.set(p.x,p.y+.74+Math.sin(elapsed*9)*.018*Math.min(moving,1),p.z);camera.rotation.set(pitch,yaw,0);$('location').textContent=onSurface?'NYSA / SURVEY SITE':p.x< -11?'ENGINEERING':p.x>11?'OBSERVATORY':p.z< -5?'COMMAND DECK':'HABITAT CONCOURSE';$('coordinates').textContent=`${onSurface?'SURFACE':'SECTOR 00.00'} / X ${(p.x-(onSurface?SURFACE_ORIGIN:0)).toFixed(1)} · Z ${p.z.toFixed(1)}`;nearest=selectTarget();}
+    if(flight)feedback.step(flight,yaw,keys.has('Space')||flightBrake,keys.has('ShiftLeft')||keys.has('ShiftRight')||flightBoost,dt);
     updatePlayerView();
     const prompt=flight?(canApproach(flight)?`[ E ] ${flight.leg==='nysa'?'Land on Nysa':'Dock with Erebus'}`:''):nearest?`[ E ] ${nearest.name}`:'';$('interaction').style.display=prompt?'block':'none';$('interaction').textContent=prompt;$('touchAction').setAttribute('aria-label',prompt||'Interact');
   }else{$('interaction').style.display='none';}
@@ -532,18 +537,19 @@ function frame(){requestAnimationFrame(frame);const rawDt=clock.getDelta(),dt=Ma
   if(bloom.enabled)composer.render();else renderer.render(renderPass.scene,camera);frames++;fpsTime+=rawDt;if(fpsTime>2){canvas.dataset.fps=String(Math.round(frames/fpsTime));frames=0;fpsTime=0;}
 }
 function updatePlayerView(){
-  avatar.visible=false;surfaceCraft.visible=false;flightWorld.craft.visible=false;
+  avatar.visible=false;surfaceCraft.visible=false;flightWorld.craft.visible=false;orbitalThrusters.root.visible=surfaceThrusters.root.visible=false;
   if(flight){
     flightWorld.cockpit.visible=!thirdPerson;
     const origin=camera.position.clone(),rotation=camera.rotation.clone(),ground=isSurfaceFlight(flight);
     const craft=ground?surfaceCraft:flightWorld.craft;
     craft.position.copy(origin);craft.position.y-=1.4;craft.rotation.copy(rotation);craft.visible=thirdPerson;
-    if(ground){craft.rotation.set(0,rotation.y,0);rotation.set(-.08,rotation.y,0);}
+    if(ground){craft.rotation.set(0,rotation.y,0);rotation.set(-.08,rotation.y,0);}else craft.rotation.z+=feedback.bank;
     if(thirdPerson){
       const pose=flightCamera(origin,rotation,ground?(from,to)=>surfaceCameraDistance(world,from,to,playerCollider,parkedShuttleCollider,extractionTarget.collider):orbitalCameraDistance);
       camera.position.copy(pose.position);camera.lookAt(pose.target);cameraClearance=pose.distance;
       if(pose.distance<3)craft.visible=false;
     }
+    (ground?surfaceThrusters:orbitalThrusters).update(craft,feedback.power,feedback.time,ground);
   }else{
     flightWorld.hide();
     const p=player.translation();avatar.position.set(p.x,p.y-.85,p.z);
@@ -576,5 +582,5 @@ if(matchMedia('(pointer:coarse)').matches || new URLSearchParams(location.search
 $('play').setAttribute('disabled','');boot().catch(()=>{$('loading').textContent='Physics initialization failed. Refresh to retry.';});
 // Explicit development-only observability; stripped from the static production build.
 if(import.meta.env.DEV && new URLSearchParams(location.search).has('qa')){
-  Object.assign(window,{__erebus:{snapshot:()=>({position:player?.translation(),camera:{x:camera.position.x,y:camera.position.y,z:camera.position.z,clearance:cameraClearance,thirdPerson},avatar:{visible:avatar.visible,visual:avatarVisual?.snapshot()??null,position:avatar.position.toArray()},authored:{craft:!!landedShuttle.userData.authored,station:!!flightWorld.habitat.userData.authored,flightCraftVisible:flightWorld.craft.visible,surfaceCraftVisible:surfaceCraft.visible},surfaceView:surface.group.visible,shuttleVisible:landedShuttle.visible,cockpitVisible:flightWorld.cockpit.visible,shipHidden:shipVisibility.size>0,onSurface,flight:flight?{...flight,speed:flightSpeed(flight),distance:flightDistance(flight)}:null,progress,surfaceMaterials:surface.materialSnapshot(),timing:{lastMotionSteps,motionStepsTotal,droppedMotionTime},render:{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,batching,lighting:lightBudget.snapshot()},doors:doors.map(d=>({open:d.open,height:d.mesh.position.y})),active,dialogueOpen,nearest:nearest?.name,crew:crew.map(c=>({name:c.name,position:c.body?.translation(),mode:c.state.mode,visitorVisible:c.visitorVisible,duty:c.duty?(c.duty.phase==='watch'?'containment-watch':'returning-to-patrol'):'patrol',dutyPath:c.duty?.path,dutyCursor:c.duty?.cursor,gait:c.gait,walkBlend:c.walkBlend,visual:c.visual?.snapshot()??null,yaw:c.mesh.rotation.y})),touchMove:{x:touchMove.x,y:touchMove.y},reactorColor:reactorMaterial.emissive.getHex(),habitatLight:ceilingSpot.intensity}),place:(x:number,z:number,angle=0)=>{player.setTranslation({x,y:onSurface?terrainHeight(x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=angle;pitch=-.12;velocity.set(0,0,0);verticalSpeed=0;},target:(name:string)=>{const t=targets.find(t=>t.name===name);if(!t)throw new Error('Unknown test target');const z=t.position.z+1.65;player.setTranslation({x:t.position.x,y:onSurface?terrainHeight(t.position.x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=0;pitch=-.3;velocity.set(0,0,0);}}});
+  Object.assign(window,{__erebus:{snapshot:()=>({position:player?.translation(),camera:{x:camera.position.x,y:camera.position.y,z:camera.position.z,clearance:cameraClearance,thirdPerson},avatar:{visible:avatar.visible,visual:avatarVisual?.snapshot()??null,position:avatar.position.toArray()},feedback:{power:feedback.power,bank:feedback.bank,time:feedback.time,orbitalVisible:orbitalThrusters.root.visible,surfaceVisible:surfaceThrusters.root.visible},authored:{craft:!!landedShuttle.userData.authored,station:!!flightWorld.habitat.userData.authored,flightCraftVisible:flightWorld.craft.visible,surfaceCraftVisible:surfaceCraft.visible},surfaceView:surface.group.visible,shuttleVisible:landedShuttle.visible,cockpitVisible:flightWorld.cockpit.visible,shipHidden:shipVisibility.size>0,onSurface,flight:flight?{...flight,speed:flightSpeed(flight),distance:flightDistance(flight)}:null,progress,surfaceMaterials:surface.materialSnapshot(),timing:{lastMotionSteps,motionStepsTotal,droppedMotionTime},render:{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,batching,lighting:lightBudget.snapshot()},doors:doors.map(d=>({open:d.open,height:d.mesh.position.y})),active,dialogueOpen,nearest:nearest?.name,crew:crew.map(c=>({name:c.name,position:c.body?.translation(),mode:c.state.mode,visitorVisible:c.visitorVisible,duty:c.duty?(c.duty.phase==='watch'?'containment-watch':'returning-to-patrol'):'patrol',dutyPath:c.duty?.path,dutyCursor:c.duty?.cursor,gait:c.gait,walkBlend:c.walkBlend,visual:c.visual?.snapshot()??null,yaw:c.mesh.rotation.y})),touchMove:{x:touchMove.x,y:touchMove.y},reactorColor:reactorMaterial.emissive.getHex(),habitatLight:ceilingSpot.intensity}),place:(x:number,z:number,angle=0)=>{player.setTranslation({x,y:onSurface?terrainHeight(x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=angle;pitch=-.12;velocity.set(0,0,0);verticalSpeed=0;},target:(name:string)=>{const t=targets.find(t=>t.name===name);if(!t)throw new Error('Unknown test target');const z=t.position.z+1.65;player.setTranslation({x:t.position.x,y:onSurface?terrainHeight(t.position.x-SURFACE_ORIGIN,z)+1.05:.9,z},true);yaw=0;pitch=-.3;velocity.set(0,0,0);}}});
 }
