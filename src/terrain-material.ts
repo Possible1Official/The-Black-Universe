@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {biomeWeights} from './biomes';
 
 export const GROUND_MAP_SIZE=128;
 export const GROUND_TILE_METERS=4;
@@ -26,7 +27,12 @@ export function groundMapData(size=GROUND_MAP_SIZE){
   return {size,albedo,normal,roughness};
 }
 const soil=new THREE.Color(0x8a8069),moss=new THREE.Color(0x526b59),rock=new THREE.Color(0x687078);
-export function groundTint(height:number,normalY:number){
+export function groundTint(height:number,normalY:number,x?:number,z?:number){
+  if(x!==undefined&&z!==undefined){
+    const weights=biomeWeights(x,z),tint=new THREE.Color(0,0,0);
+    for(const [region,hex] of Object.entries({dunes:0xb59c73,basalt:0x454e59,wetland:0x527568,highland:0x8c9390}))tint.add(new THREE.Color(hex).multiplyScalar(weights[region as keyof typeof weights]));
+    return tint.lerp(rock,clamp((1-normalY)*6)).lerp(new THREE.Color(0xcbd7d8),weights.highland*clamp((height-7)/4));
+  }
   const rocky=clamp((1-normalY)*14),lowland=clamp((.65-height)/2);
   return soil.clone().lerp(moss,lowland).lerp(rock,rocky);
 }

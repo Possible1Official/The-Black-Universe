@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {NYSA_CENTER,NYSA_RADIUS,flightGoal,canApproach,type FlightState} from './flight';
 import {STATION_HULL,STATION_ASSEMBLY} from './station';
+import {attachRequested} from './requested-assets';
 import {loadAuthoredAsset} from './authored-assets';
 export function makeShuttle(){
   const root=new THREE.Group(),hull=new THREE.MeshStandardMaterial({color:0x344655,metalness:.7,roughness:.35}),trim=new THREE.MeshStandardMaterial({color:0xd0d8d8,metalness:.6,roughness:.4}),glow=new THREE.MeshBasicMaterial({color:0x67e6ff});
@@ -20,6 +21,7 @@ export function createFlightScene(camera:THREE.PerspectiveCamera,planetMaterial:
   for(const b of STATION_HULL)block(b.size[0],b.size[1],b.size[2],b.position[0],b.position[1],b.position[2]);
   const habitat=new THREE.Group();habitat.position.set(STATION_ASSEMBLY.position[0],STATION_ASSEMBLY.position[1]-STATION_ASSEMBLY.size[1]/2,STATION_ASSEMBLY.position[2]);station.add(habitat);
   block(88,28,120,0,14,0,metal,habitat);
+  const runway=new THREE.Group();runway.position.set(0,-5,-24);runway.scale.y=1.5;station.add(runway);attachRequested('corridor',runway).catch(()=>console.warn('Orbital runway asset unavailable'));
   const craft=makeShuttle();scene.add(craft);craft.visible=false;
   for(const x of [-22,22])block(1,12,1,x,0,-32,light);
   for(const x of [-45,45])block(23,.4,2,x,6.3,20,light);
@@ -40,7 +42,7 @@ export function createFlightScene(camera:THREE.PerspectiveCamera,planetMaterial:
   const dashboard=block(2.2,.2,.7,0,-.65,-1.2,metal,cockpit);dashboard.rotation.x=.12;
   block(.8,.035,.28,0,-.53,-1.3,light,cockpit);for(const x of [-.85,.85]){const strut=block(.07,1.6,.07,x,.05,-1.2,metal,cockpit);strut.rotation.z=x*.15;}
   cockpit.visible=false;
-  return {scene,cockpit,craft,habitat,gates,loadHabitat(){return loadAuthoredAsset('station',[habitat]);},update(f:FlightState,dt:number,brakeNow=false){
+  return {scene,cockpit,craft,habitat,gates,loadCockpit(){return attachRequested('cockpit',cockpit);},loadHabitat(){return loadAuthoredAsset('station',[habitat]);},update(f:FlightState,dt:number,brakeNow=false){
     const goal=flightGoal(f),outward=f.leg==='nysa'?1:-1;
     gates.forEach((gate,i)=>{gate.position.set(goal.x,goal.y,goal.z+outward*i*50);gate.rotation.z+=dt*.3;});
     gateMaterial.color.setHex(canApproach(f)?0x83f0c1:brakeNow?0xffbb72:0x77e6ee);

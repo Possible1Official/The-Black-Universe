@@ -15,7 +15,7 @@ export function drawSurveyMap(canvas:HTMLCanvasElement,p:Progress,visitor?:{x:nu
  }
  canvas.width=canvas.height=256;ctx.drawImage(relief,0,0);ctx.strokeStyle='#9acbce33';ctx.lineWidth=1;
  for(let n=0;n<=4;n++){ctx.beginPath();ctx.moveTo(n*64,0);ctx.lineTo(n*64,256);ctx.moveTo(0,n*64);ctx.lineTo(256,n*64);ctx.stroke();}
- ctx.font='10px system-ui';ctx.fillStyle='#d4f8ff';ctx.fillText('N ↑',118,13);ctx.fillText('128 m · NYSA SECTOR',8,247);
+ ctx.font='10px system-ui';ctx.fillStyle='#d4f8ff';ctx.fillText('N ↑',118,13);ctx.fillText(`${SITE_HALF*2} m · NYSA SECTOR`,8,247);
  const pad=landingPad(site),other=landingPad(site==='arch'?'survey':'arch');
  const points=[{label:visitor?'KESTREL':'ACTIVE PAD',x:pad.x,z:pad.z+SHUTTLE_HATCH_Z,done:true},{label:site==='arch'?'MAIN PAD':'ARCH PAD',x:other.x,z:other.z,done:true},{label:'SAMPLE',...SAMPLE,done:p.surveyed},...FIELD_SITES.map(s=>({...s,label:s.id==='arch'?'ARCH':'WEATHER',done:p.fieldScans.includes(s.id)})),{label:'SUPPLIES',...SUPPLY_CACHE,done:p.supplies.cacheClaimed}];
  for(const point of points){const {u,v}=mapUV(point.x,point.z),x=u*256,y=v*256;ctx.fillStyle=point.done?'#83f0c1':'#ffc983';ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();ctx.fillText(point.label,Math.min(196,x+6),y-6);}

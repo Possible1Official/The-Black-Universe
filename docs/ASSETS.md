@@ -117,3 +117,37 @@ Fresh user verification completed. The first immediate check was too early; a su
 After the existing multi-candidate visual review, downloaded only `storage_box.glb` (3,263,088 bytes, 564 indexed triangles, one mesh/material and three embedded images; SHA-256 `3d8682e3d4292b38eae663c2398b51564f3922647cdf4fdce10b77f2da0052db`) and `bottle.glb` from [Sci-fi asset pack](https://www.cgtrader.com/free-3d-models/space/other/scifi-asset-pack), model 4044829, creator **desanlisadrien1**. Actual listing license: **Royalty Free License (no AI)**. Files were acquired through authenticated normal download buttons, without buying paid or subscription models. Raw sources remain ignored at `.local/cg-props/`; neither model is yet integrated or published.
 
 Next: inspect individual rendered geometry/materials, resize textures and fit selected props to the existing coolant interactions/collision bounds. Complete the game's extraction-deterrence packaging required by the reviewed royalty-free terms before distributing any derivative; do not publish stock GLBs as standalone assets in this public repository. Existing game model budgets remain unchanged.
+
+
+## 2026-10-14 · User-selected vehicle and interior derivatives
+
+All eight files were acquired through normal authenticated CGTrader download controls. The saved private session restored without another verification code, and the actual Free catalog filter remained selected. Raw Blend/GLB/RAR/ZIP files, map derivatives and cookies remain ignored and are excluded from deployment. Listing terms are Royalty Free (no AI); Intrepid additionally states public domain. The Cyber Biker pack has user-confirmed creator redistribution permission, independently unverified.
+
+| Asset | Creator | Triangles | Primitive draws | Packed transfer |
+| --- | --- | ---: | ---: | ---: |
+| biker | HRNLSTUDIO | 28,609 | 31 | 1,896,160 B |
+| bike | HRNLSTUDIO | 23,264 | 26 | 1,446,680 B |
+| rover | dragosh21 | 27,928 | 6 | 1,034,838 B |
+| corridor | dibacgi | 37,143 | 2 | 482,100 B |
+| bedroom | MASSX-RZ | 53,832 | 14 | 1,414,757 B |
+| interior | MiskatonicStudio / Zaven Boyrazian | 66,290 | 14 | 1,585,462 B |
+| cockpit | ViitorX | 48,000 | 4 | 4,799,821 B |
+| ship | OK3D | 59,123 | 18 | 2,574,535 B |
+
+Exact listing IDs/URLs, hashes and bounds/budgets are in `public/assets/requested/provenance.json` and the converter scripts. Vite fingerprints each EBU1 derivative. The payload is gzip-compressed and authenticated/encrypted with a public format key. It deters direct standalone stock-model distribution; it is not secret DRM or an unextractable asset guarantee. The client needs its public decoder. No credentials are present in the resources.
+
+Biker: 67 joints; prior licensed Mixamo Idle/Walking were retargeted, while Running/Riding are locally authored. The same captured MixamoHarvester-acquired motion is reused; no fresh Mixamo login or run download occurred. Clothing/accessories were selected, unused anatomical/source reference meshes excluded. No hand/foot IK, facial capture or new photorealistic character claim.
+
+Bike: static optimized chassis, wheels remain fixed. Rover: four normalized local-X wheel pivots spin by actual travel; gray PBR preserves silhouette with roughness/partial emission. Original procedural color/decal/cyan/normal-bump detail is omitted. Conservative Rapier proxies match body envelopes; the rover antenna tip is decorative beyond its two-meter collision height. Parking is cleared of rocks and footprint ground rays prevent starting inside slopes. There is no physical suspension, wheel friction or rigid-body tire model.
+
+Ship: roughly two million source triangles reduced to 59,123, with one rigid mesh/18 draws and 48 embedded maps, mostly512 and at most1024. Nose−Z and floor normalization fit the conservative craft clearance; weapons/engines/gear are static authored geometry with game-added exhaust feedback. Cockpit: 48,000 triangles/four draws/six1024 maps; pilot eye at origin, glazing removed, emission reduced, clear forward view. Displays are decorative.
+
+Station: only the visible Intrepid assembly is retained at uniform1.5 scale. Structural floors/walls are not decimated; closed original side panels were replaced by the game bulkheads, threshold floor bridges added, and the aft center opened for the runway. Actual exported triangles drive static collision. Thirty-nine embedded512 maps preserve available DDS PBR data; PNG-only source emission/decals are unavailable in the DDS archive and are simplified. Off-scene asset libraries and a malformed below-floor locker are excluded.
+
+Corridor: source FBX lacks Cinema4D shaders/maps. Structure is adapted to10×6×24m with reconstructed material colors and12 game-specific cyan strips, open endpoints and conservative walkway proxies. Its orbital clone has increased vertical scale for bay clearance. Bedroom: dense non-destructive construction exhausted available memory; bounded base geometry, Mirror/Solidify and static decimation retain the sleeping pod, desk and panels. The actual monitor image/grunge roughness are included; other procedural materials are reduced to14 PBR families. Shoes, bonsai and DAZ character/background are excluded. A2.2m entry joins the runway; exact triangles provide room collision.
+
+Terrain remains locally generated: four relief regions with smooth color transitions, shallow clipped water and reeds, shared render/Rapier geometry and retained mission landmarks. The192×192 cells submit73,728 ground triangles over256×256m. This is one sector rather than whole-planet streaming or additional worlds.
+
+The new station has five authored game point-light sources; performance mode keeps the four-slot selection policy. Models/terrain add rendering and decoded texture costs despite their reduced source budgets. Software browser checks cannot establish hardware/mobile FPS, GPU memory or television-level realism. Future work should prioritize measured device budgets, LOD, animation contacts and more faithful source-material baking.
+
+Embedded JPEG/PNG headers are checked by tests, rather than trusting Blender image dimensions. The bedroom initially retained original4K packed bytes despite scaled preview buffers; fresh image datablocks and a byte-preserving GLB repair now enforce1024 caps. Non-image geometry buffer hashes are unchanged by that repair.

@@ -13,3 +13,6 @@ The parked craft's 4.94×2.84×6.62-meter collision envelope covers the imported
 The imported station forms the elevated exterior habitat assembly above the working docking bay. The existing walkable mission rooms and tested open bay remain procedural. Its hollow-looking sections have a conservative box collision envelope; imported rooms are not independently walkable in this release. See ASSETS.md for source and optimization evidence.
 
 Validation scripts: `node scripts/view-qa.mjs` against development checks both camera modes, panels, wall recovery, local preferences, shared asset requests, third-person flight round trip and portrait/landscape control bounds. `node scripts/flight-production-qa.mjs` against the production preview now runs the actual walking/piloting round trip with third-person selected. Software-renderer checks do not establish hardware/mobile FPS or real pointer-lock behavior.
+
+
+The 2026-10-14 expansion supersedes the earlier appearance/flight-camera notes: Cyber Biker is the player, selected CGTrader ship/cockpit replace the craft view, and speed/steering controls remain visible with INFO off. Third-person free look is independent of pilot/ground-vehicle heading. See VEHICLES.md for exact animation/collision limits.

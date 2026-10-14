@@ -163,3 +163,10 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Both officers expose objective, recorded-survey and actual-system topics, with containment-trip priority.
 - Mission/save state remains authoritative; dialogue adds no repair actions or AI-service dependency.
 - CGTrader authentication is restored after a browser restart using private cookie/local-storage export. Next authored-asset priority remains the reviewed free sci-fi props with license-compatible game packaging and measured texture/geometry budgets.
+
+## Nysa vehicles and requested CGTrader environments (2026-10-14)
+- Integrated the selected Cyber Biker/Turbo Bike, rover, Intrepid station, corridor/runway, bedroom, cockpit and flying ship as bounded local game resources.
+- Expanded the survey sector to 256 meters with dunes, basalt mesas, wetland and highlands using shared render/collision geometry.
+- Rideable bike/rover with collision-safe parking/dismount, speed slider, steering joystick and independent third-person look; slower distance-driven walking and running.
+- Authored station collision, functional moving bulkheads and a connected bedroom/runway preserve the existing mission and flight loop.
+- Next: measured real-device GPU/transfer budgets and LODs, terrain-following vehicle tilt/suspension, rider contact animation and further planet sectors. Vehicles currently run only on Nysa; staged orbital transitions, scripted officers and decorative weapons remain.
