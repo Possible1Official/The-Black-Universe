@@ -7,6 +7,7 @@ import {loadCrewVisuals,type CrewVisual} from './crew-visual';
 import {loadAuthoredAsset} from './authored-assets';
 import {FlightFeedback} from './flight-feedback';
 import {createThrusters} from './thrusters';
+import {crewBriefing,type BriefingTopic} from './crew-briefing';
 import {drawSurveyMap,mapPoint,surfacePin,PIN_LIMIT} from './survey-map';
 import type {SurfaceTrack} from './navigation';
 import {walkingCamera,flightCamera,orbitalCameraDistance,surfaceCameraDistance} from './view-camera';
@@ -30,7 +31,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { activateForge, activateRelay, crewLine, freshProgress, parseProgress, recordFieldScan, RELAYS, SAVE_KEY, LEGACY_SAVE_KEY, type Relay } from './state';
+import { activateForge, activateRelay, freshProgress, parseProgress, recordFieldScan, RELAYS, SAVE_KEY, LEGACY_SAVE_KEY, type Relay } from './state';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = $<HTMLCanvasElement>('universe');
@@ -198,7 +199,7 @@ function makeCrew(name:string,x:number,z:number,color:number){
     box(.12,.24,.14,0,-.55,0,trim,arm);arms.push(arm);
   }
   const target={name:`Speak with ${name}`,position:g.position.clone().add(new THREE.Vector3(0,1.2,0)),action:()=>{
-    speakingCrew=name;showDialogue(`OFFICER ${name}`,crewLine(name,progress));
+    openCrewBriefing(name,'mission');
   }};
   targets.push(target);
   const route:[Point,Point]=name==='VEGA'?[{x,z:z-1},{x,z:z+1.5}]:[{x,z},{x:x+1.5,z:z+1.5}];
@@ -252,8 +253,11 @@ function updateHud(){const spans=$('relays').children;RELAYS.forEach((r,i)=>span
 let audioContext:AudioContext|undefined,hum:GainNode|undefined;
 function initAudio(){try{audioContext??=new AudioContext();void audioContext.resume();if(!hum){hum=audioContext.createGain();hum.gain.value=.018;hum.connect(audioContext.destination);for(const f of [48,72]){const o=audioContext.createOscillator();o.frequency.value=f;o.connect(hum);o.start();}}hum.gain.value=$<HTMLInputElement>('audio').checked?.018:0;}catch{ /* silent fallback */ }}
 function tone(frequency:number){if(!audioContext||!$<HTMLInputElement>('audio').checked)return;const o=audioContext.createOscillator(),g=audioContext.createGain();o.frequency.value=frequency;g.gain.setValueAtTime(.05,audioContext.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+.4);o.connect(g);g.connect(audioContext.destination);o.start();o.stop(audioContext.currentTime+.4);}
-function showDialogue(name:string,line:string){$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;$('surveyPanel').hidden=true;$('suppliesPanel').hidden=true;dialogueOpen=true;clearInput();$('speaker').textContent=name;$('speech').textContent=line;$('dialogue').hidden=false;paintNavigation();document.exitPointerLock?.();}
-function closeDialogue(){save(false);clearInput();$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;$('suppliesPanel').hidden=true;dialogueOpen=false;speakingCrew=undefined;$('dialogue').hidden=true;paintNavigation();if(active&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});}
+const crewPanel=document.createElement('section');crewPanel.id='crewPanel';crewPanel.hidden=true;crewPanel.setAttribute('aria-label','Officer briefing topics');$('dialogue').insertBefore(crewPanel,$('closeDialogue'));
+for(const [id,label] of [['mission','Next objective'],['survey','Survey debrief'],['systems','Ship systems']] as const){const button=document.createElement('button');button.dataset.briefing=id;button.textContent=label;button.onclick=()=>{if(active&&dialogueOpen&&!crewPanel.hidden&&speakingCrew)openCrewBriefing(speakingCrew,id);};crewPanel.append(button);}
+function openCrewBriefing(name:string,topic:BriefingTopic){speakingCrew=name;showDialogue(`OFFICER ${name}`,crewBriefing(name,progress,topic));crewPanel.hidden=false;for(const b of Array.from(crewPanel.querySelectorAll('button')))b.setAttribute('aria-pressed',String(b.dataset.briefing===topic));}
+function showDialogue(name:string,line:string){$('crewPanel').hidden=true;$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;$('surveyPanel').hidden=true;$('suppliesPanel').hidden=true;dialogueOpen=true;clearInput();$('speaker').textContent=name;$('speech').textContent=line;$('dialogue').hidden=false;paintNavigation();document.exitPointerLock?.();}
+function closeDialogue(){save(false);clearInput();$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;$('suppliesPanel').hidden=true;$('crewPanel').hidden=true;dialogueOpen=false;speakingCrew=undefined;$('dialogue').hidden=true;paintNavigation();if(active&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});}
 $('closeDialogue').onclick=closeDialogue;
 function pause(){save(false);active=false;clearInput();powerAccumulator=0;paintNavigation();$('overlay').hidden=false;$('play').innerHTML='RESUME EXPEDITION <span>↗</span>';document.exitPointerLock?.();if(hum)hum.gain.value=0;}
 $('menu').onclick=pause;
