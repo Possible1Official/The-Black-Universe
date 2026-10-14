@@ -32,3 +32,7 @@
 #suppliesStatus{font-size:13px;line-height:1.6;color:#abe1da}#suppliesPanel button{font-size:12px;padding:12px 16px;margin:4px 0}
 #dialogue:has(#suppliesPanel:not([hidden])){bottom:8dvh;max-height:84dvh;overflow:auto}
 @media(max-width:700px){#hud header{padding:20px 180px 20px 18px}.brand{font-size:9px}.brand span{font-size:7px;letter-spacing:.1em}#hud[data-information="false"] #flightHud button{font-size:9px}}
+
+#surveyMap{display:block;width:100%;height:auto;max-width:360px;margin:12px auto;border:1px solid #79c8ce55;cursor:crosshair;touch-action:manipulation}#pinForm{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}#pinForm label{font-size:11px;color:#a5becb}#pinForm input{display:block;width:100%;min-height:44px;margin-top:4px;color:#d8f2f5;background:#0b1b28;border:1px solid #79c8ce55;padding:8px;font:inherit;box-sizing:border-box}#pinForm button{grid-column:1/-1;min-height:44px}
+
+#closeFieldLog{position:sticky;top:0;z-index:1;display:block;width:100%;min-height:44px;background:#0b1b28;margin:8px 0;border-color:#79c8ce77}
