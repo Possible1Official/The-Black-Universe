@@ -181,3 +181,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Widen the actual Deep Scan/Navigation passage and open its source doorway; keep console side routes clear.
 - Mobile Run/Jump controls, physical grounded jumping and airborne/landing animation blending.
 - Replace local run/jump motion with captured Mixamo clips after valid export authentication is restored.
+
+## CGTrader rover surface fidelity (2026-10-15)
+- Retain the selected creator's albedo/green panels and baked tangent detail in the local rover resource; preserve per-part shader coordinates and bake on final topology.
+- Clamp atlas roughness to avoid mirror-like patches; preserve lit rubber/glass/metal response and bounded emission.
+- Four distance-driven wheel pivots, 3.6 m length, six primitive draws and 27,928 triangles remain. No usable source motion clips were present.
+- Next: terrain-following vehicle presentation and rider contacts, with measured real-device texture/GPU budgets before adding denser scenery.

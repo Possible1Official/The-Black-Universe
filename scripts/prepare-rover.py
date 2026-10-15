@@ -8,6 +8,7 @@ ROOT=Path(__file__).resolve().parent.parent
 OUT=ROOT/'.local/requested-optimized';OUT.mkdir(parents=True,exist_ok=True)
 SOURCE=ROOT/'.local/cg-props/Sci-FI_Rover.blend'
 bpy.ops.wm.open_mainfile(filepath=str(SOURCE),load_ui=False,use_scripts=False)
+source_animation_audit={'armatures':sum(o.type=='ARMATURE' for o in bpy.data.objects),'usable_motion_clips':sum(a.frame_range[1]>a.frame_range[0] for a in bpy.data.actions),'shader_actions':len(bpy.data.actions)}
 scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=4;scene.cycles.use_denoising=False;scene.cycles.device='CPU';scene.render.use_persistent_data=True
 
 def bounds(objects):
@@ -24,7 +25,7 @@ def render(objects,name):
  for n,offset,energy in [('Key',(1,-1,2),1000),('Fill',(-1,0,1),650)]:
   light=bpy.data.objects.new('Preparation'+n,bpy.data.lights.new('Preparation'+n,'AREA'));scene.collection.objects.link(light);light.location=center+Vector(offset)*size;light.rotation_euler=(center-light.location).to_track_quat('-Z','Y').to_euler();light.data.energy=energy;light.data.size=size*1.8
  scene.world=bpy.data.worlds.new('PreparationWorld');scene.world.use_nodes=True;scene.render.use_compositing=False;scene.render.film_transparent=False;scene.world.node_tree.nodes.get('Background').inputs['Color'].default_value=(.14,.17,.21,1);scene.world.node_tree.nodes.get('Background').inputs['Strength'].default_value=.5
- scene.render.resolution_x=640;scene.render.resolution_y=640;scene.render.resolution_percentage=100;scene.cycles.samples=8;scene.render.image_settings.file_format='PNG';scene.render.filepath=str(OUT/name);bpy.ops.render.render(write_still=True)
+ scene.render.resolution_x=640;scene.render.resolution_y=640;scene.render.resolution_percentage=100;scene.cycles.samples=24;scene.render.image_settings.file_format='PNG';scene.render.filepath=str(OUT/name);bpy.ops.render.render(write_still=True)
  for o in list(bpy.data.objects):
   if o.name.startswith('Preparation'):bpy.data.objects.remove(o,do_unlink=True)
 
@@ -36,6 +37,15 @@ deps=bpy.context.evaluated_depsgraph_get();objects=[];empty_evaluated=[]
 for src in sources:
  evaluated=src.evaluated_get(deps);mesh=bpy.data.meshes.new_from_object(evaluated,preserve_all_data_layers=True,depsgraph=deps)
  if not mesh.polygons:empty_evaluated.append(src.name);continue
+ # Preserve each part's shader coordinates before joining/normalization.
+ # Otherwise Object coordinates become assembly coordinates and alter the
+ # scale/placement of the creator's procedural patterns.
+ for attr_name in ['GameSourceObject','GameSourceGenerated']:
+  attr=mesh.attributes.new(attr_name,'FLOAT_VECTOR','POINT')
+  lo=Vector([min(v.co[i] for v in mesh.vertices) for i in range(3)])
+  hi=Vector([max(v.co[i] for v in mesh.vertices) for i in range(3)])
+  for vertex,item in zip(mesh.vertices,attr.data):
+   item.vector=vertex.co if attr_name=='GameSourceObject' else Vector([(vertex.co[i]-lo[i])/max(hi[i]-lo[i],1e-8) for i in range(3)])
  o=bpy.data.objects.new('Rover_'+src.name,mesh);scene.collection.objects.link(o);o.matrix_world=src.matrix_world.copy();objects.append(o)
 for src in sources:src.hide_render=True;src.hide_set(True)
 source_triangles=sum(triangles(o) for o in objects)
@@ -58,8 +68,30 @@ for o in objects:
  o.select_set(True)
 bpy.context.view_layer.objects.active=objects[0];bpy.ops.object.join();body=bpy.context.view_layer.objects.active;body.name='Rover_PreparedAssembly'
 objects=[body]
-# Bake compatible roughness and supported emission to bounded 1024 atlases.
-# Creator shader base color/decal graph is replaced by portable gray PBR.
+# Bake source Object/Generated coordinates stored above, not the joined bounds.
+visited_trees=set()
+def preserve_coordinates(tree):
+ if tree in visited_trees:return
+ visited_trees.add(tree)
+ for node in list(tree.nodes):
+  if node.type=='GROUP':preserve_coordinates(node.node_tree)
+  if node.type!='TEX_COORD':continue
+  for socket,attribute in [('Object','GameSourceObject'),('Generated','GameSourceGenerated')]:
+   if socket=='Object' and node.object:continue
+   links=list(node.outputs[socket].links)
+   if not links:continue
+   saved=tree.nodes.new('ShaderNodeAttribute');saved.attribute_name=attribute
+   for link in links:tree.links.new(saved.outputs['Vector'],link.to_socket)
+for o in objects:
+ for material in o.data.materials:
+  if material and material.use_nodes:preserve_coordinates(material.node_tree)
+# Reduce geometry before atlas layout so UV islands and tangent frames match
+# the exported mesh; baked tangent frames must match the exported topology.
+ratio=min(1,28000/source_triangles)
+for o in objects:
+ if triangles(o)>100:
+  bpy.context.view_layer.objects.active=o;mod=o.modifiers.new('GameLOD','DECIMATE');mod.ratio=ratio;bpy.ops.object.modifier_apply(modifier=mod.name)
+# Bake supported creator shaders to bounded portable 1024 atlases.
 for o in objects:
  bpy.context.view_layer.objects.active=o;o.select_set(True);o.hide_set(False)
  # Original UV layer remains available to source decal shaders.
@@ -69,23 +101,58 @@ for o in objects:
 bpy.context.view_layer.objects.active=objects[0];bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT');bpy.ops.uv.smart_project(angle_limit=math.radians(65),island_margin=.004,area_weight=.5);bpy.ops.object.mode_set(mode='OBJECT')
 materials={m for o in objects for m in o.data.materials if m and m.use_nodes}
 maps={}
-scene.cycles.samples=2;scene.render.bake.margin=3;scene.render.bake.use_pass_direct=False;scene.render.bake.use_pass_indirect=False;scene.render.bake.use_pass_color=True
-for name,kind in [('roughness','ROUGHNESS'),('emission','EMIT')]:
+scene.cycles.samples=4;scene.render.bake.margin=3;scene.render.bake.use_pass_direct=False;scene.render.bake.use_pass_indirect=False;scene.render.bake.use_pass_color=True
+for name,kind in [('roughness','ROUGHNESS'),('emission','EMIT'),('normal','NORMAL'),('color','EMIT')]:
  image=bpy.data.images.new('RoverAtlas_'+name,width=1024,height=1024,alpha=False)
- if name=='roughness':image.colorspace_settings.name='Non-Color'
+ if name in {'roughness','normal'}:image.colorspace_settings.name='Non-Color'
+ # Color is baked through emission, because diffuse baking loses metallic albedo.
+ # Temporarily rewire nested Principled surfaces; restore before the next pass.
+ saved=[]
+ if name=='color':
+  visited=set()
+  def expose_albedo(tree):
+   if tree in visited:return
+   visited.add(tree)
+   for shader in tree.nodes:
+    if shader.type=='GROUP':expose_albedo(shader.node_tree)
+    if shader.type!='BSDF_PRINCIPLED':continue
+    for socket in ['Emission Color','Emission Strength']:
+     inp=shader.inputs[socket];value=inp.default_value
+     saved.append((tree,inp,list(value) if hasattr(value,'__len__') else value,[(l.from_socket,l.to_socket) for l in inp.links]))
+     for link in list(inp.links):tree.links.remove(link)
+    source=shader.inputs['Base Color'];dest=shader.inputs['Emission Color']
+    dest.default_value=source.default_value
+    if source.is_linked:tree.links.new(source.links[0].from_socket,dest)
+    shader.inputs['Emission Strength'].default_value=1
+  for m in materials:expose_albedo(m.node_tree)
  for m in materials:
   node=m.node_tree.nodes.new('ShaderNodeTexImage');node.image=image;m.node_tree.nodes.active=node
- bpy.ops.object.bake(type=kind,uv_layer='GameAtlas',use_clear=False);image.filepath_raw=str(OUT/f'rover-{name}.png');image.file_format='PNG';image.save();maps[name]=image
+ bpy.ops.object.bake(type=kind,uv_layer='GameAtlas',use_clear=True,use_selected_to_active=False);
+ for tree,inp,value,links in saved:
+  for link in list(inp.links):tree.links.remove(link)
+  inp.default_value=value
+  for a,b in links:tree.links.new(a,b)
+ # Tiny atlas islands can filter toward zero roughness. Keep a safe lower
+ # bound so a missing/near-zero texel cannot become a mirror-like white patch.
+ if name=='roughness':
+  pixels=list(image.pixels[:])
+  for i in range(0,len(pixels),4):
+   for channel in range(3):pixels[i+channel]=max(.42,min(.95,pixels[i+channel]))
+  image.pixels[:]=pixels
+ image.filepath_raw=str(OUT/f'rover-{name}.png');image.file_format='PNG';image.save();maps[name]=image
  for m in materials:
   for node in list(m.node_tree.nodes):
    if node.type=='TEX_IMAGE' and node.image==image:m.node_tree.nodes.remove(node)
-# Portable gray hull, dark rubber and glass retain a bounded metallic response.
+# Preserve source albedo and tangent detail in standard lit glTF PBR.
 pbr=bpy.data.materials.new('Rover_BakedPBR');pbr.use_nodes=True;pbr.use_backface_culling=True
 shader=pbr.node_tree.nodes.get('Principled BSDF');shader.inputs['Metallic'].default_value=.58
 shader.inputs['Base Color'].default_value=(.35,.35,.35,1)
-for key,socket in [('roughness','Roughness'),('emission','Emission Color')]:
+for key,socket in [('color','Base Color'),('roughness','Roughness'),('emission','Emission Color')]:
  node=pbr.node_tree.nodes.new('ShaderNodeTexImage');node.image=maps[key];pbr.node_tree.links.new(node.outputs['Color'],shader.inputs[socket])
-shader.inputs['Emission Strength'].default_value=1
+normal=pbr.node_tree.nodes.new('ShaderNodeTexImage');normal.image=maps['normal']
+normal_map=pbr.node_tree.nodes.new('ShaderNodeNormalMap');normal_map.inputs['Strength'].default_value=.65
+pbr.node_tree.links.new(normal.outputs['Color'],normal_map.inputs['Color']);pbr.node_tree.links.new(normal_map.outputs['Normal'],shader.inputs['Normal'])
+shader.inputs['Emission Strength'].default_value=.7
 pbr_rubber=pbr.copy();pbr_rubber.name='Rover_RubberPBR';pbr_rubber.node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value=0;pbr_rubber.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.012,.014,.017,1)
 pbr_glass=pbr.copy();pbr_glass.name='Rover_GlassPBR';pbr_glass.node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value=.05;pbr_glass.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.025,.035,.04,1)
 for o in objects:
@@ -99,11 +166,6 @@ for o in objects:
  for name in [layer.name for layer in o.data.uv_layers if layer.name!='GameAtlas']:
   o.data.uv_layers.remove(o.data.uv_layers[name])
  o.data.uv_layers.active=o.data.uv_layers['GameAtlas'];o.data.uv_layers.active.active_render=True
-# Decimate within the common budget after baking, preserving UV seams.
-ratio=min(1,28000/source_triangles)
-for o in objects:
- if triangles(o)>100:
-  bpy.context.view_layer.objects.active=o;mod=o.modifiers.new('GameLOD','DECIMATE');mod.ratio=ratio;bpy.ops.object.modifier_apply(modifier=mod.name)
 # Tire membership survives decimation and preserves four runtime pivots.
 bpy.ops.object.select_all(action='DESELECT');body=objects[0];body.select_set(True);bpy.context.view_layer.objects.active=body
 body.vertex_groups.active_index=body.vertex_groups['RoverTire'].index
@@ -140,5 +202,5 @@ for o in objects:o.hide_set(False);o.hide_render=False;o.select_set(True)
 bpy.context.view_layer.objects.active=body
 bpy.ops.export_scene.gltf(filepath=str(OUT/'rover.glb'),export_format='GLB',use_selection=True,export_yup=True,export_animations=False,export_image_format='JPEG',export_jpeg_quality=88)
 lo,hi=vertex_bounds(objects)
-report={'source_sha256':hashlib.sha256(SOURCE.read_bytes()).hexdigest(),'derivative_sha256':hashlib.sha256((OUT/'rover.glb').read_bytes()).hexdigest(),'source_triangles':source_triangles,'empty_evaluated_objects':empty_evaluated,'triangles':sum(triangles(o) for o in objects),'bytes':(OUT/'rover.glb').stat().st_size,'dimensions_blender_xyz':list(hi-lo),'dimensions_gltf_xyz':[(hi-lo).x,(hi-lo).z,(hi-lo).y],'floor':lo.z,'normalization':'3.6m length, width capped 2.1m, floor0, -Z glTF forward; width independently scaled','objects':[{'name':o.name,'triangles':triangles(o)} for o in objects],'textures':[{'kind':n,'width':i.size[0],'height':i.size[1]} for n,i in maps.items() if n!='color'],'materials':3,'limits':['Gray hull/rubber/glass PBR palette approximates source appearance. Procedural roughness and partial emission are baked; source base-color/decal graph and cyan-light details are not preserved. Metallic is .58 hull, 0 rubber and .05 glass.','Source overlay decal transparency and thin details are approximated by atlas baking; no claim of exact source shader preservation.','No suspension rig or wheel skeleton; wheel node pivots retained for runtime rotation.','Source procedural normal/bump detail is omitted; geometric normals remain.','Procedural base-color noise is omitted; generated/object-coordinate roughness can differ after chassis consolidation before baking.']}
+report={'source_sha256':hashlib.sha256(SOURCE.read_bytes()).hexdigest(),'derivative_sha256':hashlib.sha256((OUT/'rover.glb').read_bytes()).hexdigest(),'source_triangles':source_triangles,'empty_evaluated_objects':empty_evaluated,'triangles':sum(triangles(o) for o in objects),'bytes':(OUT/'rover.glb').stat().st_size,'dimensions_blender_xyz':list(hi-lo),'dimensions_gltf_xyz':[(hi-lo).x,(hi-lo).z,(hi-lo).y],'floor':lo.z,'normalization':'3.6m length, width capped 2.1m, floor0, -Z glTF forward; width independently scaled','objects':[{'name':o.name,'triangles':triangles(o)} for o in objects],'textures':[{'kind':n,'width':i.size[0],'height':i.size[1]} for n,i in maps.items() ],'materials':3,'source_animation_audit':source_animation_audit,'roughness_range':[.42,.95],'limits':['Source albedo, tangent normal, roughness and emission are baked to 1024 atlases. Metallic is .58 hull, 0 rubber and .05 glass rather than the source procedural metal map.','Source overlay decal transparency and thin details are approximated by atlas baking; no claim of exact source shader preservation.','No suspension rig or wheel skeleton; wheel node pivots retained for runtime rotation.','Source tangent detail is baked on final topology; roughness clamped .42–.95, normal strength .65 and emission .7 are bounded for game lighting.','Object/Generated coordinates are retained per source part; attribute-driven overlays and procedural edge wear can still differ after consolidation. No source motion clips or armature; four single-frame shader actions are not exported.']}
 (OUT/'rover-report.json').write_text(json.dumps(report,indent=2)+'\n');print('ROVER_REPORT '+json.dumps(report))
