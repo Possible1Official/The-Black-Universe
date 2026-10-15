@@ -35,3 +35,24 @@ test('new Jump motion is in-place with finite moving leg rotations on the shippe
  let bends=false;for(const ch of jump.channels){const a=g.accessors[jump.samplers[ch.sampler].output],v=g.bufferViews[a.bufferView],n=ch.target.path==='rotation'?4:3,size=a.count*n,offset=(v.byteOffset??0)+(a.byteOffset??0),values=Array.from({length:size},(_,i)=>bin.readFloatLE(offset+i*4));assert.ok(values.every(Number.isFinite));if(ch.target.path==='translation')for(let axis=0;axis<3;axis++){const x=values.filter((_,i)=>i%3===axis);assert.ok(Math.max(...x)-Math.min(...x)<.0001,'physics owns jumping translation');}if(g.nodes[ch.target.node].name==='mixamorig:LeftLeg'&&ch.target.path==='rotation')bends=values.some((x:number,i:number)=>Math.abs(x-values[i%4])>.1);}
  assert.ok(bends,'Jump must animate leg flexion');
 });
+
+test('rover preserves lit source albedo and tangent detail with four independent wheels',async()=>{
+ const packed=readFileSync(new URL('../src/assets/requested/rover.ebup',import.meta.url));
+ const entry=JSON.parse(readFileSync(new URL('../public/assets/requested/provenance.json',import.meta.url),'utf8')).assets.rover;
+ assert.equal(createHash('sha256').update(packed).digest('hex'),entry.resource_sha256);assert.ok(packed.length<=entry.transfer_budget);
+ const bytes=Buffer.from(await decodeGameResource(Uint8Array.from(packed).buffer));
+ const g=JSON.parse(bytes.subarray(20,20+bytes.readUInt32LE(12)).toString());
+ assert.equal(createHash('sha256').update(bytes).digest('hex'),entry.glb_sha256);
+ const binary=bytes.subarray(28+bytes.readUInt32LE(12));for(const image of g.images){const v=g.bufferViews[image.bufferView];const size=imageDimensions(binary.subarray(v.byteOffset??0,(v.byteOffset??0)+v.byteLength),image.mimeType);assert.ok(size.every(x=>x<=1024));}
+ const triangles=g.meshes.flatMap((m:any)=>m.primitives).reduce((sum:number,p:any)=>sum+g.accessors[p.indices].count/3,0);assert.equal(triangles,entry.triangles);assert.ok(triangles<=entry.triangle_budget);
+ for(const material of g.materials){
+  assert.ok(material.pbrMetallicRoughness.baseColorTexture,'source albedo must survive export');
+  assert.ok(material.normalTexture,'source surface detail must survive export');
+  assert.ok(material.pbrMetallicRoughness.metallicRoughnessTexture);
+  assert.ok(material.emissiveTexture);assert.ok((material.emissiveFactor??[]).every((x:number)=>x<=.7));
+  assert.ok(Math.abs(material.normalTexture.scale-.65)<.001);
+ }
+ const wheels=g.nodes.filter((n:any)=>n.name?.startsWith('Rover_Wheel_'));
+ assert.equal(wheels.length,4);assert.equal(new Set(wheels.map((w:any)=>w.mesh)).size,4);
+ assert.equal((g.animations??[]).length,0,'source has no usable motion clips');
+});
