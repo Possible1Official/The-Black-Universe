@@ -26,6 +26,7 @@ import {walkingCamera,flightCamera,orbitalCameraDistance,surfaceCameraDistance} 
 import {SHUTTLE_SIZE,SHUTTLE_HATCH_Z} from './shuttle';
 import {coolantBlock,dischargeCoolant,recoverSupplies,SUPPLY_CACHE} from './supplies';
 import {cachePlacement,CACHE_SIZE} from './cache-placement';
+import {SupplyCartridges,CARTRIDGE_LAYOUT} from './supply-cartridges';
 import {bulkheadPanels} from './bulkheads';
 import {clearSight} from './visibility';
 import {INTREPID_ENGINEERING_GRAPH,planEngineeringDuty,recordDutyMovement,type EngineeringDuty} from './crew-duty';
@@ -294,7 +295,7 @@ $('play').onclick=()=>{clearInput();skipPowerFrame=true;active=true;$('overlay')
 canvas.onclick=()=>{if(active&&!dialogueOpen&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});};
 $('audio').onchange=()=>{if(active)initAudio();};
 $('quality').onchange=()=>{const high=$<HTMLSelectElement>('quality').value==='high';renderer.setPixelRatio(Math.min(devicePixelRatio,high?1.75:1));renderer.shadowMap.enabled=high;bloom.enabled=high;surface.setQuality(high);lightBudget.configure(high,!onSurface&&!flight);resize();};
-$('reset').onclick=()=>{if(onSurface||flight||launchBay.state.boarded){flight=null;flightWorld.hide();travel(false);}launchBay.state.reset();launchBay.sync();trackedField=undefined;landingSite='survey';progress=freshProgress();surface.setScans([]);save();planet.visible=atmosphere.visible=false;notify('Mission progress reset.');};
+$('reset').onclick=()=>{if(onSurface||flight||launchBay.state.boarded){flight=null;flightWorld.hide();travel(false);}launchBay.state.reset();launchBay.sync();trackedField=undefined;landingSite='survey';progress=freshProgress();surface.setScans([]);save();paintPower();planet.visible=atmosphere.visible=false;notify('Mission progress reset.');};
 function showPower(){
   speakingCrew=undefined;
   showDialogue('ENGINEERING / POWER DISTRIBUTION','Balance the forge bus against thermal load. Sustained Genesis routing reduces cooling and can trip containment. Life support remains on emergency power during a trip.');
@@ -313,6 +314,7 @@ $('resetContainment').onclick=()=>{
 };
 const thermalCold=new THREE.Color(0x44bed1),thermalHot=new THREE.Color(0xff4c32);
 function paintPower(){
+  reserveCartridges.setCount(progress.supplies.coolant);cacheCartridges.setCount(progress.supplies.cacheClaimed?0:2);
   reserveStatus.color.setHex(progress.supplies.coolant>0?0x77e5d4:0x627c88);cacheStatus.color.setHex(progress.supplies.cacheClaimed?0x627c88:0x77e5d4);
   if(!$('suppliesPanel').hidden)paintSupplies();
   const p=progress.power,output=powerOutput(p,progress.relays.length);
@@ -359,12 +361,18 @@ const surface=createSurface();scene.add(surface.group);
 const suppliesPanel=document.createElement('section');suppliesPanel.id='suppliesPanel';suppliesPanel.hidden=true;suppliesPanel.setAttribute('aria-label','Reserve coolant');$('dialogue').insertBefore(suppliesPanel,$('closeDialogue'));
 // Small generated fixtures remain as loading/failure fallbacks.
 function equipment(kind:'canister'|'crate',x:number,y:number,z:number,parent:THREE.Object3D){const root=new THREE.Group();root.position.set(x,y,z);parent.add(root);const size=kind==='canister'?[1,1.6,1]:[CACHE_SIZE.width,CACHE_SIZE.height,CACHE_SIZE.depth];box(size[0],size[1],size[2],0,size[1]/2,0,metal,root);return root;}
-const coolantReserve=equipment('canister',-6.3,0,-4.4,scene);shipNodes.push(coolantReserve);
+const coolantReserve=new THREE.Group();coolantReserve.position.set(-6.3,0,-4.4);scene.add(coolantReserve);shipNodes.push(coolantReserve);
+// Open rack stays within the old solid cabinet envelope.
+const rackMaterial=new THREE.MeshStandardMaterial({color:0x54656b,metalness:.2,roughness:.78});
+box(1,1.6,.08,0,.8,-.46,rackMaterial,coolantReserve);box(1,.12,1,0,.2,0,rackMaterial,coolantReserve);box(1,.12,1,0,1.54,0,rackMaterial,coolantReserve);
+for(const x of [-.46,.46])box(.08,1.6,1,x,.8,0,rackMaterial,coolantReserve);
+const reserveCartridges=new SupplyCartridges();reserveCartridges.root.position.y=CARTRIDGE_LAYOUT.rackY;reserveCartridges.root.scale.setScalar(CARTRIDGE_LAYOUT.rackScale);coolantReserve.add(reserveCartridges.root);
 const reserveTarget:Target={name:'Open auxiliary coolant reserve',position:new THREE.Vector3(-6.3,1.1,-4.4),action:()=>openSupplies('discharge')};targets.push(reserveTarget);solid(1,1.6,1,-6.3,.8,-4.4,reserveTarget);
 const cachePlan=cachePlacement(terrainSampler(surface.mesh.vertices)),cacheHeight=cachePlan.base,supplyCrate=equipment('crate',SUPPLY_CACHE.x,cacheHeight,SUPPLY_CACHE.z,surface.group);
 const cacheFallback=[...supplyCrate.children];
 box(CACHE_SIZE.width,cachePlan.palletHeight,CACHE_SIZE.depth,0,-cachePlan.palletHeight/2,0,metal,supplyCrate);
-function loadCargoCache(){return attachRequested('cargo',supplyCrate,false).then(()=>{for(const node of cacheFallback)node.visible=false;}).catch(()=>console.warn('Field cache asset unavailable; supply fallback retained.'));}
+const cacheCartridges=new SupplyCartridges();cacheCartridges.root.position.set(CARTRIDGE_LAYOUT.fieldX,CARTRIDGE_LAYOUT.fieldY,CARTRIDGE_LAYOUT.fieldZ);cacheCartridges.root.scale.setScalar(CARTRIDGE_LAYOUT.fieldScale);supplyCrate.add(cacheCartridges.root);
+function loadCargoCache(){void cacheCartridges.load(true);return attachRequested('cargo',supplyCrate,false).then(()=>{for(const node of cacheFallback)node.visible=false;}).catch(()=>console.warn('Field cache asset unavailable; supply fallback retained.'));}
 const cacheTarget:Target={zone:'surface',name:'Inspect coolant supply cache',position:new THREE.Vector3(SURFACE_ORIGIN+SUPPLY_CACHE.x,cacheHeight+.75,SUPPLY_CACHE.z),action:()=>openSupplies('recover')};targets.push(cacheTarget);
 const reserveStatus=new THREE.MeshBasicMaterial({color:0x77e5d4}),cacheStatus=reserveStatus.clone();
 box(.75,.04,.04,0,1.45,.52,reserveStatus,coolantReserve);box(.75,.04,.04,0,.35,.52,cacheStatus,supplyCrate);
@@ -377,6 +385,7 @@ function paintSupplies(){
   $<HTMLButtonElement>(suppliesMode==='discharge'?'dischargeCoolant':'recoverCoolant').disabled=!!blocked;
 }
 function openSupplies(mode:'discharge'|'recover'){
+  if(mode==='discharge')void reserveCartridges.load(true);
   suppliesMode=mode;speakingCrew=undefined;showDialogue(mode==='discharge'?'ENGINEERING / AUXILIARY COOLANT':'NYSA / FIELD SUPPLY CACHE',mode==='discharge'?'A finite emergency reserve supports the primary cooling circuit. It removes thermal load without clearing a latched containment trip.':'Two reserve cartridges were staged at this survey cache. Recover them when your ship reserve has room.');suppliesPanel.hidden=false;paintSupplies();
 }
 $('dischargeCoolant').onclick=()=>{if(!active||!dialogueOpen||suppliesPanel.hidden||suppliesMode!=='discharge')return;const next=dischargeCoolant(progress.power,progress.supplies);if(next.used){progress={...progress,power:next.power,supplies:next.supplies};save(false);paintPower();paintSupplies();tone(380);}};
@@ -604,6 +613,7 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
   const movementDt=discardMovementFrame?0:rawDt,powerDt=skipPowerFrame?0:rawDt;discardMovementFrame=false;skipPowerFrame=false;lastMotionSteps=0;if(toastTimer<=0)$('toast').style.opacity='0';
   if(active)advancePower(Math.min(powerDt,MAX_FRAME_SECONDS));powerVisuals();
   if(active&&!dialogueOpen){const budget=motionClock.advance(movementDt);lastMotionSteps=budget.steps;motionStepsTotal+=budget.steps;droppedMotionTime+=budget.dropped;for(let i=0;i<budget.steps;i++)physicsStep();const p=player.translation();const moving=velocity.length();
+    if(!onSurface&&!flight&&Math.hypot(p.x+6.3,p.z+4.4)<7)void reserveCartridges.load();
     for(const [kind,v] of groundVehicles){const mesh=vehicleVisuals.get(kind)!;const pos=v.body.translation();let stance=vehicleStances.get(kind);if(!stance){stance=new VehicleStance();vehicleStances.set(kind,stance);}const groundLocal=(x:number,z:number)=>(onSurface?v.supportHeight(SURFACE_ORIGIN+x,z,playerCollider):undefined)??vehicleGround(x,z);stance.update(kind,mesh,pos.x-SURFACE_ORIGIN,pos.y,pos.z,v.yaw,groundLocal,dt,v.turnRate,v.speed);let suspension=suspensions.get(kind);if(!suspension){suspension=new VehicleSuspension(kind);suspensions.set(kind,suspension);}if(onSurface)suspension.update(mesh,(x,z)=>v.supportHeight(x,z,playerCollider)??vehicleGround(x-SURFACE_ORIGIN,z),dt);
       if(kind==='rover'&&mesh.userData.requested){const wheels:THREE.Object3D[]=(mesh.userData.wheels??= ['FrontLeft','FrontRight','RearLeft','RearRight'].map(side=>mesh.getObjectByName('Rover_Wheel_'+side)).filter(Boolean));for(const wheel of wheels){const front=wheel.name.includes('Front'),steer=front?THREE.MathUtils.clamp(Math.atan(v.turnRate*2.62/Math.max(v.speed,1)),-.45,.45):0;wheel.rotation.set(-v.distance/(front?.398:.501),steer,0,'YXZ');}}
       if(kind==='bike'){if(turboFeedback.root.parent!==mesh)mesh.add(turboFeedback.root);turboFeedback.update(riding===v,onSurface&&thirdPerson&&mesh.userData.requested==='bike',keys.has('Space')||flightBrake,speedDemand,v.speed,dt);turboFeedback.root.position.y=.409+suspension.podOffset;}

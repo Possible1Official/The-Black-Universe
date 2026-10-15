@@ -236,3 +236,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Fit its original open-box/propped-lid geometry into the existing 1.25×1 m footprint; a visible level pallet bridges the actual sloped terrain, with matching conservative collision.
 - Load only on surface entry, preserve usable fallback/retry/caching and one-time coolant recovery/save behavior. Source has no animation or rig; no imported motion is claimed.
 - Remain within a 564-triangle/338 KB model budget; hardware texture/memory/FPS measurements and broader authored Nysa scenery remain future work.
+
+## Visible coolant stock (2026-10-15)
+- Add the matching CGTrader pack canister, preserving source PBR maps/geometry, with no rig or source animation present.
+- Two/one/zero visible cartridges follow actual engineering reserve; the field pair disappears only after its one-time recovery. Reload and paused reset restore the correct display.
+- Open rack preserves old cabinet collision bounds; both field canisters fit the crate's actual opening. Shared lazy loading, empty-slot transfer skip, safe fallback and explicit retry without frame-by-frame request loops.
+- Remaining: individual pickup/hand interaction, physical cartridge simulation and hardware texture/shadow/FPS budgets.
