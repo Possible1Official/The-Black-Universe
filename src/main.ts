@@ -25,6 +25,7 @@ import type {SurfaceTrack} from './navigation';
 import {walkingCamera,flightCamera,orbitalCameraDistance,surfaceCameraDistance} from './view-camera';
 import {SHUTTLE_SIZE,SHUTTLE_HATCH_Z} from './shuttle';
 import {coolantBlock,dischargeCoolant,recoverSupplies,SUPPLY_CACHE} from './supplies';
+import {cachePlacement,CACHE_SIZE} from './cache-placement';
 import {bulkheadPanels} from './bulkheads';
 import {clearSight} from './visibility';
 import {INTREPID_ENGINEERING_GRAPH,planEngineeringDuty,recordDutyMovement,type EngineeringDuty} from './crew-duty';
@@ -356,14 +357,17 @@ const shipNodes=scene.children.filter(node=>node!==sun&&!(node instanceof THREE.
 const shipVisibility=new Map<THREE.Object3D,boolean>();
 const surface=createSurface();scene.add(surface.group);
 const suppliesPanel=document.createElement('section');suppliesPanel.id='suppliesPanel';suppliesPanel.hidden=true;suppliesPanel.setAttribute('aria-label','Reserve coolant');$('dialogue').insertBefore(suppliesPanel,$('closeDialogue'));
-// Generated fixtures remain until a licensed authored import is available.
-function equipment(kind:'canister'|'crate',x:number,y:number,z:number,parent:THREE.Object3D){const root=new THREE.Group();root.position.set(x,y,z);parent.add(root);const size=kind==='canister'?[1,1.6,1]:[1.25,.9,1];box(size[0],size[1],size[2],0,size[1]/2,0,metal,root);return root;}
+// Small generated fixtures remain as loading/failure fallbacks.
+function equipment(kind:'canister'|'crate',x:number,y:number,z:number,parent:THREE.Object3D){const root=new THREE.Group();root.position.set(x,y,z);parent.add(root);const size=kind==='canister'?[1,1.6,1]:[CACHE_SIZE.width,CACHE_SIZE.height,CACHE_SIZE.depth];box(size[0],size[1],size[2],0,size[1]/2,0,metal,root);return root;}
 const coolantReserve=equipment('canister',-6.3,0,-4.4,scene);shipNodes.push(coolantReserve);
 const reserveTarget:Target={name:'Open auxiliary coolant reserve',position:new THREE.Vector3(-6.3,1.1,-4.4),action:()=>openSupplies('discharge')};targets.push(reserveTarget);solid(1,1.6,1,-6.3,.8,-4.4,reserveTarget);
-const cacheHeight=terrainHeight(SUPPLY_CACHE.x,SUPPLY_CACHE.z),supplyCrate=equipment('crate',SUPPLY_CACHE.x,cacheHeight,SUPPLY_CACHE.z,surface.group);
+const cachePlan=cachePlacement(terrainSampler(surface.mesh.vertices)),cacheHeight=cachePlan.base,supplyCrate=equipment('crate',SUPPLY_CACHE.x,cacheHeight,SUPPLY_CACHE.z,surface.group);
+const cacheFallback=[...supplyCrate.children];
+box(CACHE_SIZE.width,cachePlan.palletHeight,CACHE_SIZE.depth,0,-cachePlan.palletHeight/2,0,metal,supplyCrate);
+function loadCargoCache(){return attachRequested('cargo',supplyCrate,false).then(()=>{for(const node of cacheFallback)node.visible=false;}).catch(()=>console.warn('Field cache asset unavailable; supply fallback retained.'));}
 const cacheTarget:Target={zone:'surface',name:'Inspect coolant supply cache',position:new THREE.Vector3(SURFACE_ORIGIN+SUPPLY_CACHE.x,cacheHeight+.75,SUPPLY_CACHE.z),action:()=>openSupplies('recover')};targets.push(cacheTarget);
 const reserveStatus=new THREE.MeshBasicMaterial({color:0x77e5d4}),cacheStatus=reserveStatus.clone();
-box(.75,.04,.04,0,1.45,.52,reserveStatus,coolantReserve);box(.75,.04,.04,0,.7,.52,cacheStatus,supplyCrate);
+box(.75,.04,.04,0,1.45,.52,reserveStatus,coolantReserve);box(.75,.04,.04,0,.35,.52,cacheStatus,supplyCrate);
 suppliesPanel.innerHTML='<p id="suppliesStatus" role="status"></p><button id="dischargeCoolant">Discharge one cartridge</button><button id="recoverCoolant">Recover cartridges</button><p class="powerHint">Each cartridge reduces thermal load by 25 points. A containment trip still needs the normal manual reset. The field cache can replenish your reserve once.</p>';
 let suppliesMode:'discharge'|'recover'='discharge';
 function paintSupplies(){
@@ -462,7 +466,7 @@ function setSurfaceView(landing:boolean){
   // Entering the descent view must not overwrite the original ship visibility cache.
   if(landing&&shipVisibility.size===0){for(const node of shipNodes){shipVisibility.set(node,node.visible);node.visible=false;}}
   else if(!landing){for(const [node,visible] of shipVisibility)node.visible=visible;shipVisibility.clear();}
-  surface.group.visible=landing;
+  surface.group.visible=landing;if(landing)void loadCargoCache();
   scene.background=landing?surfaceSky:new THREE.Color('#02050d');scene.fog=landing?new THREE.FogExp2(surfaceSky,.0035):null;
 }
 $('deployNysa').onclick=()=>{
@@ -678,7 +682,7 @@ function updatePlayerView(){
   $('crosshair').hidden=thirdPerson;
 }
 async function boot(){await RAPIER.init();world=new RAPIER.World({x:0,y:-9.81,z:0});world.timestep=fixed;
-  cacheTarget.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(.625,.45,.5).setTranslation(SURFACE_ORIGIN+SUPPLY_CACHE.x,cacheHeight+.45,SUPPLY_CACHE.z));
+  cacheTarget.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(CACHE_SIZE.width/2,cachePlan.colliderHalfHeight,CACHE_SIZE.depth/2).setTranslation(SURFACE_ORIGIN+SUPPLY_CACHE.x,cachePlan.colliderY,SUPPLY_CACHE.z));
   world.createCollider(RAPIER.ColliderDesc.trimesh(surface.mesh.vertices,surface.mesh.indices).setTranslation(SURFACE_ORIGIN,0,0));
   for(const axis of ['x','z'])for(const sign of [-1,1])world.createCollider(RAPIER.ColliderDesc.cuboid(axis==='x'?1:SITE_HALF+1,4,axis==='z'?1:SITE_HALF+1).setTranslation(SURFACE_ORIGIN+(axis==='x'?sign*(SITE_HALF+1):0),2,axis==='z'?sign*(SITE_HALF+1):0));
   extractionTarget.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(.16,1.2,.16).setTranslation(SURFACE_ORIGIN,1.2,LANDING.z+SHUTTLE_HATCH_Z));

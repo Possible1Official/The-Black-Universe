@@ -12,7 +12,7 @@ function imageDimensions(bytes:Buffer,mime:string):[number,number]{
 }
 test('packaged requested models match provenance, bounded geometry and embedded resources',async()=>{
  const manifest=JSON.parse(readFileSync(new URL('../public/assets/requested/provenance.json',import.meta.url),'utf8'));
- assert.deepEqual(Object.keys(manifest.assets).sort(),['bedroom','bike','biker','cockpit','corridor','interior','resident','rover','ship']);
+ assert.deepEqual(Object.keys(manifest.assets).sort(),['bedroom','bike','biker','cargo','cockpit','corridor','interior','resident','rover','ship']);
  for(const [kind,entry] of Object.entries(manifest.assets) as [string,any][]){
   const packed=readFileSync(new URL(`../src/assets/requested/${kind}.ebup`,import.meta.url));assert.equal(createHash('sha256').update(packed).digest('hex'),entry.resource_sha256);assert.equal(packed.length,entry.resource_bytes);
   const bytes=Buffer.from(await decodeGameResource(Uint8Array.from(packed).buffer));assert.equal(bytes.readUInt32LE(0),0x46546c67);assert.equal(bytes.readUInt32LE(8),bytes.length);assert.equal(createHash('sha256').update(bytes).digest('hex'),entry.glb_sha256);
@@ -62,4 +62,17 @@ test('captured locomotion replaces motion only and preserves reviewed geometry, 
  assert.deepEqual(p.motions.map((x:any)=>x.name).sort(),['Jump','Running','Walking']);assert.equal(hash(bin.subarray(0,p.base_binary_bytes)),p.base_binary_sha256);
  for(const [key,value] of Object.entries(p.preserved))assert.equal(hash(JSON.stringify(g[key])),value,`${key} changed during motion merge`);
  for(const name of ['Walking','Running','Jump']){const a=g.animations.find((x:any)=>x.name===name);assert.ok(a.channels.length>=60);for(const channel of a.channels){const name=g.nodes[channel.target.node].name;assert.ok(g.skins.some((skin:any)=>skin.joints.includes(channel.target.node))||name==='cyber girl');if(name==='cyber girl'){const output=g.accessors[a.samplers[channel.sampler].output],view=g.bufferViews[output.bufferView],width=output.type==='VEC4'?4:3,start=(view.byteOffset??0)+(output.byteOffset??0);for(let i=0;i<output.count;i++)for(let j=0;j<width;j++)assert.ok(Math.abs(bin.readFloatLE(start+(i*width+j)*4)-bin.readFloatLE(start+j*4))<.00001,'armature root must stay fixed');}}}
+});
+
+test('field cargo derivative preserves mesh/PBR data with fitted bounds and bounded images',async()=>{
+ const report=JSON.parse(readFileSync(new URL('../public/assets/requested/cargo-conversion.json',import.meta.url),'utf8'));
+ const packed=readFileSync(new URL('../src/assets/requested/cargo.ebup',import.meta.url)),bytes=Buffer.from(await decodeGameResource(Uint8Array.from(packed).buffer)),n=bytes.readUInt32LE(12),g=JSON.parse(bytes.subarray(20,20+n).toString()),bin=bytes.subarray(28+n);
+ for(const [index,hash]of Object.entries(report.preserved_mesh_views_sha256)){const v=g.bufferViews[Number(index)],data=bin.subarray(v.byteOffset,v.byteOffset+v.byteLength);assert.equal(createHash('sha256').update(data).digest('hex'),hash,'source vertices, indices, UVs, normals and tangents preserved');}
+ assert.equal(g.animations?.length??0,0);assert.equal(g.skins?.length??0,0);
+ assert.equal(g.meshes.length,1);assert.equal(g.meshes[0].primitives.length,1);
+ const material=g.materials[0];assert.ok(material.pbrMetallicRoughness.baseColorTexture);assert.ok(material.normalTexture);assert.ok(material.pbrMetallicRoughness.metallicRoughnessTexture);assert.equal(material.occlusionTexture.index,material.pbrMetallicRoughness.metallicRoughnessTexture.index);assert.equal(material.emissiveTexture,undefined);
+ const root=g.nodes[g.scenes[g.scene??0].nodes[0]],node=g.nodes[root.children[0]],a=g.accessors[g.meshes[node.mesh].primitives[0].attributes.POSITION],min=a.min.map((v:number,i:number)=>(v+(node.translation?.[i]??0))*root.scale[i]+root.translation[i]),max=a.max.map((v:number,i:number)=>(v+(node.translation?.[i]??0))*root.scale[i]+root.translation[i]);
+ assert.ok(Math.abs(max[0]-min[0]-1.25)<1e-6);assert.ok(Math.abs(min[0]+max[0])<1e-6);assert.ok(Math.abs(min[2]+max[2])<1e-6);assert.ok(Math.abs(min[1]-.02)<1e-6);assert.ok(max[1]<.6&&max[2]-min[2]<=1);
+ for(const image of g.images){const v=g.bufferViews[image.bufferView];assert.deepEqual(imageDimensions(bin.subarray(v.byteOffset,v.byteOffset+v.byteLength),image.mimeType),[512,512]);}
+ assert.ok(report.images.find((i:any)=>i.name.includes('Normal')).normal_renormalized);
 });
