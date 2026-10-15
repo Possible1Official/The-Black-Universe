@@ -21,12 +21,15 @@ for o in objects:
  for vertex in o.data.vertices:
   if abs(vertex.co.x)<3.1 and vertex.co.y<3.4:
    t=max(0,min(1,(3.4-vertex.co.y)/2.4));vertex.co.x*=1+(.6666667*t*t*(3-2*t))
+ # Widen the actual forward Science/Navigation passage from 4.2 to 7.35m.
+ for vertex in o.data.vertices:
+  t=max(0,min(1,(vertex.co.y-8.1)/1.1));vertex.co.x*=1+.75*t*t*(3-2*t)
  # Cut only the bow viewport, leaving floor and overhead structure intact.
  bm=bmesh.new();bm.from_mesh(o.data)
- for axis,value in [(0,-1.7),(0,1.7),(0,-3.65),(0,3.65),(1,18.45),(2,.85),(2,3.35),(1,-6.825),(1,2.8),(2,.04),(2,4.2)]:
+ for axis,value in [(0,-1.7),(0,1.7),(0,-3.65),(0,3.65),(1,18.45),(2,.85),(2,3.35),(1,-6.825),(1,2.8),(2,.04),(2,4.2),(0,-1.5),(0,1.5),(1,11.8),(1,14.6),(2,3.35)]:
   point=Vector((0,0,0));point[axis]=value;normal=Vector((0,0,0));normal[axis]=1
   bmesh.ops.bisect_plane(bm,geom=list(bm.verts)+list(bm.edges)+list(bm.faces),dist=.00001,plane_co=point,plane_no=normal,clear_inner=False,clear_outer=False)
- bad=[f for f in bm.faces if (abs(f.calc_center_median().x)<1.7-.00001 and f.calc_center_median().y>18.45 and .85<f.calc_center_median().z<3.35) or (abs(f.calc_center_median().x)<3.65-.00001 and -6.825<f.calc_center_median().y<2.8 and .04<f.calc_center_median().z<4.2)]
+ bad=[f for f in bm.faces if (abs(f.calc_center_median().x)<1.7-.00001 and f.calc_center_median().y>18.45 and .85<f.calc_center_median().z<3.35) or (abs(f.calc_center_median().x)<1.5-.00001 and 11.8<f.calc_center_median().y<14.6 and .04<f.calc_center_median().z<3.35) or (abs(f.calc_center_median().x)<3.65-.00001 and -6.825<f.calc_center_median().y<2.8 and .04<f.calc_center_median().z<4.2)]
  bmesh.ops.delete(bm,geom=bad,context='FACES');bm.to_mesh(o.data);bm.free();o.data.validate(clean_customdata=True)
 # Retain authored floor finish on a continuous lounge floor and wall material.
 material=next(m for m in bpy.data.materials if 'Floor01C' in m.name)
@@ -36,5 +39,5 @@ for name,location,dimensions,mat in [('LoungeFloor',(0,-2,-.08),(7.4,9.65,.16),m
 bpy.ops.object.select_all(action='DESELECT')
 for o in objects:o.select_set(True)
 bpy.ops.export_scene.gltf(filepath=str(OUT/'interior.glb'),export_format='GLB',use_selection=True,export_yup=True,export_apply=True,export_animations=False,export_image_format='JPEG',export_jpeg_quality=90)
-report=json.loads((OUT/'interior-report.json').read_text());report['launch_lounge_width']=7;report['bow_viewport']={'width':3.4,'height':2.5,'z':-18.85};report['bytes']=(OUT/'interior.glb').stat().st_size
+report=json.loads((OUT/'interior-report.json').read_text());report['launch_lounge_width']=7;report['science_passage_width']=7.35;report['forward_doorway_opened']=True;report['bow_viewport']={'width':3.4,'height':2.5,'z':-18.85};report['bytes']=(OUT/'interior.glb').stat().st_size
 (OUT/'interior-report.json').write_text(json.dumps(report,indent=2)+'\n')

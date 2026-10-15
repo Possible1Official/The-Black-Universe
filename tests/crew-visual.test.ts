@@ -48,3 +48,10 @@ test('actual mixer blends poses, advances walk by distance, and isolates actors'
   a.update(0,0,0);assert.equal(a.root.rotation.x,0);assert.equal(a.snapshot().walkTime,.25);
   assert.throws(()=>new CrewVisual(new THREE.Group(),[]),/Idle and Walking/);
 });
+
+test('jump pose follows ballistic phase, blends back on landing and yields to riding',()=>{
+ const clip=(name:string,duration:number)=>new THREE.AnimationClip(name,duration,[new THREE.NumberKeyframeTrack('.rotation[x]',[0,duration],[0,1])]);const actor=new CrewVisual(new THREE.Group(),['Idle','Walking','Running','Riding','Jump'].map(n=>clip(n,1)));
+ actor.update(.2,.2,1,1,false,true,0);assert.ok(actor.snapshot().jumpWeight>.98);assert.equal(actor.snapshot().jumpTime,.5);assert.ok(actor.snapshot().runWeight<.02);
+ actor.update(.4,0,0,0,false,false,0);assert.ok(actor.snapshot().jumpWeight<.001);assert.equal(actor.snapshot().jumpTime,1);
+ actor.update(.2,0,0,0,true,true,0);assert.equal(actor.snapshot().ridingWeight,1);assert.equal(actor.snapshot().jumpWeight,0);
+});
