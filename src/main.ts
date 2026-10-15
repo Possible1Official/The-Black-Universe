@@ -638,7 +638,7 @@ function updatePlayerView(){
     const jet=launchBay.jet,heading=launchBay.state.jetYaw,eye=jet.position.clone().add(new THREE.Vector3(0,1.7,-1).applyAxisAngle(new THREE.Vector3(0,1,0),heading));
     camera.position.copy(eye);camera.rotation.set(pitch,heading+yaw,0);
     flightWorld.cockpit.quaternion.copy(camera.quaternion).invert().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0,heading,0)));
-    if(thirdPerson){const pose=flightCamera(eye,new THREE.Euler(pitch,heading+yaw,0,'YXZ'),(a,b)=>surfaceCameraDistance(world,a,b,playerCollider,launchBay.hull!));camera.position.copy(pose.position);camera.lookAt(pose.target);}return;
+    if(thirdPerson){const pose=flightCamera(eye,new THREE.Euler(pitch,heading+yaw,0,'YXZ'),(a,b)=>surfaceCameraDistance(world,a,b,playerCollider,launchBay.hull!));camera.position.copy(pose.position);camera.lookAt(pose.target);cameraClearance=pose.distance;}return;
   }
 
   if(riding?.kind!=='bike'||!thirdPerson)avatarVisual?.releaseBikeContact();
@@ -668,7 +668,7 @@ function updatePlayerView(){
       avatar.position.copy(mesh.localToWorld(contactRider?BIKE_RIDER_SEAT.clone():new THREE.Vector3(0,VEHICLE_SPEC[riding.kind].seat-.9,.43)));
       mesh.getWorldQuaternion(avatar.quaternion);avatar.rotateY(Math.PI);
       if(contactRider&&thirdPerson)avatarVisual?.fitBikeContact(mesh);
-      if(thirdPerson){const pose=flightCamera(camera.position,new THREE.Euler(pitch,riding.yaw+yaw,0,'YXZ'),(a,b)=>surfaceCameraDistance(world,a,b,playerCollider,riding!.collider));camera.position.copy(pose.position);camera.lookAt(pose.target);}return;
+      if(thirdPerson){const pose=flightCamera(camera.position,new THREE.Euler(pitch,riding.yaw+yaw,0,'YXZ'),(a,b)=>surfaceCameraDistance(world,a,b,playerCollider,riding!.collider));camera.position.copy(pose.position);camera.lookAt(pose.target);cameraClearance=pose.distance;}return;
     }
     if(thirdPerson){
       const eye=new THREE.Vector3(p.x,p.y+.74,p.z),pose=walkingCamera(world,eye,yaw,pitch,playerCollider);

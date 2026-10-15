@@ -225,3 +225,8 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Full outer closure before station access/disembarkation; solid parked hull restored, clear exit lane, normal walking and repeat boarding.
 - Cockpit/chase heading with independent look, pause/reset and retained mission progress. Existing textures, clips, draw counts and resources unchanged.
 - Remaining: unified orbital/local world, pressure simulation, approach continuity and measured real-device bay budgets.
+
+## Chase-camera edge clearance (2026-10-15)
+- Surface flight, bike/rover and local runway chase views now use a camera-volume sweep rather than a thin center ray, catching grazing rocks and door frames.
+- Preserve own-craft/player/hatch exclusions, restore clear distance and handle overlapping/zero-length starts safely. Mounted/runway diagnostics report actual clearance.
+- Reuse reviewed CGTrader resources and existing captured motion without altering materials, textures or clips. Orbital envelopes remain approximate; real-device performance and unified world geometry remain future work.

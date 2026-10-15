@@ -42,3 +42,33 @@ test('touchdown chase camera ignores its own parked proxy but still clears other
     const distance=surfaceCameraDistance(world,from,to,observer,craft,hatch);assert.ok(distance>7&&distance<9);
   }finally{world.free();}
 });
+
+test('mounted chase view clears grazing rocks and doorway edges with its full camera volume',async()=>{
+  await RAPIER.init();const world=new RAPIER.World({x:0,y:0,z:0});
+  try{
+    const observer=world.createCollider(RAPIER.ColliderDesc.capsule(.55,.3).setTranslation(-3,.9,0));
+    const craft=world.createCollider(RAPIER.ColliderDesc.cuboid(1,1,2).setTranslation(0,2,0));
+    const from=new THREE.Vector3(0,2,0),to=new THREE.Vector3(0,2,10);
+    for(const desc of [RAPIER.ColliderDesc.cuboid(.1,2,.15).setTranslation(.3,2,5),RAPIER.ColliderDesc.ball(.5).setTranslation(.65,2,5)]){
+      const obstacle=world.createCollider(desc);world.step();
+      const ray=world.castRay(new RAPIER.Ray(from,{x:0,y:0,z:1}),10,true,undefined,undefined,observer,undefined,c=>c.handle!==craft.handle);
+      assert.equal(ray,null,'center ray misses this visible edge');
+      const distance=surfaceCameraDistance(world,from,to,observer,craft);assert.ok(distance>4&&distance<5,'camera retracts before its edge enters the obstacle');
+      const position=from.clone().lerp(to,distance/10);
+      assert.equal(world.intersectionWithShape(position,{x:0,y:0,z:0,w:1},new RAPIER.Ball(.22),undefined,undefined,observer,undefined,c=>c.handle!==craft.handle),null,'camera volume remains outside solids');
+      world.removeCollider(obstacle,true);
+    }
+    world.step();assert.equal(surfaceCameraDistance(world,from,to,observer,craft),10,'full view returns after the obstruction is removed');
+  }finally{world.free();}
+});
+
+test('surface chase handles embedded starts and coincident endpoints without NaNs',async()=>{
+  await RAPIER.init();const world=new RAPIER.World({x:0,y:0,z:0});
+  try{
+    const observer=world.createCollider(RAPIER.ColliderDesc.ball(.1).setTranslation(-3,0,0)),craft=world.createCollider(RAPIER.ColliderDesc.ball(.1).setTranslation(-4,0,0));
+    world.createCollider(RAPIER.ColliderDesc.cuboid(.1,2,2).setTranslation(.2,2,0));world.step();
+    const from=new THREE.Vector3(0,2,0);
+    assert.equal(surfaceCameraDistance(world,from,from,observer,craft),0);
+    assert.equal(surfaceCameraDistance(world,from,new THREE.Vector3(0,2,10),observer,craft),0,'do not sweep through a wall overlapping the camera origin');
+  }finally{world.free();}
+});
