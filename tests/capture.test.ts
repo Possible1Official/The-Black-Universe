@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import {startFlight,stepFlight,canApproach,beginApproach,capturePosition,captureLook,NYSA_CENTER,NYSA_RADIUS,NYSA_CAPTURE,DOCKING_SECONDS,type FlightState,type Vec3} from '../src/flight';
+import {startFlight,stepFlight,canApproach,beginApproach,capturePosition,captureLook,EREBUS_CAPTURE,EREBUS_APPROACH,NYSA_CENTER,NYSA_RADIUS,NYSA_CAPTURE,DOCKING_SECONDS,type FlightState,type Vec3} from '../src/flight';
 import {STATION_HULL,CRAFT_CLEARANCE,stationContains,stationRecovery,inDockingZone} from '../src/station';
 import {createFlightScene} from '../src/flight-scene';
 const f=(position:Vec3,leg:'nysa'|'erebus'='nysa'):FlightState=>({...startFlight(leg),phase:'flying',position,velocity:{x:0,y:0,z:0}});
@@ -24,9 +24,9 @@ test('frontal and interior docking routes remain outside every rendered clearanc
       for(const b of STATION_HULL){const inside=[p.x,p.y,p.z].every((value,a)=>value>b.position[a]-b.size[a]/2-CRAFT_CLEARANCE&&value<b.position[a]+b.size[a]/2+CRAFT_CLEARANCE);assert.equal(inside,false);}
       if(i<300)flight=stepFlight(flight,input,1/60);
     }
-    flight=stepFlight(flight,input,1/60);assert.equal(flight.phase,'docked');assert.deepEqual(flight.position,{x:0,y:0,z:-20});
+    flight=stepFlight(flight,input,1/60);assert.equal(flight.phase,'docked');assert.deepEqual(flight.position,EREBUS_CAPTURE);
   }
-  assert.deepEqual(capturePosition({x:80,y:8,z:-80},'erebus',3),{x:0,y:0,z:-40});assert.equal(DOCKING_SECONDS,5);
+  assert.deepEqual(capturePosition({x:80,y:8,z:-80},'erebus',3),EREBUS_APPROACH);assert.equal(DOCKING_SECONDS,5);
 });
 test('docking accepts the open bay/front zone and rejects nearby side/rear wall shortcuts',()=>{
   for(const p of [{x:0,y:0,z:-80},{x:0,y:0,z:0},{x:19,y:1,z:20}]){assert.equal(inDockingZone(p),true);assert.equal(canApproach(f(p,'erebus')),true);}
@@ -48,5 +48,5 @@ test('rendered station hulls match shared collision dimensions and capture view 
   const camera=new THREE.PerspectiveCamera(68,1,.08,2500),world=createFlightScene(camera,new THREE.MeshStandardMaterial(),new THREE.Texture());
   const boxes=world.scene.children.flatMap(o=>o.children).filter(o=>o instanceof THREE.Mesh&&o.geometry instanceof THREE.BoxGeometry) as THREE.Mesh<THREE.BoxGeometry>[];
   for(const b of STATION_HULL)assert.ok(boxes.some(m=>m.position.x===b.position[0]&&m.position.y===b.position[1]&&m.position.z===b.position[2]&&m.geometry.parameters.width===b.size[0]&&m.geometry.parameters.height===b.size[1]&&m.geometry.parameters.depth===b.size[2]));
-  for(const leg of ['nysa','erebus'] as const){const p=leg==='nysa'?{x:70,y:20,z:-1000}:{x:40,y:8,z:-100},look=captureLook(p,leg);camera.rotation.order='YXZ';camera.position.set(p.x,p.y,p.z);camera.rotation.set(look.pitch,look.yaw,0);camera.updateMatrixWorld();const target=(leg==='nysa'?new THREE.Vector3(0,0,-1200):new THREE.Vector3(0,0,52)).project(camera);assert.ok(Math.abs(target.x)<1e-9&&Math.abs(target.y)<1e-9);}
+  for(const leg of ['nysa','erebus'] as const){const p=leg==='nysa'?{x:70,y:20,z:-1000}:{x:40,y:8,z:-100},look=captureLook(p,leg);camera.rotation.order='YXZ';camera.position.set(p.x,p.y,p.z);camera.rotation.set(look.pitch,look.yaw,0);camera.updateMatrixWorld();const target=(leg==='nysa'?new THREE.Vector3(0,0,-1200):new THREE.Vector3(0,EREBUS_CAPTURE.y,52)).project(camera);assert.ok(Math.abs(target.x)<1e-9&&Math.abs(target.y)<1e-9);}
 });

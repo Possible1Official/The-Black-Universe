@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {startFlight,stepFlight,beginApproach,canApproach,flightDistance,flightSpeed,NYSA_CENTER,NYSA_RADIUS,SURFACE_FLIGHT_SECONDS,surfaceFlightPose,cloudOpacity,type FlightInput,type FlightState} from '../src/flight';
+import {startFlight,stepFlight,beginApproach,canApproach,flightDistance,flightSpeed,EREBUS_CAPTURE,NYSA_CENTER,NYSA_RADIUS,SURFACE_FLIGHT_SECONDS,surfaceFlightPose,cloudOpacity,type FlightInput,type FlightState} from '../src/flight';
 import {FixedFrameClock} from '../src/timing';
 const input:FlightInput={throttle:0,boost:false,brake:false,yaw:0,pitch:0};
 const steps=(state:FlightState,n:number,controls=input)=>{for(let i=0;i<n;i++)state=stepFlight(state,controls,1/60);return state;};
@@ -19,7 +19,7 @@ test('surface takeoff permits manual return and guided docking without creating 
   let f=steps(startFlight('erebus'),602);
   while(flightDistance(f)>85)f=stepFlight(f,{...input,throttle:1,yaw:Math.PI},1/60);
   f=steps(f,120,{...input,brake:true,yaw:Math.PI});assert.ok(canApproach(f));
-  f=steps(beginApproach(f),301);assert.equal(f.phase,'docked');assert.equal(f.position.z,-20);
+  f=steps(beginApproach(f),301);assert.equal(f.phase,'docked');assert.deepEqual(f.position,EREBUS_CAPTURE);
 });
 test('surface descent/ascent are bounded, reversible and pause at the same physical camera pose',()=>{
   let last=Infinity;
