@@ -6,6 +6,6 @@ export function meshColliders(world:RAPIER.World,root:THREE.Object3D){
  root.traverse(o=>{if(!(o instanceof THREE.Mesh))return;const p=o.geometry.getAttribute('position');if(!p?.count)return;
  const vertices=new Float32Array(p.count*3);for(let i=0;i<p.count;i++){point.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);vertices.set([point.x,point.y,point.z],i*3);}
  const indices=o.geometry.index?Uint32Array.from(o.geometry.index.array):Uint32Array.from({length:p.count},(_,i)=>i);
- colliders.push(world.createCollider(RAPIER.ColliderDesc.trimesh(vertices,indices)));
+ colliders.push(world.createCollider(RAPIER.ColliderDesc.trimesh(vertices,indices,RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES)));
  });return colliders;
 }

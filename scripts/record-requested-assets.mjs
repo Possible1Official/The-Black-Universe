@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 const definitions={
+ resident:{creator:'seemlyhasan',model_id:2712319,url:'https://www.cgtrader.com/free-3d-models/character/woman/cute-girl-5122a81c-b888-4276-affd-71031a1ddb5a',triangle_budget:40000,transfer_budget:3000000},
  biker:{creator:'HRNLSTUDIO',model_id:3122428,url:'https://www.cgtrader.com/free-3d-models/character/sci-fi-character/cyber-biker-with-turbo-bike',triangle_budget:40000,transfer_budget:4000000,rights:'User states creator redistribution rights confirmed; independently unverified. CGTrader Royalty Free (no AI).'},
  bike:{creator:'HRNLSTUDIO',model_id:3122428,url:'https://www.cgtrader.com/free-3d-models/character/sci-fi-character/cyber-biker-with-turbo-bike',triangle_budget:40000,transfer_budget:3000000,rights:'Same user-confirmed creator permission as biker pack; independently unverified. CGTrader Royalty Free (no AI).'},
  rover:{creator:'dragosh21',model_id:4463132,url:'https://www.cgtrader.com/free-3d-models/vehicle/sci-fi-vehicle/sci-fi-rover-b8def830-308a-4377-8313-4218ac847aae',triangle_budget:40000,transfer_budget:4000000},

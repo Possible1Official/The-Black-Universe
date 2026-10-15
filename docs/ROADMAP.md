@@ -170,3 +170,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Rideable bike/rover with collision-safe parking/dismount, speed slider, steering joystick and independent third-person look; slower distance-driven walking and running.
 - Authored station collision, functional moving bulkheads and a connected bedroom/runway preserve the existing mission and flight loop.
 - Next: measured real-device GPU/transfer budgets and LODs, terrain-following vehicle tilt/suspension, rider contact animation and further planet sectors. Vehicles currently run only on Nysa; staged orbital transitions, scripted officers and decorative weapons remain.
+
+## Reported character, passage and visibility repair (2026-10-14)
+- Correct lit character materials/hair and rest-pose retargeting; reduce bike to rider scale.
+- Narrower standing collision, seam handling and clear widened launch lounge.
+- User-selected bed resident in unchanged authored lying pose; generated window scenery with clear glass and additional corridor/cabin lighting.
+- Next: address further user-observed defects, rider contact/wheel animation and measured device performance.
