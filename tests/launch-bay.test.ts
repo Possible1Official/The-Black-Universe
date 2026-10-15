@@ -1,0 +1,12 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {LaunchInterlock,LAUNCH_BAY,LaunchBay} from '../src/launch-bay';import RAPIER from '@dimforge/rapier3d-compat';
+test('boarding interlock seals the station before opening space and moving the parked jet',()=>{
+ const s=new LaunchInterlock();assert.equal(s.jetZ,LAUNCH_BAY.parkZ);s.requestAccess();for(let i=0;i<60;i++)s.step(1/60);assert.equal(s.inner,1);assert.equal(s.outer,0);assert.ok(s.board());const phases=new Set([s.phase]);let moved=false;
+ for(let i=0;i<600;i++){s.step(1/60);phases.add(s.phase);assert.ok(s.inner===0||s.outer===0,'doors must never expose station to space');if(s.jetZ!==LAUNCH_BAY.parkZ){moved=true;assert.equal(s.outer,1);assert.equal(s.inner,0);}if(s.boarded)assert.equal(s.requestAccess(),false);}
+ assert.ok(moved);assert.equal(s.phase,'away');assert.equal(s.jetZ,LAUNCH_BAY.endZ);assert.deepEqual([...phases],['sealing','opening','departing','away']);s.reset();assert.deepEqual(s.snapshot(),new LaunchInterlock().snapshot());
+});
+test('occupied inner door delays sealing; zero dt freezes all launch motion',()=>{
+ const s=new LaunchInterlock();s.requestAccess();for(let i=0;i<60;i++)s.step(1/60);s.board();for(let i=0;i<120;i++)s.step(1/60,true);assert.equal(s.phase,'sealing');assert.equal(s.inner,1);assert.equal(s.outer,0);const paused=s.snapshot();for(let i=0;i<100;i++)s.step(0);assert.deepEqual(s.snapshot(),paused);for(let i=0;i<60;i++)s.step(1/60);assert.equal(s.phase,'opening');
+});
+test('bay doors and jet hull share rendered transforms, retract and reset safely',async()=>{await RAPIER.init();const world=new RAPIER.World({x:0,y:-9.81,z:0});try{const bay=new LaunchBay(false);bay.init(world);bay.sync();world.step();assert.equal(bay.inner.position.z,LAUNCH_BAY.innerZ);assert.equal(bay.outer.position.z,LAUNCH_BAY.outerZ);assert.ok(bay.hull?.isEnabled());bay.state.requestAccess();for(let i=0;i<60;i++)bay.state.step(1/60);bay.state.board();bay.sync();assert.equal(bay.hull?.isEnabled(),false);for(let i=0;i<600;i++)bay.state.step(1/60);bay.sync();assert.equal(bay.jet.visible,false);assert.ok(bay.outer.position.y>8);bay.state.reset();bay.sync();assert.equal(bay.jet.visible,true);assert.equal(bay.jet.position.z,LAUNCH_BAY.parkZ);assert.ok(bay.hull?.isEnabled());}finally{world.free();}});
+
+test('boarding an already sealed bay remains valid and still waits for the outer door',()=>{const s=new LaunchInterlock();assert.ok(s.board());assert.equal(s.outer,0);s.step(1/60);assert.equal(s.phase,'opening');assert.equal(s.jetZ,LAUNCH_BAY.parkZ);});
