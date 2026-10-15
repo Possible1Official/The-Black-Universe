@@ -20,19 +20,21 @@ export function terrainStance(kind:VehicleKind,x:number,z:number,yaw:number,base
  const s=supports[kind],sin=Math.sin(yaw),cos=Math.cos(yaw);
  const height=(dx:number,dz:number)=>ground(x+dx*cos+dz*sin,z-dx*sin+dz*cos);
  const fl=height(-s.width,s.front),fr=height(s.width,s.front),rl=height(-s.width,s.rear),rr=height(s.width,s.rear);
- const mean=(fl+fr+rl+rr)/4;
+ const mean=Math.max((fl+fr+rl+rr)/4,ground(x,z)-(kind==='rover'?.4:.16));
  // Never pull a falling/airborne vehicle toward the terrain with a visual pose.
  if(baseHeight-mean>.7)return {pitch:0,roll:0,offset:0};
- return {pitch:THREE.MathUtils.clamp(Math.atan2((fl+fr-rl-rr)/2,s.rear-s.front),-STANCE_LIMIT,STANCE_LIMIT),roll:THREE.MathUtils.clamp(Math.atan2((fr+rr-fl-rl)/2,s.width*2),-STANCE_LIMIT,STANCE_LIMIT),offset:THREE.MathUtils.clamp(mean+.04-baseHeight,-.35,.35)};
+ return {pitch:THREE.MathUtils.clamp(Math.atan2((fl+fr-rl-rr)/2,s.rear-s.front),-STANCE_LIMIT,STANCE_LIMIT),roll:THREE.MathUtils.clamp(Math.atan2((fr+rr-fl-rl)/2,s.width*2),-STANCE_LIMIT,STANCE_LIMIT),offset:THREE.MathUtils.clamp(mean+.04-baseHeight,kind==='rover'?-.9:-.5,.5)};
 }
 // Visual-only support fit; upright Rapier proxy is retained, rather than rigid-body suspension.
 export class VehicleStance{
- pitch=0;roll=0;offset=0;private x=Infinity;private z=Infinity;
- update(kind:VehicleKind,mesh:THREE.Object3D,x:number,y:number,z:number,yaw:number,ground:(x:number,z:number)=>number,dt:number){
+ pitch=0;roll=0;offset=0;private x=Infinity;private z=Infinity;private height=0;
+ update(kind:VehicleKind,mesh:THREE.Object3D,x:number,y:number,z:number,yaw:number,ground:(x:number,z:number)=>number,dt:number,turnRate=0,speed=0){
   const halfHeight=VEHICLE_SPEC[kind].half[1],target=terrainStance(kind,x,z,yaw,y-halfHeight,ground);
-  const reset=Math.hypot(x-this.x,z-this.z)>8,blend=reset?1:1-Math.exp(-10*Math.max(0,Math.min(dt,.1)));
+  const reset=Math.hypot(x-this.x,z-this.z)>8,blend=reset?1:1-Math.exp(-5*Math.max(0,Math.min(dt,.1)));
+  if(kind==='bike')target.roll+=THREE.MathUtils.clamp(Math.atan(speed*turnRate/9.81)*.7,-.42,.42);
   this.pitch+=(target.pitch-this.pitch)*blend;this.roll+=(target.roll-this.roll)*blend;this.offset+=(target.offset-this.offset)*blend;this.x=x;this.z=z;
+  const desired=y+this.offset;this.height=reset?desired:this.height+(desired-this.height)*blend;this.height=THREE.MathUtils.clamp(this.height,y-(kind==='rover'?.9:.5),y+.5);
   mesh.rotation.set(this.pitch,yaw,this.roll,'YXZ');
-  mesh.position.set(0,-halfHeight,0).applyQuaternion(mesh.quaternion).add(new THREE.Vector3(x,y+this.offset,z));
+  mesh.position.set(0,-halfHeight,0).applyQuaternion(mesh.quaternion).add(new THREE.Vector3(x,this.height,z));
  }
 }

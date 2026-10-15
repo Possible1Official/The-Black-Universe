@@ -1,0 +1,44 @@
+{
+  "source": "Mixamo via pinned MixamoHarvester",
+  "tool_revision": "0f9a38aa15a79110016a0a1df15f0863c8dd9e12",
+  "character_id": "f7b85d05-5f1c-47d8-9770-9a1a054bd6f6",
+  "motions": [
+    {
+      "id": "c9c6cb0d-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Running",
+      "source_file": "Running_f7b85d05-5f1c-47d8-9770-9a1a054bd6f6.fbx",
+      "bytes": 335712,
+      "sha256": "3e496633862c578175d1acf3199b9c1bb4b057ac6fb01fc482a244840157f692"
+    },
+    {
+      "id": "c9ccec92-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Jump",
+      "source_file": "Jump_f7b85d05-5f1c-47d8-9770-9a1a054bd6f6.fbx",
+      "bytes": 369728,
+      "sha256": "a74e072c3dc23779bce35ad0a149383cb1b700a1274bc9f61168609635e33892"
+    },
+    {
+      "id": "c9c609a9-b96c-11e4-a802-0aaa78deedf9",
+      "name": "Walking",
+      "source_file": "Walking_f7b85d05-5f1c-47d8-9770-9a1a054bd6f6.fbx",
+      "bytes": 421136,
+      "sha256": "6c36f1f685341061b8540e895529e0a1282a53b5f677a2ed50c98fdf4322318c"
+    }
+  ],
+  "base_binary_bytes": 2493968,
+  "base_binary_sha256": "9c654504ab3cd978119e97e14243f8746ff3d4dbd8d9bf1ae6fc9dfd82dbe9c6",
+  "preserved": {
+    "meshes": "21f96275bc6057462307f5208eeb91550884033cbdad9a49a1ed6ed946d52b3f",
+    "materials": "2d818c00086a6f111d2eba419cd2f2163f271abe64eb234ce20f7597f32f8104",
+    "nodes": "c60a4b04c1a4754c52de89ff41cc1213f82e09237fd4aa6ba908d4651937c611",
+    "skins": "8034f3ee5628677e863073fc4f54b232756840f0ed3bf7c066ebb573f6c634a6",
+    "images": "db9e876c2dac426d2735babfdcccd28fc74e0ccaf806afcb8b092dd1797bca70",
+    "textures": "a650a963dd6ddfbb31bc9f5bc4eca0d12c86b415c71d7a9203ad3b1f940030d7"
+  },
+  "strides_m": {
+    "Walking": 1.465755,
+    "Running": 3.50991
+  },
+  "motion_translation": "In place; collision physics owns displacement and jump height",
+  "raw_sources_private": true
+}

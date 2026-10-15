@@ -198,3 +198,10 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Match visual feedback to the selected CGTrader turbine/hover design; its wheel-named parts are steering components, not tires.
 - Third-person idle/drive exhaust, immediate brake/dismount cutoff and frozen pause state; preserve reviewed textures and terrain-following rider pose.
 - Next: richer authored surface scenery, measured device budgets and rider hand/foot contact. Turbo Bike remains a terrain-bound kinematic vehicle.
+
+
+## Captured locomotion, rock travel and lounge repair (2026-10-15)
+- Fresh authenticated Mixamo Walking/Running/Jump exports, retargeted without replacing reviewed biker geometry/materials/textures; actual-distance gait and physical jump phase. Local Riding and prior Idle remain.
+- Rover maximum 14 m/s, collision-resolved rounded-rock assistance, individually sprung wheels, front steering and visible telescopic shocks. Bike banks into turns and its turbine pod moves independently of the smoothed frame/rider.
+- Lounge overlapping floor and raised runway lip removed; underlay lowered below authored grating. Tiny steps no longer trigger airborne animation.
+- Remaining: hand/foot contact IK, full tire-force dynamics, real-device GPU/memory budgets and more authored surface scenery. Current suspension is bounded raycast/spring presentation over upright kinematic proxies.

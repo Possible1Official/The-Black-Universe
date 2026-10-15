@@ -56,3 +56,10 @@ test('rover preserves lit source albedo and tangent detail with four independent
  assert.equal(wheels.length,4);assert.equal(new Set(wheels.map((w:any)=>w.mesh)).size,4);
  assert.equal((g.animations??[]).length,0,'source has no usable motion clips');
 });
+
+test('captured locomotion replaces motion only and preserves reviewed geometry, skin and texture bytes',async()=>{
+ const p=JSON.parse(readFileSync(new URL('../public/assets/requested/motion-provenance.json',import.meta.url),'utf8')),packed=readFileSync(new URL('../src/assets/requested/biker.ebup',import.meta.url)),b=Buffer.from(await decodeGameResource(Uint8Array.from(packed).buffer)),n=b.readUInt32LE(12),g=JSON.parse(b.subarray(20,20+n).toString()),bin=b.subarray(28+n),hash=(v:any)=>createHash('sha256').update(v).digest('hex');
+ assert.deepEqual(p.motions.map((x:any)=>x.name).sort(),['Jump','Running','Walking']);assert.equal(hash(bin.subarray(0,p.base_binary_bytes)),p.base_binary_sha256);
+ for(const [key,value] of Object.entries(p.preserved))assert.equal(hash(JSON.stringify(g[key])),value,`${key} changed during motion merge`);
+ for(const name of ['Walking','Running','Jump']){const a=g.animations.find((x:any)=>x.name===name);assert.ok(a.channels.length>=60);for(const channel of a.channels){const name=g.nodes[channel.target.node].name;assert.ok(g.skins.some((skin:any)=>skin.joints.includes(channel.target.node))||name==='cyber girl');if(name==='cyber girl'){const output=g.accessors[a.samplers[channel.sampler].output],view=g.bufferViews[output.bufferView],width=output.type==='VEC4'?4:3,start=(view.byteOffset??0)+(output.byteOffset??0);for(let i=0;i<output.count;i++)for(let j=0;j<width;j++)assert.ok(Math.abs(bin.readFloatLE(start+(i*width+j)*4)-bin.readFloatLE(start+j*4))<.00001,'armature root must stay fixed');}}}
+});

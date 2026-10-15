@@ -12,7 +12,7 @@ Node.js 22+: `npm ci`, then `npm run dev`. Open the printed URL. `npm test` veri
 
 ## Current expansion
 
-Cyber Biker player, ridable Turbo Bike and Sci-fi Rover on Nysa, the selected flying ship and authored first-person cockpit. The Intrepid station connects to a runway corridor and crew bedroom. Nysa now has dunes, basalt mesas, wetlands and highlands within a 256-meter sector. During piloting use the **left speed slider** and **right steering joystick**; camera look is independent of heading. On foot, Shift runs and Space jumps; mobile RUN toggles sprint and JUMP takes off. Stop vehicles with Brake/Space, then E dismounts. See [implemented scope and controls](docs/VEHICLES.md).
+Cyber Biker player, ridable Turbo Bike and Sci-fi Rover on Nysa, the selected flying ship and authored first-person cockpit. The Intrepid station connects to a runway corridor and crew bedroom. Nysa now has dunes, basalt mesas, wetlands and highlands within a 256-meter sector. During piloting use the **left speed slider** and **right steering joystick**; camera look is independent of heading. On foot, Shift runs and Space jumps; mobile RUN toggles sprint and JUMP takes off. Walking/running/jumping now use captured Mixamo motion. The rover reaches 14 m/s with independently moving wheels; the bike banks and its turbine pod moves on damped shocks. Both cross bounded rocks with collision checks. Stop vehicles with Brake/Space, then E dismounts. See [implemented scope and controls](docs/VEHICLES.md).
 
 ## Expedition 001
 

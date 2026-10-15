@@ -92,17 +92,14 @@ def character():
  arm.data.pose_position='REST';normalize([arm]+meshes,height=1.75,turn=math.pi*1.5);render([arm]+meshes,'biker-source.png')
  original,optimized=simplify(meshes,28500);material_count,maps=clean_materials(meshes);arm.data.pose_position='POSE';bpy.context.scene.render.fps=30
  clips=[]
- for name in ['Idle','Walking']:
+ captured=['Idle','Walking']+[name for name in ['Running','Jump'] if (MIX/f'{name}_f7b85d05-5f1c-47d8-9770-9a1a054bd6f6.fbx').exists()]
+ for name in captured:
   before=set(bpy.data.objects);bpy.ops.import_scene.fbx(filepath=str(MIX/f'{name}_f7b85d05-5f1c-47d8-9770-9a1a054bd6f6.fbx'));added=set(bpy.data.objects)-before;src=next(o for o in added if o.type=='ARMATURE');source_action=src.animation_data.action
   action=bpy.data.actions.new(name);action.use_fake_user=True;arm.animation_data_create();arm.animation_data.action=action
   first,last=[int(v) for v in source_action.frame_range]
   # Retarget global rest-relative rotations, then solve target parent-local basis.
   for frame in range(first,last+1):
    bpy.context.scene.frame_set(frame)
-   if name=='Jump':
-    lift=math.sin((frame-1)/24*math.pi)
-    for side,sign in [('Left',1),('Right',-1)]:
-     directions.update({'mixamorig:'+side+'UpLeg':Vector((sign*.04,-.9+.55*lift,.65*lift)),'mixamorig:'+side+'Leg':Vector((0,-.9,-.6*lift)),'mixamorig:'+side+'Arm':Vector((sign*.15,-.9+.6*lift,.5*lift)),'mixamorig:'+side+'ForeArm':Vector((sign*.03,-.8+.4*lift,.5*lift))})
    solved={}
    for bone in arm.pose.bones:
     bone.rotation_mode='QUATERNION';sb=src.pose.bones.get(bone.name)
@@ -121,7 +118,7 @@ def character():
   arm.animation_data.action=None;track=arm.animation_data.nla_tracks.new();track.name=name;track.strips.new(name,1,action);track.mute=True
   clips.append({'name':name,'type':'captured Mixamo motion, world-axis aligned bone-direction retarget','duration':float((last-first)/30)})
  # Distinct authored cyclic run: torso forward, coordinated bent-knee flight cycle.
- for name in ['Running','Riding','Sitting','Jump']:
+ for name in [n for n in ['Running','Riding','Sitting','Jump'] if n not in captured]:
   action=bpy.data.actions.new(name);action.use_fake_user=True;arm.animation_data.action=action
   for frame in range(1,26):
    phase=(frame-1)/24*2*math.pi;directions={}
@@ -165,7 +162,7 @@ def character():
  for clip in ['Walking','Running','Riding','Jump']:
   for track in arm.animation_data.nla_tracks:track.mute=track.name!=clip
   bpy.context.scene.frame_set(8);render([arm]+meshes,f'biker-{clip.lower()}.png')
- return {'source_triangles':original,'triangles':optimized,'bones':len(arm.data.bones),'materials':material_count,'texture_sizes':maps,'clips':clips,'normalization':'1.75m rest height, floor0, +Z glTF forward','bytes':(OUT/'biker.glb').stat().st_size,'publication':'User-confirmed creator redistribution rights; not independently verified','source_evidence':['embedded original texture paths identify Resident Evil 3, Spiderman PS4, DOA5 and DW9/XNALara resources'],'retarget_limit':'World-axis aligned posed bone directions on matching Mixamo bones; no root translation or hip-height IK. Procedural run/riding are locally authored, not captured Mixamo running.'}
+ return {'source_triangles':original,'triangles':optimized,'bones':len(arm.data.bones),'materials':material_count,'texture_sizes':maps,'clips':clips,'normalization':'1.75m rest height, floor0, +Z glTF forward','bytes':(OUT/'biker.glb').stat().st_size,'publication':'User-confirmed creator redistribution rights; not independently verified','source_evidence':['embedded original texture paths identify Resident Evil 3, Spiderman PS4, DOA5 and DW9/XNALara resources'],'retarget_limit':'World-axis aligned posed bone directions on matching Mixamo bones; no root translation or hip-height IK. Running/Jump use captured Mixamo FBXs when present; Riding/Sitting remain locally authored. Motion-only merge preserves reviewed geometry and textures.'}
 def bike():
  bpy.ops.wm.open_mainfile(filepath=str(SOURCE));arm=bpy.data.objects['Armature.001'];meshes=[o for o in bpy.data.objects if o.type=='MESH' and (o.parent==arm or o.name.startswith('uploads_files_2776142_aircraft'))];objects=[arm]+meshes
  # Bake the assembled source transforms, omit weapon/character/helmet entirely.
