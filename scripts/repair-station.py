@@ -41,3 +41,7 @@ for o in objects:o.select_set(True)
 bpy.ops.export_scene.gltf(filepath=str(OUT/'interior.glb'),export_format='GLB',use_selection=True,export_yup=True,export_apply=True,export_animations=False,export_image_format='JPEG',export_jpeg_quality=90)
 report=json.loads((OUT/'interior-report.json').read_text());report['launch_lounge_width']=7;report['science_passage_width']=7.35;report['forward_doorway_opened']=True;report['bow_viewport']={'width':3.4,'height':2.5,'z':-18.85};report['bytes']=(OUT/'interior.glb').stat().st_size
 (OUT/'interior-report.json').write_text(json.dumps(report,indent=2)+'\n')
+
+# Remove the source floor now covered by LoungeFloor, without touching maps.
+import subprocess
+subprocess.run(['node',str(ROOT/'scripts/repair-lounge-floor.mjs'),str(OUT/'interior.glb')],check=True)

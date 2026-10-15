@@ -13,6 +13,7 @@ import {SHIP_LAYOUT} from './ship-layout';
 import {meshColliders} from './mesh-colliders';
 import {attachRequested} from './requested-assets';
 import {TurboFeedback} from './turbo-feedback';
+import {VehicleSuspension} from './vehicle-suspension';
 import {VehicleStance,terrainSampler} from './vehicle-stance';
 import {GroundVehicle,VEHICLE_SPEC,dismountPosition,type VehicleKind} from './ground-vehicle';
 import {steerPilot,targetThrottle,WALK_SPEED,RUN_SPEED,JUMP_SPEED} from './pilot-controls';
@@ -114,7 +115,7 @@ attachRequested('corridor',runway).catch(()=>console.warn('Runway asset unavaila
 const windowVista=createWindowVista();scene.add(windowVista);
 const cabin=new THREE.Group();cabin.position.z=34.825;scene.add(cabin);
 let cabinLoaded=false;
-box(7.4,.2,24,0,-.1,18.825,floorMat);for(const x of [-3.85,3.85])box(.3,6,24,x,3,18.825,dark);
+box(7.4,.2,24,0,-.16,18.825,floorMat);for(const x of [-3.85,3.85])box(.3,6,24,x,3,18.825,dark);
 point(0x79c9ed,24,0,4,-12,12);point(0x79c9ed,24,0,4,0,12);
 point(0xd2e5f0,45,0,4,20,18);point(0xffd5aa,50,0,3.5,35,11);
 point(0xffa763,38,-5.25,4,-6,10);point(0x79ddff,38,5.25,4,-6,10);
@@ -403,7 +404,7 @@ fieldLog.onclick=()=>{
 const landedShuttle=makeShuttle();landedShuttle.position.set(0,0,LANDING.z);surface.group.add(landedShuttle);
 const surfaceCraft=makeShuttle();scene.add(surfaceCraft);surfaceCraft.visible=false;
 const feedback=new FlightFeedback(),orbitalThrusters=createThrusters(),surfaceThrusters=createThrusters();flightWorld.scene.add(orbitalThrusters.root);scene.add(surfaceThrusters.root);
-const turboFeedback=new TurboFeedback();
+const turboFeedback=new TurboFeedback();const suspensions=new Map<VehicleKind,VehicleSuspension>();
 const vehicleGround=terrainSampler(surface.mesh.vertices);const vehicleStances=new Map<VehicleKind,VehicleStance>();
 const surfaceSky=new THREE.Color(0x678b9a);
 const flightHud=document.createElement('aside');flightHud.id='flightHud';flightHud.hidden=true;flightHud.setAttribute('aria-label','Shuttle flight controls');
@@ -425,7 +426,7 @@ function launchFlight(leg:FlightLeg){
   updateHud();$('objective').textContent='Pilot Kestrel';$('missionText').textContent='Fly to the cyan approach ring. Brake below 18 m/s, then press E to land or dock.';paintNavigation();notify(leg==='nysa'?'KESTREL · Launching from Erebus shuttle bay.':'KESTREL · Lifting off Nysa. Return corridor charted.');
 }
 function travel(landing:boolean){
-  riding=null;if(playerCollider)playerCollider.setEnabled(true);speedDemand=0;
+  riding=null;playerJumping=false;if(playerCollider)playerCollider.setEnabled(true);speedDemand=0;
   orbitalThrusters.root.visible=surfaceThrusters.root.visible=false;
   clearInput();verticalSpeed=0;nearest=undefined;speakingCrew=undefined;trackedField=undefined;
   setSurfaceView(landing);onSurface=landing;
@@ -546,7 +547,7 @@ stick.onpointermove=e=>{if(e.pointerId===stickPointer)moveStick(e);};stick.onpoi
 function clearInput(){touchRunning=false;$('touchRun').setAttribute('aria-pressed','false');jumpBuffer=0;flightBrake=flightBoost=false;motionClock.reset();discardMovementFrame=true;velocity.set(0,0,0);keys.clear();touchMove.set(0,0);stickPointer=undefined;lookPointer=undefined;thumb.style.transform='';}
 function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(innerWidth,innerHeight);}window.addEventListener('resize',resize);
 const motionClock=new FixedFrameClock();let discardMovementFrame=true,skipPowerFrame=true,lastMotionSteps=0,motionStepsTotal=0,droppedMotionTime=0;
-let verticalSpeed=0,jumpBuffer=0;const fixed=FIXED_STEP;const velocity=new THREE.Vector3();
+let verticalSpeed=0,jumpBuffer=0,playerJumping=false;const fixed=FIXED_STEP;const velocity=new THREE.Vector3();
 function physicsStep(){
   if(riding){speedDemand=targetThrottle(speedDemand,(keys.has('KeyW')?1:0)-(keys.has('KeyS')?1:0),fixed);const steer=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+touchMove.x;const brake=keys.has('Space')||flightBrake;if(brake)speedDemand=Math.max(0,speedDemand-fixed*1.8);riding.step(steer,speedDemand,brake,fixed,playerCollider);avatarVisual?.update(fixed,0,0,0,true);world.step();const p=riding.body.translation();player.setTranslation({x:p.x,y:p.y+VEHICLE_SPEC[riding.kind].seat,z:p.z},true);return;}
   if(flight){
@@ -561,9 +562,9 @@ function physicsStep(){
   const input=new THREE.Vector2((keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+touchMove.x,(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0)+touchMove.y);if(input.length()>1)input.normalize();
   const speed=touchRunning||keys.has('ShiftLeft')||keys.has('ShiftRight')?RUN_SPEED:WALK_SPEED;const desired=new THREE.Vector3(input.x,0,input.y).applyAxisAngle(new THREE.Vector3(0,1,0),yaw).multiplyScalar(speed);velocity.lerp(desired,1-Math.exp(-12*fixed));
   const grounded=controller.computedGrounded(),jump=stepJumpBuffer(jumpBuffer,grounded);jumpBuffer=jump.remaining;
-  if(grounded)verticalSpeed=jump.jump?JUMP_SPEED:-.2;else verticalSpeed-=9.81*fixed;
+  if(jump.jump)playerJumping=true;if(grounded)verticalSpeed=jump.jump?JUMP_SPEED:-.2;else verticalSpeed-=9.81*fixed;
   controller.computeColliderMovement(playerCollider,{x:velocity.x*fixed,y:verticalSpeed*fixed,z:velocity.z*fixed});const m=controller.computedMovement(),p=player.translation();player.setNextKinematicTranslation({x:p.x+m.x,y:p.y+m.y,z:p.z+m.z});if(!onSurface)stepCrew();world.step();if(!onSurface)syncCrew();
-  const actual=player.translation(),distance=Math.hypot(actual.x-p.x,actual.z-p.z);avatarGait+=distance/1.313094*Math.PI*2;avatarBlend=THREE.MathUtils.damp(avatarBlend,Math.min(1,distance/(WALK_SPEED*fixed)),12,fixed);avatarVisual?.update(fixed,distance,avatarBlend,Math.min(1,Math.max(0,(distance/fixed-WALK_SPEED)/(RUN_SPEED-WALK_SPEED))),false,!controller.computedGrounded(),verticalSpeed);
+  if(controller.computedGrounded()&&!jump.jump)playerJumping=false;const actual=player.translation(),distance=Math.hypot(actual.x-p.x,actual.z-p.z);avatarGait+=distance/1.313094*Math.PI*2;avatarBlend=THREE.MathUtils.damp(avatarBlend,Math.min(1,distance/(WALK_SPEED*fixed)),12,fixed);avatarVisual?.update(fixed,distance,avatarBlend,Math.min(1,Math.max(0,(distance/fixed-WALK_SPEED)/(RUN_SPEED-WALK_SPEED))),false,playerJumping||(!controller.computedGrounded()&&(actual.y-p.y)/fixed<-.8),verticalSpeed);
   if(distance>.0001)avatar.rotation.y=turnToward(avatar.rotation.y,Math.atan2(actual.x-p.x,actual.z-p.z),fixed);
   avatarLegs.forEach((leg,i)=>leg.rotation.x=Math.sin(avatarGait+i*Math.PI)*.35*avatarBlend);
   if(player.translation().y< -4){const pad=landingPad(landingSite),spawn=onSurface?{x:SURFACE_ORIGIN+pad.x-3.8,y:terrainHeight(pad.x-3.8,pad.z+2)+1.05,z:pad.z+2}:{x:SHIP_LAYOUT.spawn.x,y:.9,z:SHIP_LAYOUT.spawn.z};player.setTranslation(spawn,true);player.setNextKinematicTranslation(spawn);clearInput();verticalSpeed=0;}
@@ -573,9 +574,9 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
   const movementDt=discardMovementFrame?0:rawDt,powerDt=skipPowerFrame?0:rawDt;discardMovementFrame=false;skipPowerFrame=false;lastMotionSteps=0;if(toastTimer<=0)$('toast').style.opacity='0';
   if(active)advancePower(Math.min(powerDt,MAX_FRAME_SECONDS));powerVisuals();
   if(active&&!dialogueOpen){const budget=motionClock.advance(movementDt);lastMotionSteps=budget.steps;motionStepsTotal+=budget.steps;droppedMotionTime+=budget.dropped;for(let i=0;i<budget.steps;i++)physicsStep();const p=player.translation();const moving=velocity.length();
-    for(const [kind,v] of groundVehicles){const mesh=vehicleVisuals.get(kind)!;const pos=v.body.translation();let stance=vehicleStances.get(kind);if(!stance){stance=new VehicleStance();vehicleStances.set(kind,stance);}stance.update(kind,mesh,pos.x-SURFACE_ORIGIN,pos.y,pos.z,v.yaw,vehicleGround,dt);
-      if(kind==='rover'&&mesh.userData.requested){const wheels:THREE.Object3D[]=(mesh.userData.wheels??= ['FrontLeft','FrontRight','RearLeft','RearRight'].map(side=>mesh.getObjectByName('Rover_Wheel_'+side)).filter(Boolean));for(const wheel of wheels)wheel.rotation.x=-v.distance/(wheel.name.includes('Front')?.398:.501);}
-      if(kind==='bike'){if(turboFeedback.root.parent!==mesh)mesh.add(turboFeedback.root);turboFeedback.update(riding===v,onSurface&&thirdPerson&&mesh.userData.requested==='bike',keys.has('Space')||flightBrake,speedDemand,v.speed,dt);}
+    for(const [kind,v] of groundVehicles){const mesh=vehicleVisuals.get(kind)!;const pos=v.body.translation();let stance=vehicleStances.get(kind);if(!stance){stance=new VehicleStance();vehicleStances.set(kind,stance);}const groundLocal=(x:number,z:number)=>(onSurface?v.supportHeight(SURFACE_ORIGIN+x,z,playerCollider):undefined)??vehicleGround(x,z);stance.update(kind,mesh,pos.x-SURFACE_ORIGIN,pos.y,pos.z,v.yaw,groundLocal,dt,v.turnRate,v.speed);let suspension=suspensions.get(kind);if(!suspension){suspension=new VehicleSuspension(kind);suspensions.set(kind,suspension);}if(onSurface)suspension.update(mesh,(x,z)=>v.supportHeight(x,z,playerCollider)??vehicleGround(x-SURFACE_ORIGIN,z),dt);
+      if(kind==='rover'&&mesh.userData.requested){const wheels:THREE.Object3D[]=(mesh.userData.wheels??= ['FrontLeft','FrontRight','RearLeft','RearRight'].map(side=>mesh.getObjectByName('Rover_Wheel_'+side)).filter(Boolean));for(const wheel of wheels){const front=wheel.name.includes('Front'),steer=front?THREE.MathUtils.clamp(Math.atan(v.turnRate*2.62/Math.max(v.speed,1)),-.45,.45):0;wheel.rotation.set(-v.distance/(front?.398:.501),steer,0,'YXZ');}}
+      if(kind==='bike'){if(turboFeedback.root.parent!==mesh)mesh.add(turboFeedback.root);turboFeedback.update(riding===v,onSurface&&thirdPerson&&mesh.userData.requested==='bike',keys.has('Space')||flightBrake,speedDemand,v.speed,dt);turboFeedback.root.position.y=.409+suspension.podOffset;}
       const t=vehicleTargets.get(kind)!;t.position.set(pos.x+Math.cos(v.yaw)*(VEHICLE_SPEC[kind].half[0]+.4),pos.y+.4,pos.z-Math.sin(v.yaw)*(VEHICLE_SPEC[kind].half[0]+.4));}
     if(flight){flightWorld.update(flight,dt,approachWarning);
       if(flight.phase==='landing'||flight.phase==='docking'){const look=captureLook(flight.position,flight.leg),blend=THREE.MathUtils.smoothstep(flight.timer,0,.8);yaw=captureViewStart.yaw+Math.atan2(Math.sin(look.yaw-captureViewStart.yaw),Math.cos(look.yaw-captureViewStart.yaw))*blend;pitch=captureViewStart.pitch+(look.pitch-captureViewStart.pitch)*blend;pilot={yaw,pitch};yaw=0;pitch=0;}

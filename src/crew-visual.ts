@@ -11,7 +11,7 @@ export class CrewVisual {
   private idle: THREE.AnimationAction;
   private walk: THREE.AnimationAction;
   private run?:THREE.AnimationAction;private ride?:THREE.AnimationAction;private jump?:THREE.AnimationAction;private airBlend=0;
-  constructor(readonly root: THREE.Object3D, clips: THREE.AnimationClip[]) {
+  constructor(readonly root: THREE.Object3D, clips: THREE.AnimationClip[],private readonly walkStride=WALK_STRIDE,private readonly runStride=2.2) {
     const idle=clips.find(c=>c.name==='Idle'),walk=clips.find(c=>c.name==='Walking');
     if(!idle||!walk)throw new Error('Crew asset needs Idle and Walking clips');
     this.mixer=new THREE.AnimationMixer(root);
@@ -22,10 +22,10 @@ export class CrewVisual {
   }
   update(dt:number,distance:number,blend:number,running=0,riding=false,airborne=false,verticalSpeed=0){
     this.idle.time=(this.idle.time+dt)%this.idle.getClip().duration;
-    this.walk.time=(this.walk.time+Math.max(0,distance)/WALK_STRIDE*this.walk.getClip().duration)%this.walk.getClip().duration;
+    this.walk.time=(this.walk.time+Math.max(0,distance)/this.walkStride*this.walk.getClip().duration)%this.walk.getClip().duration;
     this.airBlend=THREE.MathUtils.damp(this.airBlend,this.jump&&airborne&&!riding?1:0,22,Math.max(0,dt));
     const ground=1-this.airBlend;
-    const b=THREE.MathUtils.clamp(blend,0,1),r=this.run?THREE.MathUtils.clamp(running,0,1):0,mounted=riding&&this.ride?1:0;this.idle.setEffectiveWeight((1-b)*(1-mounted)*ground);this.walk.setEffectiveWeight(b*(1-r)*(1-mounted)*ground);if(this.run){this.run.time=(this.run.time+Math.max(0,distance)/2.2*this.run.getClip().duration)%this.run.getClip().duration;this.run.setEffectiveWeight(b*r*(1-mounted)*ground);}if(this.ride){this.ride.time=0;this.ride.setEffectiveWeight(mounted);}
+    const b=THREE.MathUtils.clamp(blend,0,1),r=this.run?THREE.MathUtils.clamp(running,0,1):0,mounted=riding&&this.ride?1:0;this.idle.setEffectiveWeight((1-b)*(1-mounted)*ground);this.walk.setEffectiveWeight(b*(1-r)*(1-mounted)*ground);if(this.run){this.run.time=(this.run.time+Math.max(0,distance)/this.runStride*this.run.getClip().duration)%this.run.getClip().duration;this.run.setEffectiveWeight(b*r*(1-mounted)*ground);}if(this.ride){this.ride.time=0;this.ride.setEffectiveWeight(mounted);}
     if(this.jump){this.jump.time=(airborne?THREE.MathUtils.clamp((JUMP_SPEED-verticalSpeed)/(2*JUMP_SPEED),0,1):1)*this.jump.getClip().duration;this.jump.setEffectiveWeight(this.airBlend*(1-mounted));}
     this.mixer.update(0);
   }
@@ -46,4 +46,4 @@ export async function loadCrewVisuals(actors:THREE.Group[]):Promise<CrewVisual[]
   });
 }
 
-export async function loadPlayerVisual(actor:THREE.Group){const gltf=await requestedAsset('biker');const root=clone(gltf.scene);root.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=o.receiveShadow=true;o.frustumCulled=false;}});const visual=new CrewVisual(root,gltf.animations);for(const c of actor.children)c.visible=false;root.name='requested-biker';actor.add(root);actor.userData.requested='biker';return visual;}
+export async function loadPlayerVisual(actor:THREE.Group){const gltf=await requestedAsset('biker');const root=clone(gltf.scene);root.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=o.receiveShadow=true;o.frustumCulled=false;}});const visual=new CrewVisual(root,gltf.animations,1.465755,3.50991);for(const c of actor.children)c.visible=false;root.name='requested-biker';actor.add(root);actor.userData.requested='biker';return visual;}
