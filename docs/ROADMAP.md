@@ -248,3 +248,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Carry matching throttle into manual flight, retaining coasting, braking/boost priority and landing-site selection. Share local/orbital eye height and source-body offset.
 - Reuse all reviewed CGTrader craft/cockpit/corridor resources and captured character motion unchanged; no new model or source animation.
 - Remaining: matching whole-scene scenery/lighting and the orbital-to-local return transition; this is departure pose/speed continuity, not a seamless unified world.
+
+## Docking return pose continuity (2026-10-15)
+- Orbital capture now stops at the actual local return eye/root outside the space door, rather than moving31 m inside and jumping backward.
+- Align via the clear front corridor; interior captures withdraw before rising to seated eye height. Incoming heading/pitch match local guidance.
+- The existing outer-door opening, outside turn, reverse parking and station-access sequence takes over at the same pose. Models/maps/clips and mission saves remain unchanged.
+- Remaining: unified surrounding scenery/lighting, detailed exterior/local collision and physical airlock/aerospace simulation; matching pose does not make the scenes seamless.

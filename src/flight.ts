@@ -9,6 +9,7 @@ export const NYSA_CENTER:Vec3={x:0,y:0,z:-1200};
 export const NYSA_RADIUS=170;
 export const NYSA_APPROACH:Vec3={x:0,y:0,z:-980};
 export const EREBUS_APPROACH:Vec3={x:0,y:0,z:-65};
+export const EREBUS_CAPTURE:Readonly<Vec3>={x:0,y:LOCAL_JET_Y+SHUTTLE_EYE_HEIGHT,z:LAUNCH_BAY.returnZ};
 export const APPROACH_RANGE=100,SAFE_SPEED=18;
 export const SURFACE_FLIGHT_SECONDS=7;
 export const DOCKING_SECONDS=5;
@@ -52,9 +53,10 @@ const lerpPoint=(a:Vec3,b:Vec3,t:number):Vec3=>({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.
 export function capturePosition(start:Vec3,leg:FlightLeg,seconds:number):Vec3 {
   if(seconds<=0)return copy(start);
   if(leg==='erebus'){
-    const end={x:0,y:0,z:-20};if(seconds>=DOCKING_SECONDS)return end;
-    if(start.z> -36)return lerpPoint(start,end,smooth(seconds/DOCKING_SECONDS));
-    const mouth={x:0,y:0,z:-40};return seconds<=3?lerpPoint(start,mouth,smooth(seconds/3)):lerpPoint(mouth,end,smooth((seconds-3)/2));
+    const end=copy(EREBUS_CAPTURE);if(seconds>=DOCKING_SECONDS)return end;
+    // Align outside before rising to the local seated eye. Interior approaches
+    // withdraw through the clear center corridor instead of crossing the hull.
+    const mouth=EREBUS_APPROACH;return seconds<=3?lerpPoint(start,mouth,smooth(seconds/3)):lerpPoint(mouth,end,smooth((seconds-3)/2));
   }
   if(seconds>=3)return copy(NYSA_CAPTURE);
   const t=smooth(seconds/3),delta={x:start.x-NYSA_CENTER.x,y:start.y-NYSA_CENTER.y,z:start.z-NYSA_CENTER.z},radius=Math.hypot(delta.x,delta.y,delta.z);
@@ -62,7 +64,7 @@ export function capturePosition(start:Vec3,leg:FlightLeg,seconds:number):Vec3 {
   return {x:NYSA_CENTER.x+direction.x/length*r,y:NYSA_CENTER.y+direction.y/length*r,z:NYSA_CENTER.z+direction.z/length*r};
 }
 export function captureLook(position:Vec3,leg:FlightLeg){
-  const target=leg==='nysa'?NYSA_CENTER:{x:0,y:0,z:52},dx=target.x-position.x,dy=target.y-position.y,dz=target.z-position.z;
+  const target=leg==='nysa'?NYSA_CENTER:{x:0,y:EREBUS_CAPTURE.y,z:52},dx=target.x-position.x,dy=target.y-position.y,dz=target.z-position.z;
   return {yaw:Math.atan2(-dx,-dz),pitch:Math.atan2(dy,Math.hypot(dx,dz))};
 }
 export function beginApproach(f:FlightState):FlightState {
