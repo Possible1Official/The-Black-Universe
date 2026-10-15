@@ -230,3 +230,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Surface flight, bike/rover and local runway chase views now use a camera-volume sweep rather than a thin center ray, catching grazing rocks and door frames.
 - Preserve own-craft/player/hatch exclusions, restore clear distance and handle overlapping/zero-length starts safely. Mounted/runway diagnostics report actual clearance.
 - Reuse reviewed CGTrader resources and existing captured motion without altering materials, textures or clips. Orbital envelopes remain approximate; real-device performance and unified world geometry remain future work.
+
+## Authored Nysa supply cache (2026-10-15)
+- Replace the placeholder field crate with the reviewed free CGTrader Sci-fi asset-pack storage box, retaining albedo markings/wear, tangent normals and packed occlusion/roughness/metallic maps.
+- Fit its original open-box/propped-lid geometry into the existing 1.25×1 m footprint; a visible level pallet bridges the actual sloped terrain, with matching conservative collision.
+- Load only on surface entry, preserve usable fallback/retry/caching and one-time coolant recovery/save behavior. Source has no animation or rig; no imported motion is claimed.
+- Remain within a 564-triangle/338 KB model budget; hardware texture/memory/FPS measurements and broader authored Nysa scenery remain future work.

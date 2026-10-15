@@ -1,0 +1,57 @@
+{
+  "source_sha256": "3d8682e3d4292b38eae663c2398b51564f3922647cdf4fdce10b77f2da0052db",
+  "source_bytes": 3263088,
+  "output_bytes": 350236,
+  "images": [
+    {
+      "name": "storage_box_Normal",
+      "source_size": [
+        2048,
+        2048
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "normal_renormalized": true
+    },
+    {
+      "name": "storage_box_OcclusionRoughnessMetallic",
+      "source_size": [
+        2048,
+        2048
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "normal_renormalized": false
+    },
+    {
+      "name": "storage_box_BaseColor",
+      "source_size": [
+        2048,
+        2048
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "normal_renormalized": false
+    }
+  ],
+  "animations": [],
+  "bounds_size": [
+    1.25,
+    0.551353,
+    0.991199
+  ],
+  "floor": 0.02,
+  "preserved_mesh_views_sha256": {
+    "0": "f8cb0351f441864f6f98fdf542aa3b4d050a63781237e0d066929d912ca5e7d8",
+    "1": "1c06a062ea5a22e153c7f6593f53159536103d7284afc0eaa758dd286b5b0161",
+    "2": "df0c5177ba55b203b4fb7baebd7fa0408b8b689f30757518ba7f3776cf3ba624",
+    "3": "25d85819711f948ab58795eb2fb74e330aa0e47df54782113322100b43ab0ee2",
+    "4": "babb02d1f59e3bd4bbacb416ab147e98f76315c1cd7a56dc80d715e411c74ca0"
+  }
+}

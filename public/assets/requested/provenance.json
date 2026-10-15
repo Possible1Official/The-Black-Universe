@@ -1,6 +1,24 @@
 {
   "format": "EBU1 gzip/AES-GCM game resource; public format key, extraction deterrence rather than unextractable DRM",
   "assets": {
+    "cargo": {
+      "creator": "desanlisadrien1",
+      "model_id": 4044829,
+      "url": "https://www.cgtrader.com/free-3d-models/space/other/scifi-asset-pack",
+      "triangle_budget": 600,
+      "transfer_budget": 400000,
+      "source_sha256": "3d8682e3d4292b38eae663c2398b51564f3922647cdf4fdce10b77f2da0052db",
+      "rights": "CGTrader Royalty Free License (no AI), incorporated derivative only.",
+      "glb_bytes": 350236,
+      "glb_sha256": "70d419a3e9ff74605c533d2dbb367d143a6f430b89394bfaf249649d1a4fa4b3",
+      "resource_bytes": 338063,
+      "resource_sha256": "1b7936bd7161e2fcddce776642b05c5f3e761eaabacfbdfd5693e1d61fb36949",
+      "triangles": 564,
+      "primitives": 1,
+      "images": 3,
+      "animations": [],
+      "source_retained_privately": true
+    },
     "resident": {
       "creator": "seemlyhasan",
       "model_id": 2712319,
