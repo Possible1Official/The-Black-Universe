@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import * as THREE from 'three';
 import {decodeGameResource} from '../src/game-resource';
+import {CARTRIDGE_LAYOUT} from '../src/supply-cartridges';
 
 function imageDimensions(bytes:Buffer,mime:string):[number,number]{
  if(mime==='image/png')return [bytes.readUInt32BE(16),bytes.readUInt32BE(20)];
@@ -12,7 +13,7 @@ function imageDimensions(bytes:Buffer,mime:string):[number,number]{
 }
 test('packaged requested models match provenance, bounded geometry and embedded resources',async()=>{
  const manifest=JSON.parse(readFileSync(new URL('../public/assets/requested/provenance.json',import.meta.url),'utf8'));
- assert.deepEqual(Object.keys(manifest.assets).sort(),['bedroom','bike','biker','cargo','cockpit','corridor','interior','resident','rover','ship']);
+ assert.deepEqual(Object.keys(manifest.assets).sort(),['bedroom','bike','biker','canister','cargo','cockpit','corridor','interior','resident','rover','ship']);
  for(const [kind,entry] of Object.entries(manifest.assets) as [string,any][]){
   const packed=readFileSync(new URL(`../src/assets/requested/${kind}.ebup`,import.meta.url));assert.equal(createHash('sha256').update(packed).digest('hex'),entry.resource_sha256);assert.equal(packed.length,entry.resource_bytes);
   const bytes=Buffer.from(await decodeGameResource(Uint8Array.from(packed).buffer));assert.equal(bytes.readUInt32LE(0),0x46546c67);assert.equal(bytes.readUInt32LE(8),bytes.length);assert.equal(createHash('sha256').update(bytes).digest('hex'),entry.glb_sha256);
@@ -75,4 +76,12 @@ test('field cargo derivative preserves mesh/PBR data with fitted bounds and boun
  assert.ok(Math.abs(max[0]-min[0]-1.25)<1e-6);assert.ok(Math.abs(min[0]+max[0])<1e-6);assert.ok(Math.abs(min[2]+max[2])<1e-6);assert.ok(Math.abs(min[1]-.02)<1e-6);assert.ok(max[1]<.6&&max[2]-min[2]<=1);
  for(const image of g.images){const v=g.bufferViews[image.bufferView];assert.deepEqual(imageDimensions(bin.subarray(v.byteOffset,v.byteOffset+v.byteLength),image.mimeType),[512,512]);}
  assert.ok(report.images.find((i:any)=>i.name.includes('Normal')).normal_renormalized);
+});
+
+test('coolant canister retains reviewed mesh/PBR data and fits both display envelopes',async()=>{
+ const report=JSON.parse(readFileSync(new URL('../public/assets/requested/canister-conversion.json',import.meta.url),'utf8')),packed=readFileSync(new URL('../src/assets/requested/canister.ebup',import.meta.url)),bytes=Buffer.from(await decodeGameResource(Uint8Array.from(packed).buffer)),n=bytes.readUInt32LE(12),g=JSON.parse(bytes.subarray(20,20+n).toString()),bin=bytes.subarray(28+n);
+ for(const [index,hash]of Object.entries(report.preserved_mesh_views_sha256)){const v=g.bufferViews[Number(index)];assert.equal(createHash('sha256').update(bin.subarray(v.byteOffset,v.byteOffset+v.byteLength)).digest('hex'),hash);}
+ const m=g.materials[0];assert.ok(m.pbrMetallicRoughness.baseColorTexture&&m.normalTexture&&m.occlusionTexture&&m.pbrMetallicRoughness.metallicRoughnessTexture);assert.equal(m.emissiveTexture,undefined);assert.equal(g.animations?.length??0,0);assert.equal(g.skins?.length??0,0);
+ assert.equal(report.bounds_size[1],.7);assert.ok(report.bounds_size[0]<.263&&report.bounds_size[2]<.263);const layout=CARTRIDGE_LAYOUT,half=(layout.offset+report.bounds_size[0]/2)*layout.fieldScale;assert.ok((layout.offset+report.bounds_size[0]/2)*layout.rackScale<.42,'rack pair clears the inner faces of its frame');assert.ok(layout.fieldX-half>-.48&&layout.fieldX+half<.06,'pair fits the actual opening, not the lid-shifted whole-model center');assert.ok(layout.fieldY+(.7+.01)*layout.fieldScale<.57,'caps remain below the open crate rim');assert.ok(layout.rackY+(.7+.01)*layout.rackScale<1.48);
+ for(const image of g.images){const v=g.bufferViews[image.bufferView];assert.deepEqual(imageDimensions(bin.subarray(v.byteOffset,v.byteOffset+v.byteLength),image.mimeType),[512,512]);}
 });

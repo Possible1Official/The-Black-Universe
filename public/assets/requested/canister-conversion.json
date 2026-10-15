@@ -1,0 +1,57 @@
+{
+  "source_sha256": "cb3a70bcca7ee39a1529bf65b7bd4a37f5c865a3f15a078ab24c28afdfe2233f",
+  "source_bytes": 3664848,
+  "output_bytes": 472416,
+  "images": [
+    {
+      "name": "bottle_Normal",
+      "source_size": [
+        2048,
+        2048
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "normal_renormalized": true
+    },
+    {
+      "name": "bottle_OcclusionRoughnessMetallic",
+      "source_size": [
+        2048,
+        2048
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "normal_renormalized": false
+    },
+    {
+      "name": "bottle_BaseColor",
+      "source_size": [
+        2048,
+        2048
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "normal_renormalized": false
+    }
+  ],
+  "animations": [],
+  "bounds_size": [
+    0.262623,
+    0.7,
+    0.262623
+  ],
+  "floor": 0.01,
+  "preserved_mesh_views_sha256": {
+    "0": "67b029bd8312a457d3efbfacee0e584def2a4adac82ae0bf167813e502cf2ede",
+    "1": "b02c13b99093a1c8b79d772ec05e28126e8175a8897656e362efd3f146bfa2eb",
+    "2": "9169a4d89a8e75cf779c314e62b6776838d6b14063fba124110509709de2f5fa",
+    "3": "5b174d8f48321c74b00c779c7698068f4c0650afa0fd4448017a780ba60d9140",
+    "4": "717979ba49e4db358013fe94be2161fdb376af15dd86564c3c2b1c831c58d844"
+  }
+}

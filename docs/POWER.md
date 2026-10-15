@@ -25,3 +25,7 @@ Saves occur on mission/control changes, pause/dialogue close, and every 15 activ
 ## Validation
 
 Power tests cover stable defaults, overload and isolation, cooling and manual reset, forge guards, preservation of generated worlds, exponential step consistency, v1 migration, and malformed power recovery. Browser QA uses a near-critical saved fixture to exercise actual threshold crossing, isolation, visible red emission, dimmed lights, cooling/reset and forge recovery, plus legacy save preservation and mobile controls. The fixture accelerates the starting condition; it does not bypass runtime power actions.
+
+## Visible reserve stock (2026-10-15)
+
+The open engineering rack shows two, one or zero canisters from the actual saved coolant count. Discharging removes one visual slot; Nysa cache recovery empties its visible pair and restores the rack count. The pack's static source has no animation; these are cosmetic representations of existing supplies, without individual pickup, physics or a new inventory model. Asset-loading failure retains simple canisters and the same functioning supply controls. An empty display does not download the canister asset. Reset/reload and late asynchronous imports preserve the correct visible count.
