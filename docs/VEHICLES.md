@@ -1,6 +1,6 @@
 # Nysa vehicles and authored interiors
 
-The player uses the user-selected Cyber Biker. Ely remains the two scripted officers. Walking is 1.8 m/s and sprinting (Shift) is 4.2 m/s. Idle retains the earlier Mixamo motion; Walking, Running and Jump are freshly captured Mixamo clips retargeted to the compatible 67-joint rig. The seated Riding pose remains locally authored. Walk/run phase follows actual collision-resolved distance, using the source stride lengths; the in-place jump is sampled against physical rise/fall and blends back on landing. Small floor steps do not select the airborne pose. There is no foot/hand IK or facial animation.
+The player uses the user-selected Cyber Biker. Ely remains the two scripted officers. Walking is 1.8 m/s and sprinting (Shift) is 4.2 m/s. Idle retains the earlier Mixamo motion; Walking, Running and Jump are freshly captured Mixamo clips retargeted to the compatible 67-joint rig. The seated Riding pose remains locally authored. Walk/run phase follows actual collision-resolved distance, using the source stride lengths; the in-place jump is sampled against physical rise/fall and blends back on landing. Small floor steps do not select the airborne pose. There is no on-foot foot-placement IK or facial animation. Bike-mounted hand contact is described below.
 
 Nysa has one 256×256-meter survey sector with shared render/physics geometry: dunes, basalt mesas, a shallow wetland basin and highland ridges. Terrain colors blend continuously; the wetland has a clipped water surface and instanced reeds. Both pads, sample, scanners, cache and field map remain. There is no global terrain streaming, swimming or another playable planet.
 
@@ -26,3 +26,6 @@ Turbo feedback: third person now shows a compact blue-white exhaust and core at 
 
 
 Motion/suspension and floor repair (2026-10-15) supersede the historical local-run/jump and no-wheel-travel descriptions above. The lounge now has one visible floor owner, its raised runway threshold is removed and the procedural runway underlay sits 6 cm below the grating. Existing texture, mesh vertex and UV data are preserved.
+
+
+Bike rider contact (2026-10-15): third-person riding now fits both arms to reviewed grip points on the existing CGTrader handlebars. A forward/lower saddle anchor and torso lean put the grips within reach; the analytic two-bone solve preserves bone lengths and a stable outward elbow pole. Hands align to the bars and four fingers curl locally around them. The head counter-rotates to retain forward attention. Contacts follow chassis tilt/banking independently of turbine suspension. The mixer pose is restored before every update and on dismount, so walking/captured clips do not retain the correction. Hidden first-person riders skip the solve; Ely/model-loading fallbacks retain the old placement. No finger collision, physical grip force, foot contact IK or new captured riding motion is claimed.

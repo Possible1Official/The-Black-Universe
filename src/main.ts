@@ -14,6 +14,7 @@ import {meshColliders} from './mesh-colliders';
 import {attachRequested} from './requested-assets';
 import {TurboFeedback} from './turbo-feedback';
 import {VehicleSuspension} from './vehicle-suspension';
+import {BIKE_RIDER_SEAT} from './rider-contact';
 import {VehicleStance,terrainSampler} from './vehicle-stance';
 import {GroundVehicle,VEHICLE_SPEC,dismountPosition,type VehicleKind} from './ground-vehicle';
 import {steerPilot,targetThrottle,WALK_SPEED,RUN_SPEED,JUMP_SPEED} from './pilot-controls';
@@ -607,6 +608,7 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
   if(bloom.enabled)composer.render();else renderer.render(renderPass.scene,camera);frames++;fpsTime+=rawDt;if(fpsTime>2){canvas.dataset.fps=String(Math.round(frames/fpsTime));frames=0;fpsTime=0;}
 }
 function updatePlayerView(){
+  if(riding?.kind!=='bike'||!thirdPerson)avatarVisual?.releaseBikeContact();
   avatar.visible=false;surfaceCraft.visible=false;flightWorld.craft.visible=false;orbitalThrusters.root.visible=surfaceThrusters.root.visible=false;
   if(flight){
     flightWorld.cockpit.visible=!thirdPerson;
@@ -629,8 +631,10 @@ function updatePlayerView(){
       const mesh=vehicleVisuals.get(riding.kind)!;mesh.updateWorldMatrix(true,false);
       camera.position.copy(mesh.localToWorld(new THREE.Vector3(0,VEHICLE_SPEC[riding.kind].half[1]+1.2,0)));camera.rotation.set(pitch,riding.yaw+yaw,0);
       avatar.visible=thirdPerson&&riding.kind==='bike';
-      avatar.position.copy(mesh.localToWorld(new THREE.Vector3(0,VEHICLE_SPEC[riding.kind].seat-.9,.43)));
+      const contactRider=riding.kind==='bike'&&avatar.userData.requested==='biker'&&mesh.userData.requested==='bike';
+      avatar.position.copy(mesh.localToWorld(contactRider?BIKE_RIDER_SEAT.clone():new THREE.Vector3(0,VEHICLE_SPEC[riding.kind].seat-.9,.43)));
       mesh.getWorldQuaternion(avatar.quaternion);avatar.rotateY(Math.PI);
+      if(contactRider&&thirdPerson)avatarVisual?.fitBikeContact(mesh);
       if(thirdPerson){const pose=flightCamera(camera.position,new THREE.Euler(pitch,riding.yaw+yaw,0,'YXZ'),(a,b)=>surfaceCameraDistance(world,a,b,playerCollider,riding!.collider));camera.position.copy(pose.position);camera.lookAt(pose.target);}return;
     }
     if(thirdPerson){

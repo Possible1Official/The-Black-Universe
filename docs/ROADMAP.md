@@ -205,3 +205,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Rover maximum 14 m/s, collision-resolved rounded-rock assistance, individually sprung wheels, front steering and visible telescopic shocks. Bike banks into turns and its turbine pod moves independently of the smoothed frame/rider.
 - Lounge overlapping floor and raised runway lip removed; underlay lowered below authored grating. Tiny steps no longer trigger airborne animation.
 - Remaining: hand/foot contact IK, full tire-force dynamics, real-device GPU/memory budgets and more authored surface scenery. Current suspension is bounded raycast/spring presentation over upright kinematic proxies.
+
+
+## Bike rider hand contact (2026-10-15)
+- Reuse the reviewed CGTrader bike and biker, preserving all resource/image/material bytes and captured locomotion clips.
+- Saddle/torso fit, two-bone arm IK, aligned palms and locally curled fingers keep both hands on source handlebars through banking. Bone lengths and normal walking pose are preserved; first-person/failure fallbacks remain.
+- Remaining: foot placement/contact IK, captured riding variations, finger collision/forces, real-device memory/GPU budgets and authored Nysa scenery.
