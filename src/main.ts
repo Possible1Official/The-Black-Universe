@@ -12,6 +12,7 @@ import {PLAYER_SHAPE} from './player-shape';
 import {SHIP_LAYOUT} from './ship-layout';
 import {meshColliders} from './mesh-colliders';
 import {attachRequested} from './requested-assets';
+import {VehicleStance,terrainSampler} from './vehicle-stance';
 import {GroundVehicle,VEHICLE_SPEC,dismountPosition,type VehicleKind} from './ground-vehicle';
 import {steerPilot,targetThrottle,WALK_SPEED,RUN_SPEED,JUMP_SPEED} from './pilot-controls';
 import {crewBriefing,type BriefingTopic} from './crew-briefing';
@@ -401,6 +402,7 @@ fieldLog.onclick=()=>{
 const landedShuttle=makeShuttle();landedShuttle.position.set(0,0,LANDING.z);surface.group.add(landedShuttle);
 const surfaceCraft=makeShuttle();scene.add(surfaceCraft);surfaceCraft.visible=false;
 const feedback=new FlightFeedback(),orbitalThrusters=createThrusters(),surfaceThrusters=createThrusters();flightWorld.scene.add(orbitalThrusters.root);scene.add(surfaceThrusters.root);
+const vehicleGround=terrainSampler(surface.mesh.vertices);const vehicleStances=new Map<VehicleKind,VehicleStance>();
 const surfaceSky=new THREE.Color(0x678b9a);
 const flightHud=document.createElement('aside');flightHud.id='flightHud';flightHud.hidden=true;flightHud.setAttribute('aria-label','Shuttle flight controls');
 flightHud.innerHTML='<span class="eyebrow">KESTREL / SURVEY SHUTTLE</span><strong id="flightTelemetry"></strong><span id="flightStatus" role="status"></span><div><button id="flightBrake">BRAKE / SPACE</button><button id="flightBoost">BOOST / SHIFT</button><button id="flightTarget">TARGET: NYSA</button><button id="flightPad" aria-keyshortcuts="L" aria-label="Choose Nysa landing pad">PAD: SURVEY</button></div><small>W/S throttle · A/D turn · arrows pitch · mouse/drag look · E land/dock</small>';$('hud').append(flightHud);
@@ -429,7 +431,7 @@ function travel(landing:boolean){
   const pad=landingPad(landingSite);
   const spawn=landing?{x:SURFACE_ORIGIN+pad.x-3.8,y:terrainHeight(pad.x-3.8,pad.z+2)+1.05,z:pad.z+2}:{x:SHIP_LAYOUT.spawn.x,y:.9,z:SHIP_LAYOUT.spawn.z};
   player.setTranslation(spawn,true);player.setNextKinematicTranslation(spawn);yaw=0;pitch=-.08;
-  avatar.rotation.y=Math.PI;avatarBlend=0;
+  avatar.rotation.set(0,Math.PI,0);avatarBlend=0;
   camera.position.set(spawn.x,spawn.y+.74,spawn.z);camera.rotation.set(pitch,yaw,0);
   updateHud();paintNavigation();save(false);notify(landing?'NYSA / SURVEY SITE · Locate the luminous outcrop.':'EREBUS / COMMAND DECK · Extraction complete.');
 }
@@ -519,7 +521,7 @@ function selectTarget(){
     if(distance<best&&direction.normalize().dot(forward)>.45&&clearSight(world,eye,t.position,playerCollider,t.collider)){selected=t;best=distance;}
   }return selected;
 }
-function interact(){if(!active||dialogueOpen)return;if(riding){if(riding.speed>1){notify('Brake to stop before dismounting.');return;}const p=dismountPosition(world,riding,playerCollider,(x,z)=>terrainHeight(x-SURFACE_ORIGIN,z));if(!p){notify('No clear dismount space. Move to open ground.');return;}yaw=riding.yaw+yaw;riding=null;playerCollider.setEnabled(true);player.setTranslation(p,true);player.setNextKinematicTranslation(p);clearInput();speedDemand=0;return;}if(flight){if(flight.phase!=='flying')return;if(canApproach(flight)){captureViewStart={yaw:pilot.yaw,pitch:pilot.pitch};flight=beginApproach(flight);clearInput();notify(flight.leg==='nysa'?'Guided orbital capture in progress.':'Aligning with the Erebus bay entrance.');}else notify(flight.leg==='erebus'&&flightDistance(flight)<=100&&!inDockingZone(flight.position)?'Approach the front bay beacons or enter the open hangar.':'Reach the approach ring and brake below 18 m/s.');return;}nearest=selectTarget();nearest?.action();}
+function interact(){if(!active||dialogueOpen)return;if(riding){if(riding.speed>1){notify('Brake to stop before dismounting.');return;}const p=dismountPosition(world,riding,playerCollider,(x,z)=>terrainHeight(x-SURFACE_ORIGIN,z));if(!p){notify('No clear dismount space. Move to open ground.');return;}yaw=riding.yaw+yaw;avatar.rotation.set(0,riding.yaw+Math.PI,0);riding=null;playerCollider.setEnabled(true);player.setTranslation(p,true);player.setNextKinematicTranslation(p);clearInput();speedDemand=0;return;}if(flight){if(flight.phase!=='flying')return;if(canApproach(flight)){captureViewStart={yaw:pilot.yaw,pitch:pilot.pitch};flight=beginApproach(flight);clearInput();notify(flight.leg==='nysa'?'Guided orbital capture in progress.':'Aligning with the Erebus bay entrance.');}else notify(flight.leg==='erebus'&&flightDistance(flight)<=100&&!inDockingZone(flight.position)?'Approach the front bay beacons or enter the open hangar.':'Reach the approach ring and brake below 18 m/s.');return;}nearest=selectTarget();nearest?.action();}
 $('touchAction').onclick=interact;
 let touchRunning=false;
 const movementControls=document.createElement('nav');movementControls.id='movementControls';movementControls.hidden=true;movementControls.setAttribute('aria-label','On-foot movement');movementControls.innerHTML='<button id="touchRun" aria-pressed="false" aria-keyshortcuts="Shift">RUN</button><button id="touchJump" aria-keyshortcuts="Space">JUMP</button>';$('hud').append(movementControls);
@@ -569,7 +571,7 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
   const movementDt=discardMovementFrame?0:rawDt,powerDt=skipPowerFrame?0:rawDt;discardMovementFrame=false;skipPowerFrame=false;lastMotionSteps=0;if(toastTimer<=0)$('toast').style.opacity='0';
   if(active)advancePower(Math.min(powerDt,MAX_FRAME_SECONDS));powerVisuals();
   if(active&&!dialogueOpen){const budget=motionClock.advance(movementDt);lastMotionSteps=budget.steps;motionStepsTotal+=budget.steps;droppedMotionTime+=budget.dropped;for(let i=0;i<budget.steps;i++)physicsStep();const p=player.translation();const moving=velocity.length();
-    for(const [kind,v] of groundVehicles){const mesh=vehicleVisuals.get(kind)!;const pos=v.body.translation();mesh.position.set(pos.x-SURFACE_ORIGIN,pos.y-VEHICLE_SPEC[kind].half[1],pos.z);mesh.rotation.y=v.yaw;
+    for(const [kind,v] of groundVehicles){const mesh=vehicleVisuals.get(kind)!;const pos=v.body.translation();let stance=vehicleStances.get(kind);if(!stance){stance=new VehicleStance();vehicleStances.set(kind,stance);}stance.update(kind,mesh,pos.x-SURFACE_ORIGIN,pos.y,pos.z,v.yaw,vehicleGround,dt);
       if(kind==='rover'&&mesh.userData.requested){const wheels:THREE.Object3D[]=(mesh.userData.wheels??= ['FrontLeft','FrontRight','RearLeft','RearRight'].map(side=>mesh.getObjectByName('Rover_Wheel_'+side)).filter(Boolean));for(const wheel of wheels)wheel.rotation.x=-v.distance/(wheel.name.includes('Front')?.398:.501);}
       const t=vehicleTargets.get(kind)!;t.position.set(pos.x+Math.cos(v.yaw)*(VEHICLE_SPEC[kind].half[0]+.4),pos.y+.4,pos.z-Math.sin(v.yaw)*(VEHICLE_SPEC[kind].half[0]+.4));}
     if(flight){flightWorld.update(flight,dt,approachWarning);
@@ -618,7 +620,15 @@ function updatePlayerView(){
   }else{
     flightWorld.hide();
     const p=player.translation();avatar.position.set(p.x,p.y-.85,p.z);
-    if(riding){const pos=riding.body.translation();camera.position.set(pos.x,pos.y+1.2,pos.z);camera.rotation.set(pitch,riding.yaw+yaw,0);avatar.visible=thirdPerson&&riding.kind==='bike';avatar.rotation.y=riding.yaw+Math.PI;const seat=VEHICLE_SPEC[riding.kind].seat;avatar.position.set(pos.x+Math.sin(riding.yaw)*.43,pos.y-VEHICLE_SPEC[riding.kind].half[1]+seat-.9,pos.z+Math.cos(riding.yaw)*.43);if(thirdPerson){const pose=flightCamera(camera.position,new THREE.Euler(pitch,riding.yaw+yaw,0,'YXZ'),(a,b)=>surfaceCameraDistance(world,a,b,playerCollider,riding!.collider));camera.position.copy(pose.position);camera.lookAt(pose.target);}return;}
+    avatar.rotation.x=avatar.rotation.z=0;
+    if(riding){
+      const mesh=vehicleVisuals.get(riding.kind)!;mesh.updateWorldMatrix(true,false);
+      camera.position.copy(mesh.localToWorld(new THREE.Vector3(0,VEHICLE_SPEC[riding.kind].half[1]+1.2,0)));camera.rotation.set(pitch,riding.yaw+yaw,0);
+      avatar.visible=thirdPerson&&riding.kind==='bike';
+      avatar.position.copy(mesh.localToWorld(new THREE.Vector3(0,VEHICLE_SPEC[riding.kind].seat-.9,.43)));
+      mesh.getWorldQuaternion(avatar.quaternion);avatar.rotateY(Math.PI);
+      if(thirdPerson){const pose=flightCamera(camera.position,new THREE.Euler(pitch,riding.yaw+yaw,0,'YXZ'),(a,b)=>surfaceCameraDistance(world,a,b,playerCollider,riding!.collider));camera.position.copy(pose.position);camera.lookAt(pose.target);}return;
+    }
     if(thirdPerson){
       const eye=new THREE.Vector3(p.x,p.y+.74,p.z),pose=walkingCamera(world,eye,yaw,pitch,playerCollider);
       camera.position.copy(pose.position);camera.lookAt(pose.target);cameraClearance=pose.distance;avatar.visible=pose.distance>.8;

@@ -187,3 +187,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Clamp atlas roughness to avoid mirror-like patches; preserve lit rubber/glass/metal response and bounded emission.
 - Four distance-driven wheel pivots, 3.6 m length, six primitive draws and 27,928 triangles remain. No usable source motion clips were present.
 - Next: terrain-following vehicle presentation and rider contacts, with measured real-device texture/GPU budgets before adding denser scenery.
+
+## Vehicle terrain stance (2026-10-15)
+- Sample the exact terrain triangles for bounded smoothed chassis pitch/roll and vertical fit on bike/rover.
+- Attach the bike rider to the chassis seat transform; level camera roll and clear rider tilt when walking again.
+- Keep reviewed CGTrader materials/resources intact. Upright collision proxies remain; wheel suspension, rock contact and hand/foot IK are future work.
+- Next: measured device budgets and contact animation, followed by a bounded authored CGTrader scenery expansion.
