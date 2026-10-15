@@ -12,6 +12,7 @@ import {PLAYER_SHAPE} from './player-shape';
 import {SHIP_LAYOUT} from './ship-layout';
 import {meshColliders} from './mesh-colliders';
 import {attachRequested} from './requested-assets';
+import {TurboFeedback} from './turbo-feedback';
 import {VehicleStance,terrainSampler} from './vehicle-stance';
 import {GroundVehicle,VEHICLE_SPEC,dismountPosition,type VehicleKind} from './ground-vehicle';
 import {steerPilot,targetThrottle,WALK_SPEED,RUN_SPEED,JUMP_SPEED} from './pilot-controls';
@@ -402,6 +403,7 @@ fieldLog.onclick=()=>{
 const landedShuttle=makeShuttle();landedShuttle.position.set(0,0,LANDING.z);surface.group.add(landedShuttle);
 const surfaceCraft=makeShuttle();scene.add(surfaceCraft);surfaceCraft.visible=false;
 const feedback=new FlightFeedback(),orbitalThrusters=createThrusters(),surfaceThrusters=createThrusters();flightWorld.scene.add(orbitalThrusters.root);scene.add(surfaceThrusters.root);
+const turboFeedback=new TurboFeedback();
 const vehicleGround=terrainSampler(surface.mesh.vertices);const vehicleStances=new Map<VehicleKind,VehicleStance>();
 const surfaceSky=new THREE.Color(0x678b9a);
 const flightHud=document.createElement('aside');flightHud.id='flightHud';flightHud.hidden=true;flightHud.setAttribute('aria-label','Shuttle flight controls');
@@ -573,6 +575,7 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
   if(active&&!dialogueOpen){const budget=motionClock.advance(movementDt);lastMotionSteps=budget.steps;motionStepsTotal+=budget.steps;droppedMotionTime+=budget.dropped;for(let i=0;i<budget.steps;i++)physicsStep();const p=player.translation();const moving=velocity.length();
     for(const [kind,v] of groundVehicles){const mesh=vehicleVisuals.get(kind)!;const pos=v.body.translation();let stance=vehicleStances.get(kind);if(!stance){stance=new VehicleStance();vehicleStances.set(kind,stance);}stance.update(kind,mesh,pos.x-SURFACE_ORIGIN,pos.y,pos.z,v.yaw,vehicleGround,dt);
       if(kind==='rover'&&mesh.userData.requested){const wheels:THREE.Object3D[]=(mesh.userData.wheels??= ['FrontLeft','FrontRight','RearLeft','RearRight'].map(side=>mesh.getObjectByName('Rover_Wheel_'+side)).filter(Boolean));for(const wheel of wheels)wheel.rotation.x=-v.distance/(wheel.name.includes('Front')?.398:.501);}
+      if(kind==='bike'){if(turboFeedback.root.parent!==mesh)mesh.add(turboFeedback.root);turboFeedback.update(riding===v,onSurface&&thirdPerson&&mesh.userData.requested==='bike',keys.has('Space')||flightBrake,speedDemand,v.speed,dt);}
       const t=vehicleTargets.get(kind)!;t.position.set(pos.x+Math.cos(v.yaw)*(VEHICLE_SPEC[kind].half[0]+.4),pos.y+.4,pos.z-Math.sin(v.yaw)*(VEHICLE_SPEC[kind].half[0]+.4));}
     if(flight){flightWorld.update(flight,dt,approachWarning);
       if(flight.phase==='landing'||flight.phase==='docking'){const look=captureLook(flight.position,flight.leg),blend=THREE.MathUtils.smoothstep(flight.timer,0,.8);yaw=captureViewStart.yaw+Math.atan2(Math.sin(look.yaw-captureViewStart.yaw),Math.cos(look.yaw-captureViewStart.yaw))*blend;pitch=captureViewStart.pitch+(look.pitch-captureViewStart.pitch)*blend;pilot={yaw,pitch};yaw=0;pitch=0;}
