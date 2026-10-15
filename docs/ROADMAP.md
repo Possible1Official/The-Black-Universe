@@ -176,3 +176,8 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Narrower standing collision, seam handling and clear widened launch lounge.
 - User-selected bed resident in unchanged authored lying pose; generated window scenery with clear glass and additional corridor/cabin lighting.
 - Next: address further user-observed defects, rider contact/wheel animation and measured device performance.
+
+## Screenshot-specific Science passage and on-foot controls (2026-10-15)
+- Widen the actual Deep Scan/Navigation passage and open its source doorway; keep console side routes clear.
+- Mobile Run/Jump controls, physical grounded jumping and airborne/landing animation blending.
+- Replace local run/jump motion with captured Mixamo clips after valid export authentication is restored.

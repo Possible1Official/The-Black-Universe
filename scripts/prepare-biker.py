@@ -2,7 +2,7 @@
 Run Blender --background --disable-autoexec --python scripts/prepare-biker.py.
 User confirmed creator redistribution rights; source provenance is not independently verified.
 """
-import bpy,json,math,hashlib,struct
+import bpy,json,math,hashlib,struct,sys
 from pathlib import Path
 from mathutils import Vector,Matrix,Quaternion
 ROOT=Path(__file__).resolve().parent.parent
@@ -99,6 +99,10 @@ def character():
   # Retarget global rest-relative rotations, then solve target parent-local basis.
   for frame in range(first,last+1):
    bpy.context.scene.frame_set(frame)
+   if name=='Jump':
+    lift=math.sin((frame-1)/24*math.pi)
+    for side,sign in [('Left',1),('Right',-1)]:
+     directions.update({'mixamorig:'+side+'UpLeg':Vector((sign*.04,-.9+.55*lift,.65*lift)),'mixamorig:'+side+'Leg':Vector((0,-.9,-.6*lift)),'mixamorig:'+side+'Arm':Vector((sign*.15,-.9+.6*lift,.5*lift)),'mixamorig:'+side+'ForeArm':Vector((sign*.03,-.8+.4*lift,.5*lift))})
    solved={}
    for bone in arm.pose.bones:
     bone.rotation_mode='QUATERNION';sb=src.pose.bones.get(bone.name)
@@ -117,7 +121,7 @@ def character():
   arm.animation_data.action=None;track=arm.animation_data.nla_tracks.new();track.name=name;track.strips.new(name,1,action);track.mute=True
   clips.append({'name':name,'type':'captured Mixamo motion, world-axis aligned bone-direction retarget','duration':float((last-first)/30)})
  # Distinct authored cyclic run: torso forward, coordinated bent-knee flight cycle.
- for name in ['Running','Riding','Sitting']:
+ for name in ['Running','Riding','Sitting','Jump']:
   action=bpy.data.actions.new(name);action.use_fake_user=True;arm.animation_data.action=action
   for frame in range(1,26):
    phase=(frame-1)/24*2*math.pi;directions={}
@@ -129,6 +133,10 @@ def character():
      'mixamorig:'+side+'Foot':Vector((0,-.1,.7)),
      'mixamorig:'+side+'Arm':Vector((sign*.12,-.7,-.4*swing)) if name=='Running' else Vector((sign*.10,-.85,.12)) if name=='Sitting' else Vector((sign*.2,-.45,.5)),
      'mixamorig:'+side+'ForeArm':Vector((sign*.03,.1,.7)) if name=='Running' else Vector((sign*.02,-.3,.65)) if name=='Sitting' else Vector((sign*.03,-.12,.7))})
+   if name=='Jump':
+    lift=math.sin((frame-1)/24*math.pi)
+    for side,sign in [('Left',1),('Right',-1)]:
+     directions.update({'mixamorig:'+side+'UpLeg':Vector((sign*.04,-.9+.55*lift,.65*lift)),'mixamorig:'+side+'Leg':Vector((0,-.9,-.6*lift)),'mixamorig:'+side+'Arm':Vector((sign*.15,-.9+.6*lift,.5*lift)),'mixamorig:'+side+'ForeArm':Vector((sign*.03,-.8+.4*lift,.5*lift))})
    solved={}
    for bone in arm.pose.bones:
     bone.rotation_mode='QUATERNION';rest=bone.bone.matrix_local.to_quaternion();parent=bone.parent
@@ -136,12 +144,12 @@ def character():
     desired=solved[parent.name] @ relative_rest if parent else rest
     if bone.name in directions:
      direction=directions[bone.name].normalized();desired=(rest @ Vector((0,1,0))).rotation_difference(direction) @ rest
-    if bone.name=='mixamorig:Spine':desired=Quaternion((1,0,0),.13 if name=='Running' else .08 if name=='Sitting' else .3) @ rest
+    if bone.name=='mixamorig:Spine':desired=Quaternion((1,0,0),.13 if name=='Running' else .1*lift if name=='Jump' else .08 if name=='Sitting' else .3) @ rest
     relative_pose=solved[parent.name].inverted() @ desired if parent else desired
     bone.rotation_quaternion=relative_rest.inverted() @ relative_pose;bone.location=(0,0,0);bone.scale=(1,1,1);solved[bone.name]=desired
     bone.keyframe_insert(data_path='rotation_quaternion',frame=frame,group=bone.name)
   arm.animation_data.action=None;track=arm.animation_data.nla_tracks.new();track.name=name;track.strips.new(name,1,action);track.mute=True
-  clips.append({'name':name,'type':'locally authored procedural '+('run' if name=='Running' else 'static seated pose'),'duration':.8})
+  clips.append({'name':name,'type':'locally authored procedural '+('run' if name=='Running' else 'jump cycle' if name=='Jump' else 'static seated pose'),'duration':.8})
  for b in arm.pose.bones:b.matrix_basis=Matrix.Identity(4)
  for t in arm.animation_data.nla_tracks:t.mute=False
  bpy.context.scene.frame_set(1);export([arm]+meshes,OUT/'biker.glb',True)
@@ -154,7 +162,7 @@ def character():
  # Isolate one captured track to inspect final skin deformation.
  for t in arm.animation_data.nla_tracks:t.mute=t.name!='Idle'
  bpy.context.scene.frame_set(20);render([arm]+meshes,'biker-optimized.png')
- for clip in ['Walking','Running','Riding']:
+ for clip in ['Walking','Running','Riding','Jump']:
   for track in arm.animation_data.nla_tracks:track.mute=track.name!=clip
   bpy.context.scene.frame_set(8);render([arm]+meshes,f'biker-{clip.lower()}.png')
  return {'source_triangles':original,'triangles':optimized,'bones':len(arm.data.bones),'materials':material_count,'texture_sizes':maps,'clips':clips,'normalization':'1.75m rest height, floor0, +Z glTF forward','bytes':(OUT/'biker.glb').stat().st_size,'publication':'User-confirmed creator redistribution rights; not independently verified','source_evidence':['embedded original texture paths identify Resident Evil 3, Spiderman PS4, DOA5 and DW9/XNALara resources'],'retarget_limit':'World-axis aligned posed bone directions on matching Mixamo bones; no root translation or hip-height IK. Procedural run/riding are locally authored, not captured Mixamo running.'}
@@ -169,4 +177,5 @@ def bike():
  normalize(meshes,length=2.5,turn=math.pi);render(meshes,'bike-source.png');original,optimized=simplify(meshes,23200);materials,maps=clean_materials(meshes)
  export(meshes,OUT/'bike.glb');render(meshes,'bike-optimized.png')
  return {'source_triangles':original,'triangles':optimized,'materials':materials,'texture_sizes':maps,'normalization':'2.5m length, floor0, -Z glTF forward','bytes':(OUT/'bike.glb').stat().st_size,'publication':'User-confirmed creator redistribution rights; not independently verified','source_evidence':['nighttrain_a/nighttrain_b textures under original XNALara bike path; no specific game title on bike maps. Attached aircraft turbine separately sourced by uploader.'],'rig':'static baked chassis; wheel rotation not retained'}
-report={'source_sha256':hashlib.sha256(SOURCE.read_bytes()).hexdigest(),'character':character(),'bike':bike()};(OUT/'biker-report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+prior=json.loads((OUT/'biker-report.json').read_text()) if (OUT/'biker-report.json').exists() else {}
+report={'source_sha256':hashlib.sha256(SOURCE.read_bytes()).hexdigest(),'character':character(),'bike':prior.get('bike') if '--character-only' in sys.argv else bike()};(OUT/'biker-report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
