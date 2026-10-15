@@ -1,6 +1,6 @@
 # Kestrel shuttle flight
 
-Restore the relays and create Nysa first. The bridge science array's **Launch Kestrel shuttle** button boards the vehicle; the physical **Launch survey shuttle** console at X 5 / Z 15 in the habitat concourse provides the same launch. A ship containment trip blocks outbound departure. Kestrel exits Erebus's exterior shuttle bay over three simulation seconds, then hands you manual control.
+Restore the relays and create Nysa first. Kestrel is always parked near the entrance of the bow runway while aboard. Use the inner-door panel, walk through the doorway and board at the cyan starboard marker with E. Boarding closes the inner door, then opens the outer space door; the jet waits for both conditions before a five-second guided runway departure and manual flight. A containment trip blocks outbound boarding. The existing science-array launch button and concourse launch console remain shortcuts that seat you in the same parked jet and run the same interlock. The bedroom is now directly aft of the lounge, clear of the space exit.
 
 The cockpit view contains a cyan approach ring and flight telemetry. W raises throttle; S lowers it. A/D or Left/Right turn. Up/Down pitch, and mouse look or right-side touch drag also aims the craft. Shift boosts from the normal 110 m/s target speed to 180 m/s. Space or the held BRAKE button cuts throttle and slows the craft. On touch, push the existing joystick up/down for throttle and left/right to turn; hold the BOOST/BRAKE buttons as needed. T or the TARGET button switches between Nysa and Erebus during manual flight, permitting an aborted trip or a repeat visit. This changes guidance, not position or heading.
 
@@ -44,3 +44,10 @@ During manual flight toward Nysa, click PAD or press L to choose Survey pad (loc
 
 
 The current expansion uses a left vertical target-speed slider and right steering joystick. W/S adjust target speed, A/D turn, arrows pitch and mouse/touch drag looks independently. The selected CGTrader ship and first-person cockpit are authored derivatives; the survey sector expands to 256 meters. Earlier references to uploaded craft/generated cockpit/128-meter terrain describe prior releases. Guided capture and separate orbital/surface representations remain.
+
+
+## Bow runway launch interlock (2026-10-15)
+
+The local station's existing CGTrader corridor now extends from the bow opening into space. It has separate physical inner/outer leaves and a collision-safe side route around the parked authored jet. The inner door has controls on both sides and occupancy protection. During boarding the player is seated, walking controls are disabled and first/third-person cockpit/chase views remain available. Inner closure takes up to0.9 seconds, full outer opening1.6 seconds, then guided travel5 seconds. They never open together. A blocked inner doorway delays sealing. Mission reset cancels the sequence safely; reload remains aboard. Actual return docking restores the jet at the start and both doors closed.
+
+The end of this local guided run hands off at the existing orbital departure point; existing Nysa flight/landing/return representations remain staged. There is no simulated atmospheric pressure, decompression, free walking outside the space door or seamlessly unified station exterior. Existing selected CGTrader geometry/maps are reused without re-export; no new source animation was present on the ship. `scripts/launch-bay-qa.mjs` verifies real walking/boarding, the interlock, pause, both views, manual handoff, actual nearby return/docking and fresh-mission parking; `--shortcut-only` checks the retained console path without repeating that route.

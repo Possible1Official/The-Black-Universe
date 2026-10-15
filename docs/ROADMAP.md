@@ -211,3 +211,10 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Reuse the reviewed CGTrader bike and biker, preserving all resource/image/material bytes and captured locomotion clips.
 - Saddle/torso fit, two-bone arm IK, aligned palms and locally curled fingers keep both hands on source handlebars through banking. Bone lengths and normal walking pose are preserved; first-person/failure fallbacks remain.
 - Remaining: foot placement/contact IK, captured riding variations, finger collision/forces, real-device memory/GPU budgets and authored Nysa scenery.
+
+
+## Connected bow runway and launch airlock (2026-10-15)
+- Attach the selected CGTrader runway to the station's open bow; connect the bedroom directly to the aft lounge. Keep its resident pose/scale and rear-window-only panorama.
+- Park the authored jet at the start whenever aboard. Physical boarding and existing console shortcuts run an interlocked inner-close → outer-open → guided runway departure.
+- Physical doorway/jet side clearances, pause, cockpit/chase views, return/reset parking and existing launch guards. No new stock resource or source animation.
+- Remaining: unified orbital/local geometry, pressure/airlock simulation and guided return into the same local runway. Existing orbital docking remains staged.

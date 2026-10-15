@@ -6,6 +6,7 @@ import RAPIER from '@dimforge/rapier3d-compat';
 import {decodeGameResource} from '../src/game-resource';
 import {PLAYER_SHAPE} from '../src/player-shape';
 import {meshColliders} from '../src/mesh-colliders';
+import {LaunchBay,LAUNCH_BAY} from '../src/launch-bay';
 
 // Decode actual exported rigid geometry without a DOM/image loader.
 async function geometry(kind:string){
@@ -53,8 +54,16 @@ test('reported lounge floor has one visible surface owner rather than coplanar o
  for(const [x,z] of [[0,2],[1,4],[2.8,3],[0,6],[0,-1]]){ray.set(new THREE.Vector3(x,2,z),new THREE.Vector3(0,-1,0));const hits=ray.intersectObject(root,true).filter(h=>Math.abs(h.point.y)<.035);assert.ok(hits.length);assert.deepEqual([...new Set(hits.map(h=>h.object.parent?.name))],['LoungeFloor']);}
 });
 
-test('repaired lounge and runway support continuous forward walking without vertical oscillation',async()=>{
- await RAPIER.init();const world=new RAPIER.World({x:0,y:-9.81,z:0});try{meshColliders(world,await geometry('interior'));world.createCollider(RAPIER.ColliderDesc.cuboid(3.7,.1,12).setTranslation(0,-.1,18.825));world.timestep=1/60;const body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(1.4,.9,-1.2)),c=world.createCollider(RAPIER.ColliderDesc.capsule(PLAYER_SHAPE.halfHeight,PLAYER_SHAPE.radius),body),ctl=world.createCharacterController(PLAYER_SHAPE.offset);ctl.enableSnapToGround(.2);ctl.enableAutostep(PLAYER_SHAPE.stepHeight,PLAYER_SHAPE.stepWidth,true);world.step();const ys=[];
- for(let i=0;i<430;i++){ctl.computeColliderMovement(c,{x:0,y:-.02,z:.03});const p=body.translation(),m=ctl.computedMovement();body.setNextKinematicTranslation({x:p.x+m.x,y:p.y+m.y,z:p.z+m.z});world.step();ys.push(body.translation().y);}assert.ok(body.translation().z>10,JSON.stringify(body.translation()));assert.ok(Math.max(...ys)-Math.min(...ys)<.14);
+test('lounge connects directly to the relocated crew bedroom without blocking its entrance',async()=>{
+ await RAPIER.init();const world=new RAPIER.World({x:0,y:-9.81,z:0});try{meshColliders(world,await geometry('interior'));const cabin=await geometry('bedroom');cabin.position.z=LAUNCH_BAY.cabinZ;meshColliders(world,cabin);world.createCollider(RAPIER.ColliderDesc.cuboid(1.1,.1,.5).setTranslation(0,-.1,7.1));world.createCollider(RAPIER.ColliderDesc.cuboid(.9,.55,.5).setTranslation(0,.55,4.4));world.timestep=1/60;const body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(1.4,.9,-1.2)),c=world.createCollider(RAPIER.ColliderDesc.capsule(PLAYER_SHAPE.halfHeight,PLAYER_SHAPE.radius),body),ctl=world.createCharacterController(PLAYER_SHAPE.offset);ctl.enableSnapToGround(.2);ctl.enableAutostep(PLAYER_SHAPE.stepHeight,PLAYER_SHAPE.stepWidth,true);world.step();const ys=[];
+ for(let i=0;i<410;i++){ctl.computeColliderMovement(c,{x:i>=230&&i<265?-.025:0,y:-.02,z:i>=230&&i<265?0:.03});const p=body.translation(),m=ctl.computedMovement();body.setNextKinematicTranslation({x:p.x+m.x,y:p.y+m.y,z:p.z+m.z});world.step();ys.push(body.translation().y);}assert.ok(body.translation().z>9.5,JSON.stringify(body.translation()));assert.ok(Math.max(...ys)-Math.min(...ys)<.14);
+ }finally{world.free();}
+});
+
+
+test('open bow connects the station deck to the runway, with physical door and parked jet side clearance',async()=>{
+ await RAPIER.init();const world=new RAPIER.World({x:0,y:-9.81,z:0});try{const root=await geometry('interior');meshColliders(world,root);world.createCollider(RAPIER.ColliderDesc.cuboid(3.7,.1,12).setTranslation(0,-.1,LAUNCH_BAY.centerZ));const bay=new LaunchBay(false);bay.init(world);bay.sync();for(const [x,z,w,d]of [[0,-17.2,1.8,1],[2.8,-17.8,.6,.3],[-2.8,-20.2,.6,.3]])world.createCollider(RAPIER.ColliderDesc.cuboid(w/2,.55,d/2).setTranslation(x,.55,z));world.timestep=1/60;const body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(1.35,.9,-16)),c=world.createCollider(RAPIER.ColliderDesc.capsule(PLAYER_SHAPE.halfHeight,PLAYER_SHAPE.radius),body),ctl=world.createCharacterController(PLAYER_SHAPE.offset);ctl.enableSnapToGround(.2);ctl.enableAutostep(PLAYER_SHAPE.stepHeight,PLAYER_SHAPE.stepWidth,true);world.step();
+ const walk=(dx:number,dz:number,n:number)=>{for(let i=0;i<n;i++){ctl.computeColliderMovement(c,{x:dx,y:-.02,z:dz});const p=body.translation(),m=ctl.computedMovement();body.setNextKinematicTranslation({x:p.x+m.x,y:p.y+m.y,z:p.z+m.z});world.step();}};
+ walk(0,-.03,150);assert.ok(body.translation().z>LAUNCH_BAY.innerZ);bay.state.requestAccess();for(let i=0;i<65;i++)bay.state.step(1/60);bay.sync();world.step();walk(0,-.03,210);assert.ok(body.translation().z<-20,JSON.stringify(body.translation()));walk(.025,0,60);walk(0,-.025,120);assert.ok(body.translation().x>2.7&&body.translation().z<-23.4,JSON.stringify(body.translation()));assert.ok(body.translation().y>.7&&body.translation().y<1.1);
  }finally{world.free();}
 });
