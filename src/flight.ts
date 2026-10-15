@@ -1,6 +1,9 @@
 // Bounded arcade flight, in sector meters; no gravity or arbitrary orbital mechanics.
 import {inDockingZone,stationRecovery} from './station';
 import {landingPad,type LandingSite} from './excursion';
+import {LAUNCH_BAY,LOCAL_JET_Y,RUNWAY_EXIT_SPEED} from './launch-layout';
+import {SHUTTLE_EYE_HEIGHT} from './shuttle';
+export const MANUAL_CRUISE_SPEED=110;
 export type Vec3={x:number;y:number;z:number};
 export const NYSA_CENTER:Vec3={x:0,y:0,z:-1200};
 export const NYSA_RADIUS=170;
@@ -20,6 +23,11 @@ export const flightDistance=(f:FlightState)=>{const t=flightGoal(f),p=f.position
 export function startFlight(leg:FlightLeg,site:LandingSite='survey'):FlightState {
   const position=leg==='nysa'?{x:0,y:0,z:-20}:copy(NYSA_CAPTURE);
   return {leg,site,phase:leg==='erebus'?'ascending':'launching',position,velocity:{x:0,y:0,z:0},throttle:0,timer:0,collisions:0,start:copy(position)};
+}
+// Match the quadratic runway path's endpoint derivative, not a stationary spawn.
+export function startRunwayFlight(site:LandingSite='survey'):FlightState{
+ const position={x:0,y:LOCAL_JET_Y+SHUTTLE_EYE_HEIGHT,z:LAUNCH_BAY.endZ};
+ return {...startFlight('nysa',site),phase:'flying',position,start:copy(position),velocity:{x:0,y:0,z:-RUNWAY_EXIT_SPEED},throttle:RUNWAY_EXIT_SPEED/MANUAL_CRUISE_SPEED};
 }
 export function isSurfaceFlight(f:FlightState){return f.phase==='descending'||f.phase==='ascending';}
 // Local survey coordinates; orbital and ground representations remain separate.
@@ -63,7 +71,7 @@ export function beginApproach(f:FlightState):FlightState {
 function advanceThrust(f:Pick<FlightState,'throttle'|'velocity'>,input:FlightInput,dt:number){
   // Brake wins over simultaneous joystick/throttle/boost intent.
   const throttle=input.brake?Math.max(0,f.throttle-dt*1.8):input.targetThrottle===undefined?Math.max(0,Math.min(1,f.throttle+Math.max(-1,Math.min(1,input.throttle))*dt*.7)):Math.max(0,Math.min(1,f.throttle+Math.max(-dt*.7,Math.min(dt*.7,Math.max(0,Math.min(1,input.targetThrottle))-f.throttle))));
-  const speed=throttle*(input.boost&&!input.brake?180:110),pitch=Math.max(-1.35,Math.min(1.35,input.pitch));
+  const speed=throttle*(input.boost&&!input.brake?180:MANUAL_CRUISE_SPEED),pitch=Math.max(-1.35,Math.min(1.35,input.pitch));
   const desired={x:-Math.sin(input.yaw)*Math.cos(pitch)*speed,y:Math.sin(pitch)*speed,z:-Math.cos(input.yaw)*Math.cos(pitch)*speed};
   const blend=1-Math.exp(-(input.brake?5:1.4)*dt),velocity=copy(f.velocity);
   for(const axis of ['x','y','z'] as const)velocity[axis]+=(desired[axis]-velocity[axis])*blend;
