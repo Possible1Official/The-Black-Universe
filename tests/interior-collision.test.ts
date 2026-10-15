@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import {decodeGameResource} from '../src/game-resource';
 import {PLAYER_SHAPE} from '../src/player-shape';
+import {walkingCamera} from '../src/view-camera';
 import {meshColliders} from '../src/mesh-colliders';
 import {LaunchBay,LAUNCH_BAY} from '../src/launch-bay';
 
@@ -65,5 +66,12 @@ test('open bow connects the station deck to the runway, with physical door and p
  await RAPIER.init();const world=new RAPIER.World({x:0,y:-9.81,z:0});try{const root=await geometry('interior');meshColliders(world,root);world.createCollider(RAPIER.ColliderDesc.cuboid(3.7,.1,12).setTranslation(0,-.1,LAUNCH_BAY.centerZ));const bay=new LaunchBay(false);bay.init(world);bay.sync();for(const [x,z,w,d]of [[0,-17.2,1.8,1],[2.8,-17.8,.6,.3],[-2.8,-20.2,.6,.3]])world.createCollider(RAPIER.ColliderDesc.cuboid(w/2,.55,d/2).setTranslation(x,.55,z));world.timestep=1/60;const body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(1.35,.9,-16)),c=world.createCollider(RAPIER.ColliderDesc.capsule(PLAYER_SHAPE.halfHeight,PLAYER_SHAPE.radius),body),ctl=world.createCharacterController(PLAYER_SHAPE.offset);ctl.enableSnapToGround(.2);ctl.enableAutostep(PLAYER_SHAPE.stepHeight,PLAYER_SHAPE.stepWidth,true);world.step();
  const walk=(dx:number,dz:number,n:number)=>{for(let i=0;i<n;i++){ctl.computeColliderMovement(c,{x:dx,y:-.02,z:dz});const p=body.translation(),m=ctl.computedMovement();body.setNextKinematicTranslation({x:p.x+m.x,y:p.y+m.y,z:p.z+m.z});world.step();}};
  walk(0,-.03,150);assert.ok(body.translation().z>LAUNCH_BAY.innerZ);bay.state.requestAccess();for(let i=0;i<65;i++)bay.state.step(1/60);bay.sync();world.step();walk(0,-.03,210);assert.ok(body.translation().z<-20,JSON.stringify(body.translation()));walk(.025,0,60);walk(0,-.025,120);assert.ok(body.translation().x>2.7&&body.translation().z<-23.4,JSON.stringify(body.translation()));assert.ok(body.translation().y>.7&&body.translation().y<1.1);
+ }finally{world.free();}
+});
+
+
+test('returned visitor has a clear chase view and can walk through the open station doorway',async()=>{
+ await RAPIER.init();const world=new RAPIER.World({x:0,y:-9.81,z:0});try{meshColliders(world,await geometry('interior'));world.createCollider(RAPIER.ColliderDesc.cuboid(3.7,.1,12).setTranslation(0,-.1,LAUNCH_BAY.centerZ));for(const x of [-3.85,3.85])world.createCollider(RAPIER.ColliderDesc.cuboid(.15,3,12).setTranslation(x,3,LAUNCH_BAY.centerZ));world.createCollider(RAPIER.ColliderDesc.cuboid(.9,.55,.5).setTranslation(0,.55,-17.2));const bay=new LaunchBay(false);bay.init(world);bay.state.inner=1;bay.state.access=true;bay.sync();const body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(LAUNCH_BAY.exit.x,.9,LAUNCH_BAY.exit.z)),c=world.createCollider(RAPIER.ColliderDesc.capsule(PLAYER_SHAPE.halfHeight,PLAYER_SHAPE.radius),body),ctl=world.createCharacterController(PLAYER_SHAPE.offset);ctl.enableSnapToGround(.2);ctl.enableAutostep(PLAYER_SHAPE.stepHeight,PLAYER_SHAPE.stepWidth,true);world.step();
+ const eye=new THREE.Vector3(LAUNCH_BAY.exit.x,1.64,LAUNCH_BAY.exit.z),camera=walkingCamera(world,eye,Math.PI,-.08,c);assert.ok(camera.distance>2.2,JSON.stringify(camera));for(let i=0;i<150;i++){ctl.computeColliderMovement(c,{x:0,y:-.02,z:.03});const p=body.translation(),m=ctl.computedMovement();body.setNextKinematicTranslation({x:p.x+m.x,y:p.y+m.y,z:p.z+m.z});world.step();}assert.ok(body.translation().z>-16,JSON.stringify(body.translation()));
  }finally{world.free();}
 });

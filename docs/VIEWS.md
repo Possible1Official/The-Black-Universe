@@ -16,3 +16,6 @@ Validation scripts: `node scripts/view-qa.mjs` against development checks both c
 
 
 The 2026-10-14 expansion supersedes the earlier appearance/flight-camera notes: Cyber Biker is the player, selected CGTrader ship/cockpit replace the craft view, and speed/steering controls remain visible with INFO off. Third-person free look is independent of pilot/ground-vehicle heading. See VEHICLES.md for exact animation/collision limits.
+
+
+Local runway guidance (2026-10-15): the cockpit and chase camera follow the actual local jet heading during both departure and return. Independent head look does not steer the guided ship; camera-local cockpit orientation compensates for that look. The returned visitor exits into the clear lane behind the parked jet, preserving more than2.2 m chase-camera clearance in the actual collision fixture instead of squeezing the camera beside the hull. INFO/H and C preferences remain.

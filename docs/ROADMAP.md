@@ -218,3 +218,10 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Park the authored jet at the start whenever aboard. Physical boarding and existing console shortcuts run an interlocked inner-close → outer-open → guided runway departure.
 - Physical doorway/jet side clearances, pause, cockpit/chase views, return/reset parking and existing launch guards. No new stock resource or source animation.
 - Remaining: unified orbital/local geometry, pressure/airlock simulation and guided return into the same local runway. Existing orbital docking remains staged.
+
+
+## Visible runway return (2026-10-15)
+- Guided turn outside the space door and reverse parking into the same reviewed CGTrader runway, leaving the jet facing outward.
+- Full outer closure before station access/disembarkation; solid parked hull restored, clear exit lane, normal walking and repeat boarding.
+- Cockpit/chase heading with independent look, pause/reset and retained mission progress. Existing textures, clips, draw counts and resources unchanged.
+- Remaining: unified orbital/local world, pressure simulation, approach continuity and measured real-device bay budgets.
