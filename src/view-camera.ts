@@ -42,9 +42,13 @@ export function flightCamera(origin:THREE.Vector3,rotation:THREE.Euler,clearance
 }
 
 export function surfaceCameraDistance(world:RAPIER.World,from:THREE.Vector3,to:THREE.Vector3,observer:RAPIER.Collider,craft:RAPIER.Collider,hatch?:RAPIER.Collider){
-  const direction=to.clone().sub(from),length=direction.length();direction.normalize();
+  const direction=to.clone().sub(from),length=direction.length();
+  if(length<1e-9)return 0;
+  direction.divideScalar(length);
   // During takeoff/touchdown the parked proxy represents our own moving craft.
   // It stays solid for walking, but cannot occlude its own chase camera.
-  const hit=world.castRay(new RAPIER.Ray(from,direction),length,true,undefined,undefined,observer,undefined,c=>c.handle!==craft.handle&&c.handle!==hatch?.handle);
-  return hit?Math.max(0,hit.timeOfImpact-.25):length;
+  // A center ray misses grazing rock faces/door frames that still intersect the
+  // near plane. Sweep the same clearance volume used by the walking camera.
+  const hit=world.castShape(from,{x:0,y:0,z:0,w:1},direction,cameraShape,0,length,true,undefined,undefined,observer,undefined,c=>c.handle!==craft.handle&&c.handle!==hatch?.handle);
+  return hit?Math.max(0,hit.time_of_impact-.04):length;
 }
