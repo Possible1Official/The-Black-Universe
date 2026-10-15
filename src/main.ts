@@ -1,5 +1,5 @@
 import './style.css';
-import {startFlight,stepFlight,beginApproach,canApproach,flightDistance,flightSpeed,flightGoal,isSurfaceFlight,surfaceFlightPose,cloudOpacity,approachGuidance,captureLook,DOCKING_SECONDS,NYSA_CENTER,type FlightState,type FlightLeg} from './flight';
+import {startFlight,startRunwayFlight,stepFlight,beginApproach,canApproach,flightDistance,flightSpeed,flightGoal,isSurfaceFlight,surfaceFlightPose,cloudOpacity,approachGuidance,captureLook,DOCKING_SECONDS,NYSA_CENTER,type FlightState,type FlightLeg} from './flight';
 import {inDockingZone} from './station';
 import {createFlightScene,makeShuttle} from './flight-scene';
 import {createPlanetTextures} from './planet';
@@ -23,7 +23,7 @@ import {crewBriefing,type BriefingTopic} from './crew-briefing';
 import {drawSurveyMap,mapPoint,surfacePin,PIN_LIMIT} from './survey-map';
 import type {SurfaceTrack} from './navigation';
 import {walkingCamera,flightCamera,orbitalCameraDistance,surfaceCameraDistance} from './view-camera';
-import {SHUTTLE_SIZE,SHUTTLE_HATCH_Z} from './shuttle';
+import {SHUTTLE_SIZE,SHUTTLE_HATCH_Z,SHUTTLE_EYE_HEIGHT} from './shuttle';
 import {coolantBlock,dischargeCoolant,recoverSupplies,SUPPLY_CACHE} from './supplies';
 import {cachePlacement,CACHE_SIZE} from './cache-placement';
 import {SupplyCartridges,CARTRIDGE_LAYOUT} from './supply-cartridges';
@@ -442,7 +442,7 @@ function launchFlight(leg:FlightLeg,fromRunway=false){
   void loadAuthoredAsset('craft',[landedShuttle,flightWorld.craft,surfaceCraft]).catch(()=>console.warn('Craft asset unavailable; procedural shuttle fallback active.'));
   void flightWorld.loadHabitat().catch(()=>console.warn('Station asset unavailable; docking habitat fallback active.'));
   if(leg==='nysa')for(const [kind,mesh] of vehicleVisuals)void attachRequested(kind,mesh).catch(()=>console.warn('Surface vehicle asset unavailable; physical fallback active.'));
-  clearInput();nearest=undefined;flight=startFlight(leg,landingSite);if(fromRunway){flight.phase='flying';flight.position={x:0,y:0,z:-80};flight.start={...flight.position};}pilot={yaw:leg==='nysa'?0:Math.PI,pitch:0};yaw=0;pitch=0;speedDemand=0;feedback.reset(pilot.yaw);
+  clearInput();nearest=undefined;flight=fromRunway&&leg==='nysa'?startRunwayFlight(landingSite):startFlight(leg,landingSite);pilot={yaw:leg==='nysa'?0:Math.PI,pitch:0};yaw=0;pitch=0;speedDemand=flight.throttle;feedback.reset(pilot.yaw);
   updateHud();$('objective').textContent='Pilot Kestrel';$('missionText').textContent='Fly to the cyan approach ring. Brake below 18 m/s, then press E to land or dock.';paintNavigation();notify(leg==='nysa'?'KESTREL · Launching from Erebus shuttle bay.':'KESTREL · Lifting off Nysa. Return corridor charted.');
 }
 function beginBayReturn(){
@@ -649,7 +649,7 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
 function updatePlayerView(){
   if(launchBay.state.boarded){
     avatar.visible=false;flightWorld.cockpit.visible=!thirdPerson;surfaceCraft.visible=false;launchBay.jet.visible=thirdPerson;
-    const jet=launchBay.jet,heading=launchBay.state.jetYaw,eye=jet.position.clone().add(new THREE.Vector3(0,1.7,-1).applyAxisAngle(new THREE.Vector3(0,1,0),heading));
+    const jet=launchBay.jet,heading=launchBay.state.jetYaw,eye=jet.position.clone().add(new THREE.Vector3(0,SHUTTLE_EYE_HEIGHT,0));
     camera.position.copy(eye);camera.rotation.set(pitch,heading+yaw,0);
     flightWorld.cockpit.quaternion.copy(camera.quaternion).invert().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0,heading,0)));
     if(thirdPerson){const pose=flightCamera(eye,new THREE.Euler(pitch,heading+yaw,0,'YXZ'),(a,b)=>surfaceCameraDistance(world,a,b,playerCollider,launchBay.hull!));camera.position.copy(pose.position);camera.lookAt(pose.target);cameraClearance=pose.distance;}return;
@@ -662,7 +662,7 @@ function updatePlayerView(){
     const origin=camera.position.clone(),rotation=camera.rotation.clone(),ground=isSurfaceFlight(flight);
     flightWorld.cockpit.quaternion.copy(camera.quaternion).invert().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(ground?rotation.x:pilot.pitch,ground?rotation.y:pilot.yaw,0,'YXZ')));
     const craft=ground?surfaceCraft:flightWorld.craft;
-    craft.position.copy(origin);craft.position.y-=1.4;craft.rotation.set(ground?0:pilot.pitch,ground?rotation.y:pilot.yaw,0);craft.visible=thirdPerson;
+    craft.position.copy(origin);craft.position.y-=SHUTTLE_EYE_HEIGHT;craft.rotation.set(ground?0:pilot.pitch,ground?rotation.y:pilot.yaw,0);craft.visible=thirdPerson;
     if(ground){craft.rotation.set(0,rotation.y,0);rotation.set(-.08,rotation.y,0);}else craft.rotation.z+=feedback.bank;
     if(thirdPerson){
       const pose=flightCamera(origin,rotation,ground?(from,to)=>surfaceCameraDistance(world,from,to,playerCollider,parkedShuttleCollider,extractionTarget.collider):orbitalCameraDistance);

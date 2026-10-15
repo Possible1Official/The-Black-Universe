@@ -242,3 +242,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Two/one/zero visible cartridges follow actual engineering reserve; the field pair disappears only after its one-time recovery. Reload and paused reset restore the correct display.
 - Open rack preserves old cabinet collision bounds; both field canisters fit the crate's actual opening. Shared lazy loading, empty-slot transfer skip, safe fallback and explicit retry without frame-by-frame request loops.
 - Remaining: individual pickup/hand interaction, physical cartridge simulation and hardware texture/shadow/FPS budgets.
+
+## Runway departure pose and momentum (2026-10-15)
+- Replace the hardcoded stationary orbital spawn31 m beyond the runway with its actual endpoint/cockpit eye and analytic exit velocity (~9.28 m/s).
+- Carry matching throttle into manual flight, retaining coasting, braking/boost priority and landing-site selection. Share local/orbital eye height and source-body offset.
+- Reuse all reviewed CGTrader craft/cockpit/corridor resources and captured character motion unchanged; no new model or source animation.
+- Remaining: matching whole-scene scenery/lighting and the orbital-to-local return transition; this is departure pose/speed continuity, not a seamless unified world.
