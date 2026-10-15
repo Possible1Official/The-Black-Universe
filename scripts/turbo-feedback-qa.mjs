@@ -1,0 +1,20 @@
+// Focused actual-game fixture; setup skips unrelated flight, never ships hooks.
+import {chromium} from '@playwright/test';import assert from 'node:assert/strict';import fs from 'node:fs/promises';
+const browser=await chromium.launch({args:['--no-sandbox','--enable-unsafe-swiftshader']});
+try{
+ const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});page.setDefaultTimeout(90000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(()=>{localStorage.setItem('erebus-camera','third');localStorage.setItem('black-universe-v2',JSON.stringify({version:2,relays:['engineering','navigation','observatory'],forged:true,power:{profile:'balanced',heat:24,tripped:false}}));});
+ await page.route('**/src/main.ts*',async route=>{const r=await route.fetch();await route.fulfill({response:r,body:(await r.text())+`
+window.__turboSetup=async()=>{await attachRequested('bike',vehicleVisuals.get('bike'));travel(true);};
+window.__turboRead=()=>({power:turboFeedback.power,time:turboFeedback.time,visible:turboFeedback.root.visible,length:turboFeedback.plume.scale.z,attached:turboFeedback.root.parent===vehicleVisuals.get('bike'),position:turboFeedback.root.getWorldPosition(new THREE.Vector3()).toArray()});
+window.__turboZoom=z=>{camera.zoom=z;camera.updateProjectionMatrix();};`});});
+ await page.goto('http://localhost:5173/?qa');await page.waitForSelector('canvas[data-ready=true]');await page.waitForFunction(()=>window.__erebus.snapshot().avatar.source==='biker');await page.click('#play');await page.evaluate(()=>window.__turboSetup());
+ await page.evaluate(()=>window.__erebus.target('Ride Turbo Bike'));await page.waitForFunction(()=>window.__erebus.snapshot().nearest==='Ride Turbo Bike');await page.keyboard.press('KeyE');await page.waitForFunction(()=>window.__turboRead().visible&&window.__turboRead().power>.1);const idle=await page.evaluate(()=>window.__turboRead());assert.ok(idle.attached&&idle.position.every(Number.isFinite));await fs.mkdir('.local/qa',{recursive:true});
+ await page.evaluate(()=>window.__turboZoom(1.8));await page.screenshot({path:'.local/qa/turbo-idle-close.png'});
+ await page.locator('#vehicleSpeed').evaluate(e=>{e.value='60';e.dispatchEvent(new Event('input',{bubbles:true}));});await page.waitForFunction(()=>window.__turboRead().power>.45&&window.__erebus.snapshot().vehicles.find(v=>v.kind==='bike').distance>2);const driving=await page.evaluate(()=>window.__turboRead());assert.ok(driving.length>idle.length*1.5);await page.screenshot({path:'.local/qa/turbo-driving-close.png'});
+ await page.click('#menu');const paused=await page.evaluate(()=>window.__turboRead());await page.waitForTimeout(350);assert.deepEqual(await page.evaluate(()=>window.__turboRead()),paused);await page.click('#play');
+ await page.keyboard.down('Space');await page.waitForFunction(()=>!window.__turboRead().visible&&window.__turboRead().power===0);await page.waitForFunction(()=>window.__erebus.snapshot().vehicles.find(v=>v.kind==='bike').speed<.2);await page.locator('#vehicleSpeed').evaluate(e=>{e.value='0';e.dispatchEvent(new Event('input',{bubbles:true}));});await page.screenshot({path:'.local/qa/turbo-braking-close.png'});await page.keyboard.up('Space');
+ await page.keyboard.press('KeyC');await page.waitForFunction(()=>!window.__erebus.snapshot().camera.thirdPerson&&!window.__turboRead().visible);await page.keyboard.press('KeyC');await page.waitForFunction(()=>window.__turboRead().visible);
+ await page.evaluate(()=>window.__turboZoom(1));await page.screenshot({path:'.local/qa/turbo-mobile.png'});await page.keyboard.press('KeyE');await page.waitForFunction(()=>window.__erebus.snapshot().riding===null&&!window.__turboRead().visible&&window.__turboRead().power===0);
+ assert.deepEqual(errors,[]);console.log(JSON.stringify({idleAndDriveResponse:true,immediateBrakeCut:true,pauseFrozen:true,firstPersonHidden:true,dismountCut:true,authoredAttachment:true,idlePower:idle.power,drivePower:driving.power,errors}));
+}finally{await browser.close();}

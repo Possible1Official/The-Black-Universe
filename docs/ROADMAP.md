@@ -193,3 +193,8 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Attach the bike rider to the chassis seat transform; level camera roll and clear rider tilt when walking again.
 - Keep reviewed CGTrader materials/resources intact. Upright collision proxies remain; wheel suspension, rock contact and hand/foot IK are future work.
 - Next: measured device budgets and contact animation, followed by a bounded authored CGTrader scenery expansion.
+
+## Turbo Bike engine feedback (2026-10-15)
+- Match visual feedback to the selected CGTrader turbine/hover design; its wheel-named parts are steering components, not tires.
+- Third-person idle/drive exhaust, immediate brake/dismount cutoff and frozen pause state; preserve reviewed textures and terrain-following rider pose.
+- Next: richer authored surface scenery, measured device budgets and rider hand/foot contact. Turbo Bike remains a terrain-bound kinematic vehicle.
