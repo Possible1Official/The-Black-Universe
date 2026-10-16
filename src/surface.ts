@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {wetlandPlants,WetlandScenery} from './wetland-plants';
 import {WATER_LEVEL} from './biomes';
 import {createGroundMaterial,groundTint,groundBlend,GROUND_TILE_METERS} from './terrain-material';
 import {LANDING,LANDING_PLAN,landingPad,type LandingSite,SAMPLE,SITE_HALF,SURFACE_ORIGIN,terrainHeight,terrainMesh,surfaceRocks} from './excursion';
@@ -37,11 +38,7 @@ export function createSurface(){
   }
   rocks.castShadow=true;rocks.receiveShadow=true;const rockScenery=new RockScenery(rocks,rockInstances);group.add(rockScenery.root);
   const water=new THREE.Mesh(new THREE.CircleGeometry(15,48),new THREE.MeshStandardMaterial({color:0x366f7b,metalness:.35,roughness:.2,transparent:true,opacity:.78,depthWrite:false}));water.rotation.x=-Math.PI/2;water.position.set(32,WATER_LEVEL,34);group.add(water);
-  const grass=new THREE.InstancedMesh(new THREE.ConeGeometry(.12,.75,5),new THREE.MeshStandardMaterial({color:0x61958c,roughness:.9}),240);
-  for(let i=0;i<240;i++){
-    const a=i*2.399963,r=6+Math.sqrt(i/240)*17,x=32+Math.cos(a)*r,z=34+Math.sin(a)*r,height=terrainHeight(x,z);
-    transform.position.set(x,Math.max(height,WATER_LEVEL)+.35,z);transform.rotation.set(0,i,0);transform.scale.set(1,1+(i%3)*.3,1);transform.updateMatrix();grass.setMatrixAt(i,transform.matrix);
-  }group.add(grass);
+  const plants=new WetlandScenery(wetlandPlants(rockGround));group.add(plants.root);
   const glow=new THREE.MeshStandardMaterial({color:0x9cf1df,emissive:0x39cbb2,emissiveIntensity:2,roughness:.3,metalness:.3});
   const sample=new THREE.Group();sample.position.set(SAMPLE.x,terrainHeight(SAMPLE.x,SAMPLE.z),SAMPLE.z);group.add(sample);
   for(let i=0;i<5;i++){const crystal=new THREE.Mesh(new THREE.ConeGeometry(.24,.9+(i%3)*.3,5),glow);crystal.position.set(Math.sin(i)*.55,.65,Math.cos(i)*.55);crystal.rotation.z=(i-2)*.12;sample.add(crystal);}
@@ -79,5 +76,5 @@ export function createSurface(){
   // Distant silhouettes are visual scenery beyond the playable crater.
   for(let i=0;i<16;i++){const mountain=new THREE.Mesh(new THREE.ConeGeometry(26,40+(i%4)*10,5),stone);const a=i*Math.PI/8;mountain.position.set(Math.cos(a)*(SITE_HALF+86),12,Math.sin(a)*(SITE_HALF+86));mountain.rotation.y=i;group.add(mountain);}
   const skyPlanet=new THREE.Mesh(new THREE.SphereGeometry(13,24,16),new THREE.MeshStandardMaterial({color:0x93bfc5,roughness:1}));skyPlanet.position.set(-80,68,-170);group.add(skyPlanet);
-  return {group,mesh,obstacles,sample,contact,rockScenery,setLanding(site:LandingSite){const pad=landingPad(site);beacon.position.set(pad.x,0,pad.z+2.4);},landmarkBoxes,scanners,setScans(ids:readonly FieldScan[]){for(const s of scanners)s.material.emissiveIntensity=ids.includes(s.id)?1.8:.6;},setQuality:groundMaterial.setQuality,materialSnapshot:groundMaterial.snapshot};
+  return {group,mesh,plants,obstacles,sample,contact,rockScenery,setLanding(site:LandingSite){const pad=landingPad(site);beacon.position.set(pad.x,0,pad.z+2.4);},landmarkBoxes,scanners,setScans(ids:readonly FieldScan[]){for(const s of scanners)s.material.emissiveIntensity=ids.includes(s.id)?1.8:.6;},setQuality:groundMaterial.setQuality,materialSnapshot:groundMaterial.snapshot};
 }

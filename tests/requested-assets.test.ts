@@ -13,14 +13,14 @@ function imageDimensions(bytes:Buffer,mime:string):[number,number]{
 }
 test('packaged requested models match provenance, bounded geometry and embedded resources',async()=>{
  const manifest=JSON.parse(readFileSync(new URL('../public/assets/requested/provenance.json',import.meta.url),'utf8'));
- assert.deepEqual(Object.keys(manifest.assets).sort(),['bedroom','bike','biker','canister','cargo','cockpit','corridor','interior','resident','rock','rover','ship']);
+ assert.deepEqual(Object.keys(manifest.assets).sort(),['bedroom','bike','biker','canister','cargo','cockpit','corridor','grass','interior','resident','rock','rover','ship']);
  for(const [kind,entry] of Object.entries(manifest.assets) as [string,any][]){
   const packed=readFileSync(new URL(`../src/assets/requested/${kind}.ebup`,import.meta.url));assert.equal(createHash('sha256').update(packed).digest('hex'),entry.resource_sha256);assert.equal(packed.length,entry.resource_bytes);
   const bytes=Buffer.from(await decodeGameResource(Uint8Array.from(packed).buffer));assert.equal(bytes.readUInt32LE(0),0x46546c67);assert.equal(bytes.readUInt32LE(8),bytes.length);assert.equal(createHash('sha256').update(bytes).digest('hex'),entry.glb_sha256);
   const gltf=JSON.parse(bytes.subarray(20,20+bytes.readUInt32LE(12)).toString());assert.ok(gltf.buffers.every((b:any)=>!b.uri));assert.ok((gltf.images??[]).every((i:any)=>!i.uri));
   const binary=bytes.subarray(28+bytes.readUInt32LE(12));for(const image of gltf.images??[]){const view=gltf.bufferViews[image.bufferView],data=binary.subarray(view.byteOffset??0,(view.byteOffset??0)+view.byteLength);const [w,h]=imageDimensions(data,image.mimeType);assert.ok(w<=1024&&h<=1024,`${kind} oversized ${w}x${h}`);}
 
-  const tris=gltf.meshes.flatMap((m:any)=>m.primitives).reduce((n:number,p:any)=>n+(p.indices?gltf.accessors[p.indices].count:gltf.accessors[p.attributes.POSITION].count)/3,0);assert.equal(tris,entry.triangles);assert.ok(tris<=entry.triangle_budget);assert.ok(packed.length<=entry.transfer_budget);
+  const tris=gltf.meshes.flatMap((m:any)=>m.primitives).reduce((n:number,p:any)=>n+(p.indices!==undefined?gltf.accessors[p.indices].count:gltf.accessors[p.attributes.POSITION].count)/3,0);assert.equal(tris,entry.triangles);assert.ok(tris<=entry.triangle_budget);assert.ok(packed.length<=entry.transfer_budget);
   if(kind==='biker'){for(const m of gltf.materials){assert.ok(!m.emissiveFactor||m.emissiveFactor.every((x:number)=>x===0),'body must not emit light');if(m.name.startsWith('HairCutout_')){assert.equal(m.alphaMode,'MASK');assert.equal(m.doubleSided,true);assert.ok(m.pbrMetallicRoughness.baseColorTexture);}}assert.equal(gltf.skins[0].joints.length,67);assert.deepEqual(gltf.animations.map((a:any)=>a.name).sort(),['Idle','Jump','Riding','Running','Sitting','Walking']);}
  }
 });

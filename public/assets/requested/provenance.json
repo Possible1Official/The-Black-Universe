@@ -1,6 +1,24 @@
 {
   "format": "EBU1 gzip/AES-GCM game resource; public format key, extraction deterrence rather than unextractable DRM",
   "assets": {
+    "grass": {
+      "creator": "Nicholas-3D",
+      "model_id": 3875260,
+      "url": "https://www.cgtrader.com/free-3d-models/plant/grass/realistic-grass-pack-for-games",
+      "triangle_budget": 100,
+      "transfer_budget": 750000,
+      "source_sha256": "884af32b1cbb3fa0e85f27df67c97ed57629ebda8aee95f263ca2697e9b04da3",
+      "rights": "CGTrader Royalty Free License (no AI), incorporated derivative only.",
+      "glb_bytes": 656536,
+      "glb_sha256": "74a37a9f9c8df0cd2cc54d9ed9cfb46fdacef78da6a1cffeb0645296bfff2d2c",
+      "resource_bytes": 648479,
+      "resource_sha256": "d8f9ca0d0c0cc637dcf480b84d876c56b09a422bce4f66dbd368d5ffe4a7fe0a",
+      "triangles": 80,
+      "primitives": 2,
+      "images": 4,
+      "animations": [],
+      "source_retained_privately": true
+    },
     "rock": {
       "creator": "dimdimich",
       "model_id": 898927,
