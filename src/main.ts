@@ -639,6 +639,7 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
   landedShuttle.visible=!groundFlight;flightClouds.style.opacity=String(flight?cloudOpacity(flight):0);camera.updateMatrixWorld();
   surface.rockScenery.update(new THREE.Vector3(camera.position.x-SURFACE_ORIGIN,camera.position.y,camera.position.z),$<HTMLSelectElement>('quality').value==='high',surface.group.visible);
   surface.plants.update(dt,active&&!dialogueOpen&&surface.group.visible);
+  surface.pond.update(dt,active&&!dialogueOpen&&surface.group.visible);
   surface.contact.clear();
   if(surface.group.visible){
     for(const [i,rock]of surface.rockScenery.contacts().entries())surface.contact.updateRock(i,rock.x+SURFACE_ORIGIN,rock.z,rock.width,rock.depth);

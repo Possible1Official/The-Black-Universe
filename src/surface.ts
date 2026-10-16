@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {wetlandPlants,WetlandScenery} from './wetland-plants';
-import {WATER_LEVEL} from './biomes';
+import {Pond} from './pond';
 import {createGroundMaterial,groundTint,groundBlend,GROUND_TILE_METERS} from './terrain-material';
 import {LANDING,LANDING_PLAN,landingPad,type LandingSite,SAMPLE,SITE_HALF,SURFACE_ORIGIN,terrainHeight,terrainMesh,surfaceRocks} from './excursion';
 import {FIELD_SITES,type FieldScan} from './survey';
@@ -37,7 +37,7 @@ export function createSurface(){
     rockInstances.push({contact,matrix:transform.matrix.clone(),color:new THREE.Color().fromArray(rocks.instanceColor!.array,i*3)});
   }
   rocks.castShadow=true;rocks.receiveShadow=true;const rockScenery=new RockScenery(rocks,rockInstances);group.add(rockScenery.root);
-  const water=new THREE.Mesh(new THREE.CircleGeometry(15,48),new THREE.MeshStandardMaterial({color:0x366f7b,metalness:.35,roughness:.2,transparent:true,opacity:.78,depthWrite:false}));water.rotation.x=-Math.PI/2;water.position.set(32,WATER_LEVEL,34);group.add(water);
+  const pond=new Pond(mesh);group.add(pond.mesh);
   const plants=new WetlandScenery(wetlandPlants(rockGround));group.add(plants.root);
   const glow=new THREE.MeshStandardMaterial({color:0x9cf1df,emissive:0x39cbb2,emissiveIntensity:2,roughness:.3,metalness:.3});
   const sample=new THREE.Group();sample.position.set(SAMPLE.x,terrainHeight(SAMPLE.x,SAMPLE.z),SAMPLE.z);group.add(sample);
@@ -76,5 +76,5 @@ export function createSurface(){
   // Distant silhouettes are visual scenery beyond the playable crater.
   for(let i=0;i<16;i++){const mountain=new THREE.Mesh(new THREE.ConeGeometry(26,40+(i%4)*10,5),stone);const a=i*Math.PI/8;mountain.position.set(Math.cos(a)*(SITE_HALF+86),12,Math.sin(a)*(SITE_HALF+86));mountain.rotation.y=i;group.add(mountain);}
   const skyPlanet=new THREE.Mesh(new THREE.SphereGeometry(13,24,16),new THREE.MeshStandardMaterial({color:0x93bfc5,roughness:1}));skyPlanet.position.set(-80,68,-170);group.add(skyPlanet);
-  return {group,mesh,plants,obstacles,sample,contact,rockScenery,setLanding(site:LandingSite){const pad=landingPad(site);beacon.position.set(pad.x,0,pad.z+2.4);},landmarkBoxes,scanners,setScans(ids:readonly FieldScan[]){for(const s of scanners)s.material.emissiveIntensity=ids.includes(s.id)?1.8:.6;},setQuality:groundMaterial.setQuality,materialSnapshot:groundMaterial.snapshot};
+  return {group,mesh,pond,plants,obstacles,sample,contact,rockScenery,setLanding(site:LandingSite){const pad=landingPad(site);beacon.position.set(pad.x,0,pad.z+2.4);},landmarkBoxes,scanners,setScans(ids:readonly FieldScan[]){for(const s of scanners)s.material.emissiveIntensity=ids.includes(s.id)?1.8:.6;},setQuality(high:boolean){groundMaterial.setQuality(high);pond.setQuality(high);},materialSnapshot:groundMaterial.snapshot};
 }
