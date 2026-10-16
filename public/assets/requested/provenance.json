@@ -1,6 +1,26 @@
 {
   "format": "EBU1 gzip/AES-GCM game resource; public format key, extraction deterrence rather than unextractable DRM",
   "assets": {
+    "drone": {
+      "creator": "RiDDDick1991",
+      "model_id": 4439273,
+      "url": "https://www.cgtrader.com/free-3d-models/aircraft/other/dron-animation-free",
+      "triangle_budget": 16000,
+      "transfer_budget": 400000,
+      "source_sha256": "4c5e38c758880dfa0d3b0d6e3129da0029810bea96bcf959e76ac4139e15ec66",
+      "rights": "CGTrader Royalty Free License (no AI), incorporated derivative only.",
+      "glb_bytes": 224360,
+      "glb_sha256": "b72adb899b5ffcf29a91a18a44b42fffbe6f59624cdd6b75a30d28cc036adb31",
+      "resource_bytes": 97083,
+      "resource_sha256": "6a3dc080810259848cd4bc44893abee90de2a4174ce983ff708ff57595dfc70e",
+      "triangles": 7302,
+      "primitives": 5,
+      "images": 0,
+      "animations": [
+        "RotorLoop"
+      ],
+      "source_retained_privately": true
+    },
     "grass": {
       "creator": "Nicholas-3D",
       "model_id": 3875260,
@@ -153,13 +173,13 @@
       "source_retained_privately": true
     },
     "corridor": {
+      "source_sha256": "ad260feedaaeb325c6246769238f6f0db125342166264827e9ceacffb0f9216d",
+      "rights": "CGTrader Royalty Free License (no AI), incorporated derivative only. Source README permits personal/commercial projects.",
       "creator": "alitoons",
       "model_id": 7626256,
       "url": "https://www.cgtrader.com/free-3d-models/space/other/free-sci-fi-corridor-starter-kit",
       "triangle_budget": 4000,
       "transfer_budget": 150000,
-      "source_sha256": "ad260feedaaeb325c6246769238f6f0db125342166264827e9ceacffb0f9216d",
-      "rights": "CGTrader Royalty Free License (no AI), incorporated derivative only. Source README permits personal/commercial projects.",
       "glb_bytes": 172176,
       "glb_sha256": "ed3a643c09ed559ce570ae8e6c449ae11a80af33599a9364d0cb608f31adb5c8",
       "resource_bytes": 21057,

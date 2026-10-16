@@ -13,7 +13,7 @@ function imageDimensions(bytes:Buffer,mime:string):[number,number]{
 }
 test('packaged requested models match provenance, bounded geometry and embedded resources',async()=>{
  const manifest=JSON.parse(readFileSync(new URL('../public/assets/requested/provenance.json',import.meta.url),'utf8'));
- assert.deepEqual(Object.keys(manifest.assets).sort(),['bedroom','bike','biker','canister','cargo','cockpit','corridor','grass','interior','resident','rock','rover','ship']);
+ assert.deepEqual(Object.keys(manifest.assets).sort(),['bedroom','bike','biker','canister','cargo','cockpit','corridor','drone','grass','interior','resident','rock','rover','ship']);
  for(const [kind,entry] of Object.entries(manifest.assets) as [string,any][]){
   const packed=readFileSync(new URL(`../src/assets/requested/${kind}.ebup`,import.meta.url));assert.equal(createHash('sha256').update(packed).digest('hex'),entry.resource_sha256);assert.equal(packed.length,entry.resource_bytes);
   const bytes=Buffer.from(await decodeGameResource(Uint8Array.from(packed).buffer));assert.equal(bytes.readUInt32LE(0),0x46546c67);assert.equal(bytes.readUInt32LE(8),bytes.length);assert.equal(createHash('sha256').update(bytes).digest('hex'),entry.glb_sha256);

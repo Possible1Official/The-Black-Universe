@@ -1,0 +1,41 @@
+{
+  "source_sha256": "4c5e38c758880dfa0d3b0d6e3129da0029810bea96bcf959e76ac4139e15ec66",
+  "source_creator": "RiDDDick1991",
+  "model_id": 4439273,
+  "glb_sha256": "b72adb899b5ffcf29a91a18a44b42fffbe6f59624cdd6b75a30d28cc036adb31",
+  "bytes": 224360,
+  "unique_geometry_triangles": 7302,
+  "runtime_mesh_instances": 8,
+  "source_images": 0,
+  "images": 0,
+  "clips": [
+    "RotorLoop"
+  ],
+  "source_rotor_radians_per_frame": 2,
+  "source_fps": 30,
+  "loop_seconds": 0.10471975511965977,
+  "normalized_cycle_bounds": [
+    [
+      -0.3217335045337677,
+      -0.375,
+      -0.0495724193751812
+    ],
+    [
+      0.3217335045337677,
+      0.375,
+      0.0495724193751812
+    ]
+  ],
+  "excluded": [
+    "staging floor",
+    "metaball clouds",
+    "source lights/camera",
+    "spatial flight/noise animation"
+  ],
+  "limitations": [
+    "Source uses plain Principled materials and has no image textures.",
+    "Source mirrored procedural rotor motion baked to four independent rigid hubs.",
+    "No source spatial flight or camera animation; game motion supplies navigation.",
+    "Loop sampling retains original generator angular speed; motion blur is not implemented."
+  ]
+}
