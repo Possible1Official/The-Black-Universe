@@ -1,3 +1,4 @@
+import {VAULT} from './signal-vault';
 // One bounded survey site, in local meters. Render and physics use the same mesh.
 import {FIELD_SITES} from './survey';
 import {regionalRelief} from './biomes';
@@ -20,6 +21,7 @@ export function surfaceRocks(){
   };
   for(let i=0;i<128;i++){
     const spread=i<64?29:SITE_HALF-4,x=Math.sin(i*127.1+3)*spread,z=Math.cos(i*311.7+7)*spread;
+    if(Math.abs(x-VAULT.x)<8&&Math.abs(z-VAULT.z)<12)continue;
     if(Math.abs(x-OUTPOST.x)<8&&Math.abs(z-OUTPOST.z)<10)continue;
     if(REPAIR_SITES.some(s=>Math.hypot(x-s.x,z-s.z)<6))continue;
     if(points.some(p=>Math.hypot(x-p.x,z-p.z)<6))continue;
@@ -37,7 +39,8 @@ export function terrainHeight(x:number,z:number):number {
   const padBlend=Math.min(1,Math.max(0,(distance-4)/6));
   // A modest prepared building site, blended back into the same terrain mesh.
   const outpostBlend=Math.min(1,Math.max(0,Math.max(Math.abs(x-OUTPOST.x)-5,Math.abs(z-OUTPOST.z)-5)/4));
-  return padBlend===0||outpostBlend===0?0:relief*padBlend*outpostBlend;
+  const vaultBlend=Math.min(1,Math.max(0,Math.max(Math.abs(x-VAULT.x)-6,Math.abs(z-VAULT.z)-10)/4));
+  return padBlend===0||outpostBlend===0||vaultBlend===0?0:relief*padBlend*outpostBlend*vaultBlend;
 }
 export function terrainMesh(segments=192){
   const vertices=new Float32Array((segments+1)**2*3),indices=new Uint32Array(segments**2*6);

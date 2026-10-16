@@ -1,3 +1,4 @@
+import {VAULT} from './signal-vault';
 import {SITE_HALF,terrainHeight,landingPad,availableLandingSites,type LandingSite,SAMPLE} from './excursion';
 import {OUTPOST,REPAIR_SITES} from './relay-expedition';
 import {FIELD_SITES} from './survey';
@@ -18,7 +19,7 @@ export function drawSurveyMap(canvas:HTMLCanvasElement,p:Progress,visitor?:{x:nu
  for(let n=0;n<=4;n++){ctx.beginPath();ctx.moveTo(n*64,0);ctx.lineTo(n*64,256);ctx.moveTo(0,n*64);ctx.lineTo(256,n*64);ctx.stroke();}
  ctx.font='10px system-ui';ctx.fillStyle='#d4f8ff';ctx.fillText('N ↑',118,13);ctx.fillText(`${SITE_HALF*2} m · NYSA SECTOR`,8,247);
  const pad=landingPad(site);
- const points=[{label:visitor?'KESTREL':'ACTIVE PAD',x:pad.x,z:pad.z+SHUTTLE_HATCH_Z,done:true},...availableLandingSites(p.network.online).filter(s=>s!==site).map(s=>({...landingPad(s),label:s.toUpperCase()+' PAD',done:true})),{label:'SAMPLE',...SAMPLE,done:p.surveyed},...FIELD_SITES.map(s=>({...s,label:s.id==='arch'?'ARCH':'WEATHER',done:p.fieldScans.includes(s.id)})),{label:'SUPPLIES',...SUPPLY_CACHE,done:p.supplies.cacheClaimed},...REPAIR_SITES.map(s=>({...s,label:s.id.toUpperCase()+' RELAY',done:p.network.repairs.includes(s.id)})),{...OUTPOST,label:'OUTPOST',done:p.network.online}];
+ const points=[{label:visitor?'KESTREL':'ACTIVE PAD',x:pad.x,z:pad.z+SHUTTLE_HATCH_Z,done:true},...availableLandingSites(p.network.online).filter(s=>s!==site).map(s=>({...landingPad(s),label:s.toUpperCase()+' PAD',done:true})),{label:'SAMPLE',...SAMPLE,done:p.surveyed},...FIELD_SITES.map(s=>({...s,label:s.id==='arch'?'ARCH':'WEATHER',done:p.fieldScans.includes(s.id)})),{label:'SUPPLIES',...SUPPLY_CACHE,done:p.supplies.cacheClaimed},...REPAIR_SITES.map(s=>({...s,label:s.id.toUpperCase()+' RELAY',done:p.network.repairs.includes(s.id)})),{...OUTPOST,label:'OUTPOST',done:p.network.online},{...VAULT,label:'VAULT',done:p.vault.archived}];
  for(const point of points){const {u,v}=mapUV(point.x,point.z),x=u*256,y=v*256;ctx.fillStyle=point.done?'#83f0c1':'#ffc983';ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill();ctx.fillText(point.label,Math.min(196,x+6),y-6);}
  if(pin){const {u,v}=mapUV(pin.x,pin.z);ctx.strokeStyle='#fff';ctx.strokeRect(u*256-4,v*256-4,8,8);}
  if(visitor){const {u,v}=mapUV(visitor.x,visitor.z);ctx.save();ctx.translate(u*256,v*256);ctx.rotate(-visitor.yaw);ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(0,-7);ctx.lineTo(-4,5);ctx.lineTo(4,5);ctx.closePath();ctx.fill();ctx.restore();}

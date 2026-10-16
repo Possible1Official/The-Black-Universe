@@ -11,6 +11,6 @@ export class RunwayDoor{
   this.leaves=['L','R'].map(side=>{const leaf=model.getObjectByName('SM_SF_Corridor_Door_Door'+side);if(!leaf)throw Error('Missing source door leaf');return leaf;});
   this.mixer=new THREE.AnimationMixer(model);this.action=this.mixer.clipAction(clip).setLoop(THREE.LoopOnce,1).play();this.action.paused=true;this.action.clampWhenFinished=true;this.update(0);
  }
- init(world:RAPIER.World){for(const leaf of this.leaves){const box=new THREE.Box3().setFromObject(leaf),half=box.getSize(new THREE.Vector3()).multiplyScalar(.5),center=box.getCenter(new THREE.Vector3());this.colliders.push(world.createCollider(RAPIER.ColliderDesc.cuboid(half.x,half.y,half.z).setTranslation(center.x,center.y,center.z)));}}
+ init(world:RAPIER.World){this.root.updateWorldMatrix(true,true);for(const leaf of this.leaves){const box=new THREE.Box3().setFromObject(leaf),half=box.getSize(new THREE.Vector3()).multiplyScalar(.5),center=box.getCenter(new THREE.Vector3());this.colliders.push(world.createCollider(RAPIER.ColliderDesc.cuboid(half.x,half.y,half.z).setTranslation(center.x,center.y,center.z)));}}
  update(fraction:number){fraction=THREE.MathUtils.clamp(fraction,0,1);if(fraction===this.fraction)return;this.fraction=fraction;this.action.time=fraction*this.action.getClip().duration;this.mixer.update(0);this.root.updateWorldMatrix(true,true);this.leaves.forEach((leaf,i)=>{const center=new THREE.Box3().setFromObject(leaf).getCenter(new THREE.Vector3());this.colliders[i]?.setTranslation(center);});}
 }
