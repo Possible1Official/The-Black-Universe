@@ -284,3 +284,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Replace240 cones with64 terrain-fitted clumps, clearing standing water, steep slopes, rocks and mission props. Two instanced batches share the resource; safe rooted fallback and explicit re-entry retry.
 - Gentle root-anchored visual wind pauses with gameplay. Approximate thin-leaf diffuse lighting restores a source translucency cue without emission; source has no captured animation.
 - Remaining: denser authored vegetation/other biomes, measured physical-device alpha-overdraw/memory budgets, terrain-conforming individual roots, interactive vegetation and physically based leaf scattering.
+
+## Terrain-following pond shoreline (2026-10-16)
+- Replace the fixed circular water sheet with the connected wetland basin clipped against actual terrain triangles. Natural shoreline, no arbitrary cutoff through deep water or flooding of separate depressions.
+- Depth tint/opacity, soft shallows, animated ripple normals and an angle-dependent constant sky approximation; High adds a second ripple family. Pause/hidden-view clocks freeze and quality changes reuse the same resources.
+- Existing13 CGTrader resources, terrain/vehicle collision and captured animations unchanged. No new download, reflection pass, light or collider.
+- Remaining: authored distant terrain/horizon, measured mobile GPU budgets, actual scene reflection/refraction, underwater rendering, swimming/buoyancy and water interaction. This remains a visual pond approximation.
