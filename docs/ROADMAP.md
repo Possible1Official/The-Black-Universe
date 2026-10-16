@@ -273,3 +273,8 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - One instanced detailed draw: at most12 rocks within24 m in Performance,20 within36 m in High, with hysteresis. Lazy surface-entry download, safe failure fallback, explicit retry, cached re-entry and no physics swap during LOD.
 - Match fallback color to measured source albedo; soft ground contact for the four nearest rocks shares the terrain shader. No new lights, decals or shadow pass.
 - Remaining: more authored rock varieties/biome scenery, seamless LOD fades, projected directional shadows and real-device rendering/convex-collision budgets. The rest of Nysa's landscape remains procedural.
+
+## Blended Nysa ground detail (2026-10-16)
+- Smooth sand/stone/organic-soil pattern weights follow regional influence and slope; highlands mix stone/sand. Rotated larger-scale modulation reduces the obvious four-meter color repeat.
+- One linear packed texture supplies both quality modes; High adds matching bump and regional roughness. Existing CGTrader assets, terrain collision and soft contact shading remain.
+- Remaining: authored ground scans/erosion, more surface vegetation variety, measured physical-device GPU/memory budgets and broader planetary exploration. Current ground remains procedural.
