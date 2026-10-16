@@ -1,5 +1,6 @@
 import type {Progress} from './state';
 import {FIELD_SITES} from './survey';
+import {expeditionStep} from './relay-expedition';
 export type BriefingTopic='mission'|'survey'|'systems';
 export function crewBriefing(name:string,p:Progress,topic:BriefingTopic='mission'):string{
  if(p.power.tripped)return `Containment has tripped. Thermal load ${Math.round(p.power.heat)}%. Select Cooling at engineering diagnostics, cool to 40% or less, then reset manually. Reserve ${p.supplies.coolant}/2 can support cooling; discharging it does not clear the trip. Any created world remains stable.`;
@@ -7,7 +8,7 @@ export function crewBriefing(name:string,p:Progress,topic:BriefingTopic='mission
  if(topic==='survey'){
   if(!p.forged)return 'No world has been created yet. Restore the three relays and initialize the architect before surveying Nysa.';
   const readings=FIELD_SITES.filter(s=>p.fieldScans.includes(s.id)).map(s=>`${s.label}: ${s.reading}`).join(' ');
-  return `${p.surveyed?'Outcrop sample secured.':'Outcrop sample not yet collected.'} Field readings ${p.fieldScans.length}/${FIELD_SITES.length}. ${readings||'No optional readings recorded.'}`;
+  return `${p.surveyed?'Outcrop sample secured.':'Outcrop sample not yet collected.'} Field readings ${p.fieldScans.length}/${FIELD_SITES.length}. ${readings||'No optional readings recorded.'} ${p.network.online?'Relay network online. The new Relay pad is available to Kestrel. Archive 03 reports a signal arriving before its source.':`Relay expedition: ${p.network.repairs.length}/2 receivers restored. FIELD LOG can track ${expeditionStep(p.network).label}.`}`;
  }
  if(p.forged){
   if(name==='ION')return `Genesis is stable. ${crewBriefing(name,p,'systems')} ${p.surveyed?'Your outcrop sample is recorded.':'The surface sample remains uncollected.'}`;

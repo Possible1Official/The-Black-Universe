@@ -309,3 +309,10 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Track the original skinned pupils with bounded lens clearance. Fit the original legs around the tank using length-preserving knee/ankle contact and two small footrests; retain handlebar contact through chassis tilt.
 - Share the same forge, Nysa, atmosphere, clouds, companion and stars between station and orbital rendering. Preserve object/material/animation/power state at handoff; stars retain their distant angular directions during travel.
 - Remaining: physical-device camera comfort/performance and a more detailed authored cockpit/riding animation. Narrow portrait framing can crop peripheral hands; it does not hide the body.
+
+## Silent Network content expansion (2026-10-16)
+- Two remote receiver repair sites across Nysa's existing256m sector, persistent repairs in either order and an uplink prerequisite.
+- Walk-in communications outpost built with two reviewed CGTrader kit cells, source PBR cargo props, local service lighting, labeled consoles and a tracking antenna. Solid walls/back and actual trim/deck collision; no closed-door bypass or terrain/deck overlap.
+- Field-log expedition tracking automatically advances through receivers to the outpost; chart markers and officer survey debriefs reflect saved work. The original sample/scans/cache/return remain optional and independent.
+- Bringing the network online unlocks a third Kestrel pad, usable through PAD/L with existing guided descent, parked craft/vehicles and extraction. Revisit the console for Archive03.
+- Remaining: distinct second-world exploration, richer outpost interiors/repair animations, NPC expedition duties and measured device budgets. No global streaming, pressure or simulated signal intelligence is claimed.
