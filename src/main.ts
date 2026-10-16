@@ -636,6 +636,14 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
   renderPass.scene=flight&&!groundFlight?flightWorld.scene:scene;
   if(camera.parent!==renderPass.scene)renderPass.scene.add(camera);
   landedShuttle.visible=!groundFlight;flightClouds.style.opacity=String(flight?cloudOpacity(flight):0);camera.updateMatrixWorld();
+  surface.contact.clear();
+  if(surface.group.visible){
+    // World X/Z matches shader fragments; height follows the actual render mesh.
+    surface.contact.update('player',{x:avatar.position.x,y:avatar.position.y,z:avatar.position.z,yaw:avatar.rotation.y,visible:avatar.visible&&!riding},vehicleGround(avatar.position.x-SURFACE_ORIGIN,avatar.position.z));
+    for(const [kind,mesh] of vehicleVisuals)surface.contact.update(kind,{x:SURFACE_ORIGIN+mesh.position.x,y:mesh.position.y,z:mesh.position.z,yaw:groundVehicles.get(kind)!.yaw,visible:mesh.visible},vehicleGround(mesh.position.x,mesh.position.z));
+    const craft=groundFlight?surfaceCraft:landedShuttle,offset=groundFlight?0:SURFACE_ORIGIN;
+    surface.contact.update('shuttle',{x:craft.position.x+offset,y:craft.position.y,z:craft.position.z,yaw:craft.rotation.y,visible:craft.visible},vehicleGround(craft.position.x+offset-SURFACE_ORIGIN,craft.position.z));
+  }
   velocityMarker.hidden=true;
   if(active&&!dialogueOpen&&flight?.phase==='flying'&&flightSpeed(flight)>1){
     const v=flight.velocity,speed=flightSpeed(flight);camera.getWorldDirection(velocityForward);

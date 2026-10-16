@@ -254,3 +254,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Align via the clear front corridor; interior captures withdraw before rising to seated eye height. Incoming heading/pitch match local guidance.
 - The existing outer-door opening, outside turn, reverse parking and station-access sequence takes over at the same pose. Models/maps/clips and mission saves remain unchanged.
 - Remaining: unified surrounding scenery/lighting, detailed exterior/local collision and physical airlock/aerospace simulation; matching pose does not make the scenes seamless.
+
+## Nysa ground-contact lighting (2026-10-16)
+- Soft terrain/pad contact shading beneath the visible third-person player, bike, rover and shuttle in both quality modes, including Performance with shadow maps disabled.
+- World-space ellipses turn with each vehicle, follow the existing terrain surface and weaken/spread with height; hidden actors and station/orbital travel clear their contacts.
+- Reuse reviewed CGTrader geometry/PBR maps and captured locomotion unchanged. No extra draw, texture or shadow-map pass; four bounded fragment evaluations add shader work.
+- Remaining: projected directional silhouettes, rock/object occlusion, foot placement IK and real-device GPU measurements. This is approximate contact occlusion, not physical shadow simulation.
