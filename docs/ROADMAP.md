@@ -260,3 +260,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - World-space ellipses turn with each vehicle, follow the existing terrain surface and weaken/spread with height; hidden actors and station/orbital travel clear their contacts.
 - Reuse reviewed CGTrader geometry/PBR maps and captured locomotion unchanged. No extra draw, texture or shadow-map pass; four bounded fragment evaluations add shader work.
 - Remaining: projected directional silhouettes, rock/object occlusion, foot placement IK and real-device GPU measurements. This is approximate contact occlusion, not physical shadow simulation.
+
+## Biker foot placement on Nysa (2026-10-16)
+- Fit the reviewed Cyber Biker's planted boots to the existing terrain triangles with two-leg IK, bounded ankle tilt/height and a small pelvis drop.
+- Preserve captured Walking/Running/Jump clips; fade adjustment as a boot swings, restore source pose before each mixer update, and clear on jumping, riding, first person and leaving Nysa.
+- Skip when root support is elevated above/below the terrain so height-field fitting cannot pull a character standing on a prop down into it. No source/model/map changes.
+- Remaining: world-space foot locking, exact boot/rock/prop contacts, ship-floor IK and real-device CPU/GPU measurement. This is bounded visual fitting, not physical leg locomotion.

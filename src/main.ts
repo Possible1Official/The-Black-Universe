@@ -655,6 +655,7 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
   if(bloom.enabled)composer.render();else renderer.render(renderPass.scene,camera);frames++;fpsTime+=rawDt;if(fpsTime>2){canvas.dataset.fps=String(Math.round(frames/fpsTime));frames=0;fpsTime=0;}
 }
 function updatePlayerView(){
+  avatarVisual?.releaseFootContact();
   if(launchBay.state.boarded){
     avatar.visible=false;flightWorld.cockpit.visible=!thirdPerson;surfaceCraft.visible=false;launchBay.jet.visible=thirdPerson;
     const jet=launchBay.jet,heading=launchBay.state.jetYaw,eye=jet.position.clone().add(new THREE.Vector3(0,SHUTTLE_EYE_HEIGHT,0));
@@ -695,6 +696,7 @@ function updatePlayerView(){
     if(thirdPerson){
       const eye=new THREE.Vector3(p.x,p.y+.74,p.z),pose=walkingCamera(world,eye,yaw,pitch,playerCollider);
       camera.position.copy(pose.position);camera.lookAt(pose.target);cameraClearance=pose.distance;avatar.visible=pose.distance>.8;
+      if(avatar.visible&&onSurface&&!playerJumping&&controller.computedGrounded())avatarVisual?.fitFootContact((x,z)=>vehicleGround(x-SURFACE_ORIGIN,z));
     }
   }
   $('crosshair').hidden=thirdPerson;
