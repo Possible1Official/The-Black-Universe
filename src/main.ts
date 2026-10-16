@@ -4,6 +4,7 @@ import {startFlight,startRunwayFlight,stepFlight,beginApproach,canApproach,fligh
 import {inDockingZone} from './station';
 import {createFlightScene,makeShuttle} from './flight-scene';
 import {createPlanetTextures} from './planet';
+import {SharedSpace,FORGE_CENTER,SPACE_COLOR} from './shared-space';
 import {loadCrewVisuals,loadPlayerVisual,type CrewVisual} from './crew-visual';
 import {loadAuthoredAsset} from './authored-assets';
 import {FlightFeedback} from './flight-feedback';
@@ -75,7 +76,7 @@ catch { $('loading').textContent='This expedition needs WebGL 2. Try a browser w
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));
 renderer.setSize(innerWidth,innerHeight,false); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.1;
-const scene=new THREE.Scene(); scene.background=new THREE.Color('#02050d');
+const scene=new THREE.Scene(); scene.background=new THREE.Color(SPACE_COLOR);
 const camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.08,2500); camera.rotation.order='YXZ';
 camera.position.set(0,1.7,16);
 const composer=new EffectComposer(renderer);const renderPass=new RenderPass(scene,camera); composer.addPass(renderPass);
@@ -127,8 +128,8 @@ point(0x79c9ed,24,0,4,-12,12);point(0x79c9ed,24,0,4,0,12);
 point(0xd2e5f0,65,0,4,LAUNCH_BAY.centerZ,25);point(0xffd5aa,50,0,3.5,11,11);
 point(0xffa763,38,-5.25,4,-6,10);point(0x79ddff,38,5.25,4,-6,10);
 const ceilingSpot=new THREE.SpotLight(0xc7eaff,60,25,Math.PI/3,.6,1.4);ceilingSpot.position.set(0,4,-4);ceilingSpot.target.position.set(0,0,-12);ceilingSpot.castShadow=true;ceilingSpot.shadow.mapSize.set(1024,1024);scene.add(ceilingSpot,ceilingSpot.target);
-// Universe forge: kilometer-scale impression through staged distance, rings, trusses and orbiting fragments.
-const forge=new THREE.Group();forge.position.set(0,8,-105);scene.add(forge);
+// A single sector-space forge persists across station and orbital rendering.
+const forge=new THREE.Group();forge.position.set(...FORGE_CENTER);forge.scale.setScalar(4);scene.add(forge);
 const forgeBody=new THREE.Mesh(new THREE.TorusGeometry(7.8,.85,12,96),metal);forge.add(forgeBody);
 const forgeLight=sphere(4.8,0,0,0,new THREE.MeshBasicMaterial({color:0xb3efff}),forge);
 const rings:THREE.Mesh[]=[];
@@ -137,12 +138,14 @@ const pylons=new THREE.Group();forge.add(pylons);
 for(let i=0;i<12;i++){const a=i*Math.PI/6;const p=new THREE.Group();p.position.set(Math.cos(a)*21,Math.sin(a)*21,0);p.rotation.z=a;box(8,1.1,2,0,0,0,metal,p);box(5,.08,2.08,0,.6,0,cyan,p);box(2,3,3,3,0,0,dark,p);pylons.add(p);}
 const shell=new THREE.Mesh(new THREE.IcosahedronGeometry(9,1),new THREE.MeshBasicMaterial({color:0x70cbd4,wireframe:true,transparent:true,opacity:.22}));forge.add(shell);
 const halo=new THREE.Mesh(new THREE.TorusGeometry(31,.12,8,160),amber);halo.rotation.x=.7;forge.add(halo);
-const starsGeo=new THREE.BufferGeometry();const stars=new Float32Array(3500*3);for(let i=0;i<3500;i++){const a=random()*Math.PI*2,b=Math.acos(2*random()-1),r=800+random()*700;stars.set([Math.sin(b)*Math.cos(a)*r,Math.cos(b)*r,Math.sin(b)*Math.sin(a)*r],i*3);}starsGeo.setAttribute('position',new THREE.BufferAttribute(stars,3));scene.add(new THREE.Points(starsGeo,new THREE.PointsMaterial({color:0xb8d4e8,size:1.2,sizeAttenuation:true})));
+const starsGeo=new THREE.BufferGeometry();const stars=new Float32Array(3500*3);for(let i=0;i<3500;i++){const a=random()*Math.PI*2,b=Math.acos(2*random()-1),r=800+random()*700;stars.set([Math.sin(b)*Math.cos(a)*r,Math.cos(b)*r,Math.sin(b)*Math.sin(a)*r],i*3);}starsGeo.setAttribute('position',new THREE.BufferAttribute(stars,3));const starfield=new THREE.Points(starsGeo,new THREE.PointsMaterial({color:0xb8d4e8,size:1.2,sizeAttenuation:true}));
 const planetMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.9,metalness:.05});
 const planetTextures=createPlanetTextures();planetMat.map=planetTextures.color;
-const planet=sphere(NYSA_RADIUS,NYSA_CENTER.x,NYSA_CENTER.y,NYSA_CENTER.z,planetMat);const atmosphere=sphere(NYSA_RADIUS+5,NYSA_CENTER.x,NYSA_CENTER.y,NYSA_CENTER.z,new THREE.MeshBasicMaterial({color:0x67b7e9,transparent:true,opacity:.15,side:THREE.BackSide}));planet.visible=atmosphere.visible=progress.forged;
-const flightWorld=createFlightScene(camera,planetMat,planetTextures.clouds);
-sphere(65,-350,90,-850,new THREE.MeshStandardMaterial({color:0x806b78,roughness:1}));
+const planet=new THREE.Mesh(new THREE.SphereGeometry(NYSA_RADIUS,64,40),planetMat);planet.position.copy(NYSA_CENTER);const atmosphere=new THREE.Mesh(new THREE.SphereGeometry(NYSA_RADIUS+5,48,32),new THREE.MeshBasicMaterial({color:0x67b7e9,transparent:true,opacity:.15,side:THREE.BackSide}));atmosphere.position.copy(NYSA_CENTER);planet.visible=atmosphere.visible=progress.forged;
+const clouds=new THREE.Mesh(new THREE.SphereGeometry(NYSA_RADIUS+2,48,32),new THREE.MeshStandardMaterial({map:planetTextures.clouds,transparent:true,opacity:.8,roughness:1,depthWrite:false}));clouds.position.copy(NYSA_CENTER);clouds.visible=progress.forged;
+const companion=sphere(65,-350,90,-850,new THREE.MeshStandardMaterial({color:0x806b78,roughness:1}));
+const sharedSpace=new SharedSpace(starfield,forge,planet,atmosphere,clouds,companion);scene.add(sharedSpace.root);
+const flightWorld=createFlightScene(camera);
 // Reactor with nested containment chambers.
 const reactor=new THREE.Group();reactor.position.set(-10,1.8,-6);scene.add(reactor);
 const reactorMaterial=cyan.clone();
@@ -479,7 +482,7 @@ function setSurfaceView(landing:boolean){
   if(landing&&shipVisibility.size===0){for(const node of shipNodes){shipVisibility.set(node,node.visible);node.visible=false;}}
   else if(!landing){for(const [node,visible] of shipVisibility)node.visible=visible;shipVisibility.clear();}
   surface.group.visible=landing;if(landing){void loadCargoCache();void surface.rockScenery.load(true);void surface.plants.load(true);}
-  scene.background=landing?surfaceSky:new THREE.Color('#02050d');scene.fog=landing?new THREE.FogExp2(surfaceSky,.0035):null;
+  scene.background=landing?surfaceSky:new THREE.Color(SPACE_COLOR);scene.fog=landing?new THREE.FogExp2(surfaceSky,.0035):null;
 }
 $('deployNysa').onclick=()=>{
   if(!active||!dialogueOpen||$('expeditionPanel').hidden)return;
@@ -633,12 +636,13 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
     const prompt=launchBay.state.boarded?'':riding?'[ E ] Stop and dismount':flight?(canApproach(flight)?`[ E ] ${flight.leg==='nysa'?'Land on Nysa':'Dock with Erebus'}`:''):nearest?`[ E ] ${nearest.name}`:'';$('interaction').style.display=prompt?'block':'none';$('interaction').textContent=prompt;$('touchAction').setAttribute('aria-label',prompt||'Interact');
   }else{$('interaction').style.display='none';}
   navigationTimer+=rawDt;if(navigationTimer>=.1){paintNavigation();navigationTimer=0;}
-  for(let i=0;i<rings.length;i++){rings[i].rotation.z+=dt*.035*(i%2?-1:1);rings[i].rotation.y+=dt*.012;}pylons.rotation.z=elapsed*.018;shell.rotation.y=elapsed*.06;forgeBody.rotation.y=elapsed*.03;forgeLight.scale.setScalar(.96+Math.sin(elapsed*1.4)*.04+(progress.forged?.12:0));chart.rotation.y=elapsed*.15;reactorCore.rotation.y=elapsed*.25;planet.rotation.y=elapsed*.008;
+  for(let i=0;i<rings.length;i++){rings[i].rotation.z+=dt*.035*(i%2?-1:1);rings[i].rotation.y+=dt*.012;}pylons.rotation.z=elapsed*.018;shell.rotation.y=elapsed*.06;forgeBody.rotation.y=elapsed*.03;forgeLight.scale.setScalar(.96+Math.sin(elapsed*1.4)*.04+(progress.forged?.12:0));chart.rotation.y=elapsed*.15;reactorCore.rotation.y=elapsed*.25;planet.rotation.y=elapsed*.008;clouds.rotation.y=elapsed*.015;clouds.visible=planet.visible;
   if(dialogueOpen&&speakingCrew){const c=crew.find(c=>c.name===speakingCrew)!;const p=player.translation();c.mesh.rotation.y=turnToward(c.mesh.rotation.y,Math.atan2(p.x-c.mesh.position.x,p.z-c.mesh.position.z),dt);}
   lightBudget.configure($<HTMLSelectElement>('quality').value==='high',!onSurface&&!flight);lightBudget.update(camera.position,dt);
   const groundFlight=flight&&isSurfaceFlight(flight);
   renderPass.scene=flight&&!groundFlight?flightWorld.scene:scene;
   if(camera.parent!==renderPass.scene)renderPass.scene.add(camera);
+  sharedSpace.present(renderPass.scene,camera.position);
   landedShuttle.visible=!groundFlight;flightClouds.style.opacity=String(flight?cloudOpacity(flight):0);camera.updateMatrixWorld();
   surface.rockScenery.update(new THREE.Vector3(camera.position.x-SURFACE_ORIGIN,camera.position.y,camera.position.z),$<HTMLSelectElement>('quality').value==='high',surface.group.visible);
   surface.plants.update(dt,active&&!dialogueOpen&&surface.group.visible);
@@ -664,7 +668,7 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
 }
 function updatePlayerView(){
   avatarVisual?.setBikeFirstPerson(false);
-  const fov=riding?.kind==='bike'&&!thirdPerson?bikeViewFov(camera.aspect):68;if(camera.fov!==fov){camera.fov=fov;camera.updateProjectionMatrix();}
+  const firstBike=riding?.kind==='bike'&&!thirdPerson,fov=firstBike?bikeViewFov(camera.aspect):68,near=firstBike?.02:.08;if(camera.fov!==fov||camera.near!==near){camera.fov=fov;camera.near=near;camera.updateProjectionMatrix();}
   avatarVisual?.releaseFootContact();
   if(launchBay.state.boarded){
     avatar.visible=false;flightWorld.cockpit.visible=!thirdPerson;surfaceCraft.visible=false;launchBay.jet.visible=thirdPerson;
@@ -700,7 +704,7 @@ function updatePlayerView(){
       const contactRider=riding.kind==='bike'&&avatar.userData.requested==='biker'&&mesh.userData.requested==='bike';
       avatar.position.copy(mesh.localToWorld(contactRider?BIKE_RIDER_SEAT.clone():new THREE.Vector3(0,VEHICLE_SPEC[riding.kind].seat-.9,.43)));
       mesh.getWorldQuaternion(avatar.quaternion);avatar.rotateY(Math.PI);
-      if(contactRider){avatarVisual?.fitBikeContact(mesh);avatarVisual?.setBikeFirstPerson(!thirdPerson);}
+      if(contactRider){avatarVisual?.fitBikeContact(mesh);avatarVisual?.setBikeFirstPerson(!thirdPerson);if(!thirdPerson){avatarVisual?.bikeEye(camera.position);camera.rotation.set(pitch+mesh.rotation.x,riding.yaw+yaw,mesh.rotation.z,'YXZ');}}
       if(thirdPerson){const pose=flightCamera(camera.position,new THREE.Euler(pitch,riding.yaw+yaw,0,'YXZ'),(a,b)=>surfaceCameraDistance(world,a,b,playerCollider,riding!.collider));camera.position.copy(pose.position);camera.lookAt(pose.target);cameraClearance=pose.distance;}return;
     }
     if(thirdPerson){
@@ -728,7 +732,7 @@ async function boot(){await RAPIER.init();world=new RAPIER.World({x:0,y:-9.81,z:
     c.controller=world.createCharacterController(.015);c.controller.enableSnapToGround(.2);c.controller.enableAutostep(.25,.2,true);
   }
   world.step(); // Populate collision queries before the first interaction/sight sample.
-  for(const kind of ['bike','rover'] as const){const pad=landingPad(landingSite),x=pad.x+(kind==='bike'?7:-8),z=pad.z+7;const v=new GroundVehicle(kind,world,{x:SURFACE_ORIGIN+x,y:terrainHeight(x,z),z});groundVehicles.set(kind,v);const mesh=new THREE.Group();surface.group.add(mesh);vehicleVisuals.set(kind,mesh);const material=new THREE.MeshStandardMaterial({color:kind==='bike'?0x77644a:0x91a8a5,metalness:.6,roughness:.5});const h=VEHICLE_SPEC[kind].half;const hull=new THREE.Mesh(new THREE.BoxGeometry(h[0]*2,h[1],h[2]*2),material);hull.position.y=h[1];mesh.add(hull);const t:Target={zone:'surface',name:kind==='bike'?'Ride Turbo Bike':'Drive Sci-fi Rover',position:new THREE.Vector3(),collider:v.collider,action:()=>{riding=v;playerCollider.setEnabled(false);clearInput();speedDemand=0;yaw=0;pitch=-.1;notify('Left slider: speed. Right joystick: steering. Brake, then E to dismount.');}};vehicleTargets.set(kind,t);targets.push(t);}
+  for(const kind of ['bike','rover'] as const){const pad=landingPad(landingSite),x=pad.x+(kind==='bike'?7:-8),z=pad.z+7;const v=new GroundVehicle(kind,world,{x:SURFACE_ORIGIN+x,y:terrainHeight(x,z),z});groundVehicles.set(kind,v);const mesh=new THREE.Group();surface.group.add(mesh);vehicleVisuals.set(kind,mesh);const material=new THREE.MeshStandardMaterial({color:kind==='bike'?0x77644a:0x91a8a5,metalness:.6,roughness:.5});const h=VEHICLE_SPEC[kind].half;const hull=new THREE.Mesh(new THREE.BoxGeometry(h[0]*2,h[1],h[2]*2),material);hull.position.y=h[1];mesh.add(hull);const t:Target={zone:'surface',name:kind==='bike'?'Ride Turbo Bike':'Drive Sci-fi Rover',position:new THREE.Vector3(),collider:v.collider,action:()=>{riding=v;playerCollider.setEnabled(false);clearInput();speedDemand=0;yaw=0;pitch=kind==='bike'&&!thirdPerson?-.4:-.1;notify('Left slider: speed. Right joystick: steering. Brake, then E to dismount.');}};vehicleTargets.set(kind,t);targets.push(t);}
   try{
     const root=await attachRequested('interior',deck);if(root){const colliders=meshColliders(world,root);if(!colliders.length)throw Error('Empty station collision');for(const c of structuralColliders)world.removeCollider(c,true);deckFallback.visible=false;}
   }catch{deckFallback.visible=true;console.warn('Station interior unavailable; fitted fallback retained');}

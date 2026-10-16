@@ -37,7 +37,7 @@ test('hull recovery leaves clearance and does not repeatedly register a stationa
   }
 });
 test('approach beacons share geometry, face both legs and change color without recoloring station lights',()=>{
-  const camera=new THREE.PerspectiveCamera(),material=new THREE.MeshStandardMaterial(),cloud=new THREE.Texture(),world=createFlightScene(camera,material,cloud);
+  const camera=new THREE.PerspectiveCamera(),world=createFlightScene(camera);
   assert.equal(world.gates.length,3);assert.ok(world.gates.every(g=>g.geometry===world.gates[0].geometry));
   const unrelated=world.scene.children.flatMap(node=>node.children).find(c=>c instanceof THREE.Mesh&&(c.material as THREE.MeshBasicMaterial).color?.getHex()===0x77e6ee) as THREE.Mesh;
   assert.ok(unrelated);const stationMaterial=unrelated.material as THREE.MeshBasicMaterial;

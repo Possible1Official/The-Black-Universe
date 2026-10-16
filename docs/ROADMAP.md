@@ -303,3 +303,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Sample the kit's original Door_Open clip for both interlocked sliding doors, with matching individual leaf colliders. Clear left/right walking lanes around the parked jet; closed entrance has no side bypass.
 - Use the same Nysa center and runway placement aboard and in orbit; preserve runway heading and free look through departure instead of resetting the view.
 - Remaining: richer authored hangar artwork and physical-device rendering budgets. This is low-poly palette artwork and kinematic door motion, not photorealism or pressure simulation.
+
+## Full-body bike correction and shared space (2026-10-16)
+- Supersede the previous arms-only bike view: keep every original torso/garment/leg triangle, skin and material. Only head parts and separate glasses hide in first person; source visibility restores on exit.
+- Track the original skinned pupils with bounded lens clearance. Fit the original legs around the tank using length-preserving knee/ankle contact and two small footrests; retain handlebar contact through chassis tilt.
+- Share the same forge, Nysa, atmosphere, clouds, companion and stars between station and orbital rendering. Preserve object/material/animation/power state at handoff; stars retain their distant angular directions during travel.
+- Remaining: physical-device camera comfort/performance and a more detailed authored cockpit/riding animation. Narrow portrait framing can crop peripheral hands; it does not hide the body.
