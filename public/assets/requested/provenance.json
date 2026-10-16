@@ -153,21 +153,23 @@
       "source_retained_privately": true
     },
     "corridor": {
-      "creator": "dibacgi",
-      "model_id": 6124373,
-      "url": "https://www.cgtrader.com/free-3d-models/interior/other/sci-fi-corridor-f4a91d03-f880-45c2-8f24-4924fa0ec1d2",
-      "triangle_budget": 40000,
-      "transfer_budget": 1500000,
-      "source_sha256": "60ffffa9ba64556105727fcfebc6d49e9da896562e9d7a9d7a116e895c7304ac",
-      "rights": "CGTrader Royalty Free License (no AI), incorporated derivative only.",
-      "glb_bytes": 847420,
-      "glb_sha256": "3fcca5f99ac432aca45b8b6d56e47c028c76ec55a31892d72d82348aef40edfa",
-      "resource_bytes": 482100,
-      "resource_sha256": "737abb0ab613f7119f6dff90a63205c87eb4f0b49f8af9a5f7b32f05988e5a08",
-      "triangles": 37143,
-      "primitives": 2,
-      "images": 0,
-      "animations": [],
+      "creator": "alitoons",
+      "model_id": 7626256,
+      "url": "https://www.cgtrader.com/free-3d-models/space/other/free-sci-fi-corridor-starter-kit",
+      "triangle_budget": 4000,
+      "transfer_budget": 150000,
+      "source_sha256": "ad260feedaaeb325c6246769238f6f0db125342166264827e9ceacffb0f9216d",
+      "rights": "CGTrader Royalty Free License (no AI), incorporated derivative only. Source README permits personal/commercial projects.",
+      "glb_bytes": 172176,
+      "glb_sha256": "ed3a643c09ed559ce570ae8e6c449ae11a80af33599a9364d0cb608f31adb5c8",
+      "resource_bytes": 21057,
+      "resource_sha256": "93f67a0a1b0f089c057f6373beaf00943b981bf7a75731c9b4dbd89dd00e952c",
+      "triangles": 848,
+      "primitives": 3,
+      "images": 2,
+      "animations": [
+        "Door_Open"
+      ],
       "source_retained_privately": true
     },
     "bedroom": {

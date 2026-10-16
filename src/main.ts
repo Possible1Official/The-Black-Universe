@@ -1,6 +1,6 @@
 import './style.css';
 import {createRockCollider} from './rock-collider';
-import {startFlight,startRunwayFlight,stepFlight,beginApproach,canApproach,flightDistance,flightSpeed,flightGoal,isSurfaceFlight,surfaceFlightPose,cloudOpacity,approachGuidance,captureLook,DOCKING_SECONDS,NYSA_CENTER,type FlightState,type FlightLeg} from './flight';
+import {startFlight,startRunwayFlight,stepFlight,beginApproach,canApproach,flightDistance,flightSpeed,flightGoal,isSurfaceFlight,surfaceFlightPose,cloudOpacity,approachGuidance,captureLook,DOCKING_SECONDS,NYSA_CENTER,NYSA_RADIUS,type FlightState,type FlightLeg} from './flight';
 import {inDockingZone} from './station';
 import {createFlightScene,makeShuttle} from './flight-scene';
 import {createPlanetTextures} from './planet';
@@ -16,7 +16,9 @@ import {attachRequested} from './requested-assets';
 import {TurboFeedback} from './turbo-feedback';
 import {VehicleSuspension} from './vehicle-suspension';
 import {BIKE_RIDER_SEAT} from './rider-contact';
+import {BIKE_EYE,bikeViewFov} from './bike-view';
 import {LaunchBay,LAUNCH_BAY} from './launch-bay';
+import {createRunwayShell,runwayShellColliders} from './runway-shell';
 import {VehicleStance,terrainSampler} from './vehicle-stance';
 import {GroundVehicle,VEHICLE_SPEC,dismountPosition,type VehicleKind} from './ground-vehicle';
 import {steerPilot,targetThrottle,WALK_SPEED,RUN_SPEED,JUMP_SPEED} from './pilot-controls';
@@ -116,11 +118,11 @@ for(const side of [-1,1]){
 }
 for(const x of [-1.9,1.9])deckBox(.4,4.5,.2,x,2.25,-18.95,wallMat);deckBox(3.4,1.1,.2,0,3.95,-18.95,wallMat);
 const runway=new THREE.Group();runway.position.z=LAUNCH_BAY.centerZ;scene.add(runway);
-attachRequested('corridor',runway).catch(()=>console.warn('Runway asset unavailable'));
+const runwayReady=attachRequested('corridor',runway).catch(()=>{console.warn('Runway asset unavailable; sealed structural fallback retained');return undefined;});
 const windowVista=createWindowVista();windowVista.position.z=-24;scene.add(windowVista);
 const cabin=new THREE.Group();cabin.position.z=LAUNCH_BAY.cabinZ;scene.add(cabin);
 let cabinLoaded=false;
-box(7.4,.2,24,0,-.16,LAUNCH_BAY.centerZ,floorMat);for(const x of [-3.85,3.85])box(.3,6,24,x,3,LAUNCH_BAY.centerZ,dark);
+scene.add(createRunwayShell());
 point(0x79c9ed,24,0,4,-12,12);point(0x79c9ed,24,0,4,0,12);
 point(0xd2e5f0,65,0,4,LAUNCH_BAY.centerZ,25);point(0xffd5aa,50,0,3.5,11,11);
 point(0xffa763,38,-5.25,4,-6,10);point(0x79ddff,38,5.25,4,-6,10);
@@ -138,7 +140,7 @@ const halo=new THREE.Mesh(new THREE.TorusGeometry(31,.12,8,160),amber);halo.rota
 const starsGeo=new THREE.BufferGeometry();const stars=new Float32Array(3500*3);for(let i=0;i<3500;i++){const a=random()*Math.PI*2,b=Math.acos(2*random()-1),r=800+random()*700;stars.set([Math.sin(b)*Math.cos(a)*r,Math.cos(b)*r,Math.sin(b)*Math.sin(a)*r],i*3);}starsGeo.setAttribute('position',new THREE.BufferAttribute(stars,3));scene.add(new THREE.Points(starsGeo,new THREE.PointsMaterial({color:0xb8d4e8,size:1.2,sizeAttenuation:true})));
 const planetMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.9,metalness:.05});
 const planetTextures=createPlanetTextures();planetMat.map=planetTextures.color;
-const planet=sphere(20,95,-12,-190,planetMat);const atmosphere=sphere(20.6,95,-12,-190,new THREE.MeshBasicMaterial({color:0x67b7e9,transparent:true,opacity:.15,side:THREE.BackSide}));planet.visible=atmosphere.visible=progress.forged;
+const planet=sphere(NYSA_RADIUS,NYSA_CENTER.x,NYSA_CENTER.y,NYSA_CENTER.z,planetMat);const atmosphere=sphere(NYSA_RADIUS+5,NYSA_CENTER.x,NYSA_CENTER.y,NYSA_CENTER.z,new THREE.MeshBasicMaterial({color:0x67b7e9,transparent:true,opacity:.15,side:THREE.BackSide}));planet.visible=atmosphere.visible=progress.forged;
 const flightWorld=createFlightScene(camera,planetMat,planetTextures.clouds);
 sphere(65,-350,90,-850,new THREE.MeshStandardMaterial({color:0x806b78,roughness:1}));
 // Reactor with nested containment chambers.
@@ -174,7 +176,7 @@ let storageWarned=false;
 function save(refresh=true){try{localStorage.setItem(SAVE_KEY,JSON.stringify(progress));}catch{if(!storageWarned){notify('Storage unavailable. Progress will last for this session.');storageWarned=true;}}if(refresh){updateHud();if(player)paintNavigation();}}
 function relayAction(r:Relay){if(progress.relays.includes(r)){notify(`${r.toUpperCase()} relay already online.`);return;}progress=activateRelay(progress,r);save();notify(`${r.toUpperCase()} relay online · ${progress.relays.length}/3 synchronized`);tone(330+progress.relays.length*110);}
 const relayTargets=[terminal('Restore engineering relay',-5,-5.7,'POWER RELAY','01 / ENGINEERING',()=>relayAction('engineering')),terminal('Restore navigation relay',0,-13.5,'NAVIGATION','02 / BRIDGE ARRAY',()=>relayAction('navigation')),terminal('Restore observatory relay',5,-5.7,'SPECTRAL ARRAY','03 / OBSERVATORY',()=>relayAction('observatory'))];
-terminal('Initialize universe forge',0,-17.2,'THE ARCHITECT','GENESIS CONTROL',()=>{if(progress.forged){notify('Genesis complete. Your new world is visible beyond the starboard bow.');return;}if(progress.relays.length<3){notify(`Genesis locked. Restore ${3-progress.relays.length} remaining power relay(s).`);tone(120);return;}const blocked=forgeReadiness(progress.power,progress.relays.length);if(blocked){notify(blocked);tone(120);return;}progress=activateForge(progress);planet.visible=atmosphere.visible=true;save();notify('GENESIS COMPLETE · New world designated Nysa.');tone(660);});
+terminal('Initialize universe forge',0,-17.2,'THE ARCHITECT','GENESIS CONTROL',()=>{if(progress.forged){notify('Genesis complete. Your new world is visible ahead of the launch runway.');return;}if(progress.relays.length<3){notify(`Genesis locked. Restore ${3-progress.relays.length} remaining power relay(s).`);tone(120);return;}const blocked=forgeReadiness(progress.power,progress.relays.length);if(blocked){notify(blocked);tone(120);return;}progress=activateForge(progress);planet.visible=atmosphere.visible=true;save();notify('GENESIS COMPLETE · New world designated Nysa.');tone(660);});
 terminal('Scan the new world',0,-10.5,'DEEP SCAN','TARGET / NYSA',()=>{
   showDialogue('EREBUS / SCIENCE ARRAY',progress.forged?'NYSA · Survey corridor charted. Launch the survey shuttle, pilot toward the marked approach ring, brake below 18 m/s and press E to land. Collect an outcrop sample, then board your shuttle and fly back to Erebus.':'No terrestrial signatures. Initialize the architect to create Nysa.');
   $('expeditionPanel').hidden=!progress.forged;
@@ -197,7 +199,7 @@ for(const side of [-1,1]){
 for(const x of [-1.9,1.9])solid(.4,4.5,.2,x,2.25,-18.95);solid(3.4,1.1,.2,0,3.95,-18.95);
 const structureEnd=solids.length;
 // The bow opening is protected by the interlocked launch-bay inner door.
-solid(7.4,.2,24,0,-.1,LAUNCH_BAY.centerZ);for(const x of [-3.85,3.85])solid(.3,6,24,x,3,LAUNCH_BAY.centerZ);solid(7.4,.3,24,0,5.55,LAUNCH_BAY.centerZ);solid(2.2,.2,1,0,-.1,7.1);
+solid(2.2,.2,1,0,-.1,7.1);
 const doors:{mesh:THREE.Mesh;open:boolean;collider?:RAPIER.Collider;progress:number;x:number}[]=[];
 const accessScreen=textPanel('ACCESS','BULKHEAD CONTROL');
 for(const x of [-SHIP_LAYOUT.doorX,SHIP_LAYOUT.doorX]){
@@ -443,7 +445,7 @@ function launchFlight(leg:FlightLeg,fromRunway=false){
   void loadAuthoredAsset('craft',[landedShuttle,flightWorld.craft,surfaceCraft]).catch(()=>console.warn('Craft asset unavailable; procedural shuttle fallback active.'));
   void flightWorld.loadHabitat().catch(()=>console.warn('Station asset unavailable; docking habitat fallback active.'));
   if(leg==='nysa')for(const [kind,mesh] of vehicleVisuals)void attachRequested(kind,mesh).catch(()=>console.warn('Surface vehicle asset unavailable; physical fallback active.'));
-  clearInput();nearest=undefined;flight=fromRunway&&leg==='nysa'?startRunwayFlight(landingSite):startFlight(leg,landingSite);pilot={yaw:leg==='nysa'?0:Math.PI,pitch:0};yaw=0;pitch=0;speedDemand=flight.throttle;feedback.reset(pilot.yaw);
+  clearInput();nearest=undefined;flight=fromRunway&&leg==='nysa'?startRunwayFlight(landingSite):startFlight(leg,landingSite);pilot={yaw:fromRunway?launchBay.state.jetYaw:leg==='nysa'?0:Math.PI,pitch:0};if(!fromRunway){yaw=0;pitch=0;}speedDemand=flight.throttle;feedback.reset(pilot.yaw);
   updateHud();$('objective').textContent='Pilot Kestrel';$('missionText').textContent='Fly to the cyan approach ring. Brake below 18 m/s, then press E to land or dock.';paintNavigation();notify(leg==='nysa'?'KESTREL · Launching from Erebus shuttle bay.':'KESTREL · Lifting off Nysa. Return corridor charted.');
 }
 function beginBayReturn(){
@@ -661,6 +663,8 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
   if(bloom.enabled)composer.render();else renderer.render(renderPass.scene,camera);frames++;fpsTime+=rawDt;if(fpsTime>2){canvas.dataset.fps=String(Math.round(frames/fpsTime));frames=0;fpsTime=0;}
 }
 function updatePlayerView(){
+  avatarVisual?.setBikeFirstPerson(false);
+  const fov=riding?.kind==='bike'&&!thirdPerson?bikeViewFov(camera.aspect):68;if(camera.fov!==fov){camera.fov=fov;camera.updateProjectionMatrix();}
   avatarVisual?.releaseFootContact();
   if(launchBay.state.boarded){
     avatar.visible=false;flightWorld.cockpit.visible=!thirdPerson;surfaceCraft.visible=false;launchBay.jet.visible=thirdPerson;
@@ -670,7 +674,7 @@ function updatePlayerView(){
     if(thirdPerson){const pose=flightCamera(eye,new THREE.Euler(pitch,heading+yaw,0,'YXZ'),(a,b)=>surfaceCameraDistance(world,a,b,playerCollider,launchBay.hull!));camera.position.copy(pose.position);camera.lookAt(pose.target);cameraClearance=pose.distance;}return;
   }
 
-  if(riding?.kind!=='bike'||!thirdPerson)avatarVisual?.releaseBikeContact();
+  if(riding?.kind!=='bike')avatarVisual?.releaseBikeContact();
   avatar.visible=false;surfaceCraft.visible=false;flightWorld.craft.visible=false;orbitalThrusters.root.visible=surfaceThrusters.root.visible=false;
   if(flight){
     flightWorld.cockpit.visible=!thirdPerson;
@@ -691,12 +695,12 @@ function updatePlayerView(){
     avatar.rotation.x=avatar.rotation.z=0;
     if(riding){
       const mesh=vehicleVisuals.get(riding.kind)!;mesh.updateWorldMatrix(true,false);
-      camera.position.copy(mesh.localToWorld(new THREE.Vector3(0,VEHICLE_SPEC[riding.kind].half[1]+1.2,0)));camera.rotation.set(pitch,riding.yaw+yaw,0);
-      avatar.visible=thirdPerson&&riding.kind==='bike';
+      camera.position.copy(mesh.localToWorld(riding.kind==='bike'&&!thirdPerson?BIKE_EYE.clone():new THREE.Vector3(0,VEHICLE_SPEC[riding.kind].half[1]+1.2,0)));camera.rotation.set(pitch,riding.yaw+yaw,0);
+      avatar.visible=riding.kind==='bike';
       const contactRider=riding.kind==='bike'&&avatar.userData.requested==='biker'&&mesh.userData.requested==='bike';
       avatar.position.copy(mesh.localToWorld(contactRider?BIKE_RIDER_SEAT.clone():new THREE.Vector3(0,VEHICLE_SPEC[riding.kind].seat-.9,.43)));
       mesh.getWorldQuaternion(avatar.quaternion);avatar.rotateY(Math.PI);
-      if(contactRider&&thirdPerson)avatarVisual?.fitBikeContact(mesh);
+      if(contactRider){avatarVisual?.fitBikeContact(mesh);avatarVisual?.setBikeFirstPerson(!thirdPerson);}
       if(thirdPerson){const pose=flightCamera(camera.position,new THREE.Euler(pitch,riding.yaw+yaw,0,'YXZ'),(a,b)=>surfaceCameraDistance(world,a,b,playerCollider,riding!.collider));camera.position.copy(pose.position);camera.lookAt(pose.target);cameraClearance=pose.distance;}return;
     }
     if(thirdPerson){
@@ -729,6 +733,8 @@ async function boot(){await RAPIER.init();world=new RAPIER.World({x:0,y:-9.81,z:
     const root=await attachRequested('interior',deck);if(root){const colliders=meshColliders(world,root);if(!colliders.length)throw Error('Empty station collision');for(const c of structuralColliders)world.removeCollider(c,true);deckFallback.visible=false;}
   }catch{deckFallback.visible=true;console.warn('Station interior unavailable; fitted fallback retained');}
   try{const root=await attachRequested('bedroom',cabin);if(root){clearCabinGlazing(root);meshColliders(world,root);cabinLoaded=true;const resident=new THREE.Group();resident.scale.setScalar(1.12);const bedHit=world.castRay(new RAPIER.Ray({x:0,y:2,z:cabin.position.z+3.2},{x:0,y:-1,z:0}),2,true);resident.position.set(0,bedHit?2-bedHit.timeOfImpact+.015:.9,3.2);cabin.add(resident);await attachRequested('resident',resident);cabin.userData.resident=true;}}catch{console.warn('Crew cabin unavailable');}
+  const runwayRoot=await runwayReady;if(runwayRoot)meshColliders(world,runwayRoot);
+  runwayShellColliders(world);
   launchBay.init(world);launchBay.sync();boardJetTarget.collider=launchBay.hull;world.step();syncCrew();updateHud();paintPower();$('loading').textContent='Systems ready · progress saves on this device';$('play').removeAttribute('disabled');canvas.dataset.ready='true';frame();}
 if(matchMedia('(pointer:coarse)').matches || new URLSearchParams(location.search).has('qa')){$<HTMLSelectElement>('quality').value='low';renderer.setPixelRatio(1);renderer.shadowMap.enabled=false;bloom.enabled=false;surface.setQuality(false);resize();}
 $('play').setAttribute('disabled','');boot().catch(()=>{$('loading').textContent='Physics initialization failed. Refresh to retry.';});

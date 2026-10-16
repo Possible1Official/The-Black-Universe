@@ -296,3 +296,10 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Repair the reviewed rover derivative: rims/arms were baked into the fixed chassis while only rubber tires moved. Preserve every triangle/material/attribute and image; repartition into four hinged arms, complete wheels and inboard steering knuckles.
 - Rigid arm arcs, independent terrain support, wheel carrier counter-rotation and separate steering/spin. Remove floating rover spring overlays; retain bike suspension.
 - Remaining: force-based multibody suspension/tire forces, exact irregular-rock center-of-mass/friction simulation and measured physical-device budgets. These are bounded kinematic presentation fixes.
+
+## Bike first-person and sealed launch runway (2026-10-16)
+- First-person Turbo Bike renders the original skinned, textured arms with the existing handlebar contact solve; portrait framing retains both grips. Third-person and walking restore the full source appearance.
+- Replace the incomplete untextured corridor derivative with six straight sections from alitoons' reviewed free CGTrader starter kit, widened to11m around its beveled feet, with matching trim collision. Seal the station/runway shoulders and roof; share structural dimensions between visible surfaces and collision.
+- Sample the kit's original Door_Open clip for both interlocked sliding doors, with matching individual leaf colliders. Clear left/right walking lanes around the parked jet; closed entrance has no side bypass.
+- Use the same Nysa center and runway placement aboard and in orbit; preserve runway heading and free look through departure instead of resetting the view.
+- Remaining: richer authored hangar artwork and physical-device rendering budgets. This is low-poly palette artwork and kinematic door motion, not photorealism or pressure simulation.
