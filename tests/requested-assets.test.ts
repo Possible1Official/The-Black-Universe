@@ -54,7 +54,7 @@ test('rover preserves lit source albedo and tangent detail with four independent
   assert.ok(Math.abs(material.normalTexture.scale-.65)<.001);
  }
  const wheels=g.nodes.filter((n:any)=>n.name?.startsWith('Rover_Wheel_'));
- assert.equal(wheels.length,4);assert.equal(new Set(wheels.map((w:any)=>w.mesh)).size,4);
+ assert.equal(wheels.length,4);assert.ok(wheels.every((w:any)=>w.children.length===2));assert.equal(g.nodes.filter((n:any)=>n.name?.startsWith('Rover_Leg_')).length,4);
  assert.equal((g.animations??[]).length,0,'source has no usable motion clips');
 });
 
@@ -84,4 +84,16 @@ test('coolant canister retains reviewed mesh/PBR data and fits both display enve
  const m=g.materials[0];assert.ok(m.pbrMetallicRoughness.baseColorTexture&&m.normalTexture&&m.occlusionTexture&&m.pbrMetallicRoughness.metallicRoughnessTexture);assert.equal(m.emissiveTexture,undefined);assert.equal(g.animations?.length??0,0);assert.equal(g.skins?.length??0,0);
  assert.equal(report.bounds_size[1],.7);assert.ok(report.bounds_size[0]<.263&&report.bounds_size[2]<.263);const layout=CARTRIDGE_LAYOUT,half=(layout.offset+report.bounds_size[0]/2)*layout.fieldScale;assert.ok((layout.offset+report.bounds_size[0]/2)*layout.rackScale<.42,'rack pair clears the inner faces of its frame');assert.ok(layout.fieldX-half>-.48&&layout.fieldX+half<.06,'pair fits the actual opening, not the lid-shifted whole-model center');assert.ok(layout.fieldY+(.7+.01)*layout.fieldScale<.57,'caps remain below the open crate rim');assert.ok(layout.rackY+(.7+.01)*layout.rackScale<1.48);
  for(const image of g.images){const v=g.bufferViews[image.bufferView];assert.deepEqual(imageDimensions(bin.subarray(v.byteOffset,v.byteOffset+v.byteLength),image.mimeType),[512,512]);}
+});
+
+test('hinged rover preserves every source triangle attribute/material and image, with valid aligned export buffers',async()=>{
+ const packed=readFileSync(new URL('../src/assets/requested/rover.ebup',import.meta.url)),b=Buffer.from(await decodeGameResource(Uint8Array.from(packed).buffer)),n=b.readUInt32LE(12),g=JSON.parse(b.subarray(20,20+n).toString()),bin=b.subarray(28+n),report=JSON.parse(readFileSync(new URL('../public/assets/requested/rover-hinges.json',import.meta.url),'utf8')),hash=(x:Buffer|string)=>createHash('sha256').update(x).digest('hex');
+ assert.equal(g.buffers[0].byteLength,bin.length);for(const v of g.bufferViews)assert.ok(Number.isInteger(v.byteOffset)&&v.byteOffset%4===0&&v.byteOffset+v.byteLength<=bin.length);
+ for(const [i,image]of g.images.entries()){const v=g.bufferViews[image.bufferView];assert.equal(hash(bin.subarray(v.byteOffset,v.byteOffset+v.byteLength)),report.image_sha256[i]);}
+ const signatures:string[]=[],widths:Record<string,number>={SCALAR:1,VEC2:2,VEC3:3,VEC4:4},bytes:Record<number,number>={5121:1,5123:2,5125:4,5126:4};
+ for(const mesh of g.meshes)for(const p of mesh.primitives){
+  const a=g.accessors[p.indices],v=g.bufferViews[a.bufferView],start=v.byteOffset+(a.byteOffset??0),ids=Array.from({length:a.count},(_,i)=>a.componentType===5123?bin.readUInt16LE(start+i*2):bin.readUInt32LE(start+i*4));
+  for(let j=0;j<ids.length;j+=3){const pieces=[Buffer.from([p.material])];for(const id of ids.slice(j,j+3))for(const key of Object.keys(p.attributes).sort()){const a=g.accessors[p.attributes[key]],v=g.bufferViews[a.bufferView],size=widths[a.type]*bytes[a.componentType],offset=v.byteOffset+(a.byteOffset??0)+id*(v.byteStride??size);pieces.push(bin.subarray(offset,offset+size));}signatures.push(hash(Buffer.concat(pieces)));}
+ }
+ assert.equal(signatures.length,27928);assert.equal(hash(signatures.sort().join('')),report.triangle_attribute_multiset_sha256);assert.equal(report.triangle_data_preserved,true);assert.equal(g.nodes.filter((n:any)=>n.name?.startsWith('Rover_Knuckle_')).length,4);
 });

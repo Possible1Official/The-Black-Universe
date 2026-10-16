@@ -8,7 +8,7 @@ import {SurfaceContact} from './surface-contact';
 import {RockScenery,type RockInstance} from './rock-scenery';
 import {ROCK_HULL_VERTICES,ROCK_HULL_INDICES} from './rock-hull';
 import type {RockObstacle} from './rock-collider';
-import {seatRock} from './rock-placement';
+import {orientRock,seatRock} from './rock-placement';
 import {terrainSampler} from './vehicle-stance';
 export function createSurface(){
   const group=new THREE.Group();group.position.x=SURFACE_ORIGIN;group.visible=false;
@@ -32,7 +32,7 @@ export function createSurface(){
   const rockInstances:RockInstance[]=[],rockGround=terrainSampler(mesh.vertices);
   for(let i=0;i<rockPlan.length;i++){
     const {x,z,radius:r}=rockPlan[i],y=terrainHeight(x,z);
-    transform.position.set(x,y+r*.45,z);transform.rotation.set(i*.6,i*.9,i*.23);transform.scale.set(r,r*.8,r);const contact=seatRock(transform,rockGround,r);rocks.setMatrixAt(i,transform.matrix);rocks.setColorAt(i,new THREE.Color(0x958a7e));
+    transform.position.set(x,y+r*.45,z);orientRock(transform,rockGround,r,i*.9);transform.scale.set(r,r*.8,r);const contact=seatRock(transform,rockGround,r);rocks.setMatrixAt(i,transform.matrix);rocks.setColorAt(i,new THREE.Color(0x958a7e));
     obstacles.push({x:SURFACE_ORIGIN+x,y:transform.position.y,z,scale:[r,r*.8,r],rotation:transform.quaternion.clone()});
     rockInstances.push({contact,matrix:transform.matrix.clone(),color:new THREE.Color().fromArray(rocks.instanceColor!.array,i*3)});
   }
