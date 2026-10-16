@@ -1,6 +1,24 @@
 {
   "format": "EBU1 gzip/AES-GCM game resource; public format key, extraction deterrence rather than unextractable DRM",
   "assets": {
+    "rock": {
+      "creator": "dimdimich",
+      "model_id": 898927,
+      "url": "https://www.cgtrader.com/free-3d-models/scanned/various/rock-pbr-game-ready",
+      "triangle_budget": 1000,
+      "transfer_budget": 1500000,
+      "source_sha256": "34fc5f7ae813335026886bd9a937575de4469d8ed0affc3d1f63082b016faac8",
+      "rights": "CGTrader Royalty Free License (no AI), incorporated derivative only.",
+      "glb_bytes": 1161816,
+      "glb_sha256": "1c6bb35cd68d998241a30c91edfe6a856857e888fc06a8ea76cf96393f982af0",
+      "resource_bytes": 1152031,
+      "resource_sha256": "e628faf24d74db1d41a34d85cef462dba857f5ac2dfc3580cf3724678ddf6a47",
+      "triangles": 908,
+      "primitives": 1,
+      "images": 3,
+      "animations": [],
+      "source_retained_privately": true
+    },
     "canister": {
       "creator": "desanlisadrien1",
       "model_id": 4044829,

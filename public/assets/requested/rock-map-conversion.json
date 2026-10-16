@@ -1,0 +1,62 @@
+{
+  "source_images": {
+    "rock_low_Mixed_AO.png": {
+      "sha256": "cddbbee2bfb57d7d3dac2e508fbb4850a44d954433096fdcb2e2601ca6aff76c",
+      "size": [
+        2048,
+        2048
+      ]
+    },
+    "rock_low_Metallic.png": {
+      "sha256": "41a8c2d58782abca9d4b79dc2b4d59fa460a731b081212ba4723c7b64017b780",
+      "size": [
+        2048,
+        2048
+      ]
+    },
+    "rock_low_Base_Color.png": {
+      "sha256": "c74590a43a80480b0c55b78b10d3e4725131080bfb1b30fd369e4a79c80d82a3",
+      "size": [
+        2048,
+        2048
+      ]
+    },
+    "rock_low_Roughness.png": {
+      "sha256": "9568a7b15004c6449d72179325dfce85c55a8e5db73f747610bedcf31fd5478e",
+      "size": [
+        2048,
+        2048
+      ]
+    },
+    "rock_low_Normal_DirectX.png": {
+      "sha256": "e0cec1105dc2644976558a6e599370f94d0a4eede362b500c19c26cfe323e724",
+      "size": [
+        2048,
+        2048
+      ]
+    }
+  },
+  "output_images": {
+    "rock-base.png": {
+      "sha256": "d6b8e987f1ed715f7ea3b3db7f69a2b8539c61a8a9a5e46ff9a747ae14debf52",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "rock-normal.png": {
+      "sha256": "0f64e570a75c263ab36bd4a23fc08123cdb93faaadd1ba039272e034eb50b8f4",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "rock-orm.png": {
+      "sha256": "a81fab7ffd4e012083a06effd408f6234ac1138deb07db517953fb2363c2aa94",
+      "size": [
+        512,
+        512
+      ]
+    }
+  }
+}

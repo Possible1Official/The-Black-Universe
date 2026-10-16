@@ -32,5 +32,5 @@ test('ground and pad shaders share live contact uniforms across quality recompil
   assert.ok(g.vertexShader.includes('modelMatrix * vec4(transformed'));assert.ok(g.fragmentShader.includes('outgoingLight *= contactVisibility'));
   c.update('bike',{x:407,y:0,z:27,yaw:.3,visible:true},0);assert.ok(g.uniforms.contactPoses.value[1].z>0);
   ground.normalMap=new THREE.Texture();ground.needsUpdate=true;const recompiled=shader();ground.onBeforeCompile(recompiled,null as any);assert.equal(recompiled.uniforms.contactPoses,g.uniforms.contactPoses);
-  c.clear();assert.equal(p.uniforms.contactPoses.value[1].z,0);
+  c.updateRock(3,410,20,.6,.4);assert.equal(p.uniforms.contactPoses.value[7].z,.28);c.clear();assert.ok(p.uniforms.contactPoses.value.every((v:THREE.Vector4)=>v.z===0));
 });
