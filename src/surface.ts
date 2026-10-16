@@ -3,6 +3,7 @@ import {biomeAt,WATER_LEVEL} from './biomes';
 import {createGroundMaterial,groundTint,GROUND_TILE_METERS} from './terrain-material';
 import {LANDING,LANDING_PLAN,landingPad,type LandingSite,SAMPLE,SITE_HALF,SURFACE_ORIGIN,terrainHeight,terrainMesh,surfaceRocks} from './excursion';
 import {FIELD_SITES,type FieldScan} from './survey';
+import {SurfaceContact} from './surface-contact';
 export function createSurface(){
   const group=new THREE.Group();group.position.x=SURFACE_ORIGIN;group.visible=false;
   const mesh=terrainMesh(),geometry=new THREE.BufferGeometry();
@@ -15,6 +16,7 @@ export function createSurface(){
   geometry.setAttribute('uv',new THREE.BufferAttribute(uv,2));
   geometry.setAttribute('color',new THREE.BufferAttribute(colors,3));
   const groundMaterial=createGroundMaterial();
+  const contact=new SurfaceContact();contact.bind(groundMaterial.material);
   const ground=new THREE.Mesh(geometry,groundMaterial.material);ground.receiveShadow=true;group.add(ground);
   const stone=new THREE.MeshStandardMaterial({color:0x4e6360,roughness:.94});
   const rockPlan=surfaceRocks(),rockGeo=new THREE.DodecahedronGeometry(1,0),rocks=new THREE.InstancedMesh(rockGeo,stone,rockPlan.length);
@@ -35,6 +37,7 @@ export function createSurface(){
   const sample=new THREE.Group();sample.position.set(SAMPLE.x,terrainHeight(SAMPLE.x,SAMPLE.z),SAMPLE.z);group.add(sample);
   for(let i=0;i<5;i++){const crystal=new THREE.Mesh(new THREE.ConeGeometry(.24,.9+(i%3)*.3,5),glow);crystal.position.set(Math.sin(i)*.55,.65,Math.cos(i)*.55);crystal.rotation.z=(i-2)*.12;sample.add(crystal);}
   const padGeo=new THREE.CylinderGeometry(3.5,3.5,.06,32),ringGeo=new THREE.TorusGeometry(3.3,.06,6,48),padMaterial=new THREE.MeshStandardMaterial({color:0x344c59,metalness:.6,roughness:.6});
+  contact.bind(padMaterial);
   for(const site of LANDING_PLAN){const pad=new THREE.Mesh(padGeo,padMaterial);pad.position.set(site.x,.025,site.z);group.add(pad);const ring=new THREE.Mesh(ringGeo,glow);ring.rotation.x=Math.PI/2;ring.position.set(site.x,.09,site.z);group.add(ring);}
   const beacon=new THREE.Group();beacon.position.set(0,0,LANDING.z+2.4);group.add(beacon);
   const pole=new THREE.Mesh(new THREE.CylinderGeometry(.12,.16,2.4,8),stone);pole.position.y=1.2;beacon.add(pole);
@@ -67,5 +70,5 @@ export function createSurface(){
   // Distant silhouettes are visual scenery beyond the playable crater.
   for(let i=0;i<16;i++){const mountain=new THREE.Mesh(new THREE.ConeGeometry(26,40+(i%4)*10,5),stone);const a=i*Math.PI/8;mountain.position.set(Math.cos(a)*(SITE_HALF+86),12,Math.sin(a)*(SITE_HALF+86));mountain.rotation.y=i;group.add(mountain);}
   const skyPlanet=new THREE.Mesh(new THREE.SphereGeometry(13,24,16),new THREE.MeshStandardMaterial({color:0x93bfc5,roughness:1}));skyPlanet.position.set(-80,68,-170);group.add(skyPlanet);
-  return {group,mesh,obstacles,sample,setLanding(site:LandingSite){const pad=landingPad(site);beacon.position.set(pad.x,0,pad.z+2.4);},landmarkBoxes,scanners,setScans(ids:readonly FieldScan[]){for(const s of scanners)s.material.emissiveIntensity=ids.includes(s.id)?1.8:.6;},setQuality:groundMaterial.setQuality,materialSnapshot:groundMaterial.snapshot};
+  return {group,mesh,obstacles,sample,contact,setLanding(site:LandingSite){const pad=landingPad(site);beacon.position.set(pad.x,0,pad.z+2.4);},landmarkBoxes,scanners,setScans(ids:readonly FieldScan[]){for(const s of scanners)s.material.emissiveIntensity=ids.includes(s.id)?1.8:.6;},setQuality:groundMaterial.setQuality,materialSnapshot:groundMaterial.snapshot};
 }
