@@ -8,7 +8,7 @@ import {SUPPLY_CACHE} from './supplies';
 import {FIELD_SITES,type FieldScan} from './survey';
 import {expeditionStep} from './relay-expedition';
 export interface NavPoint {x:number;z:number}
-export type SurfaceTrack=FieldScan|'supplies'|'network'|NavPoint;
+export type SurfaceTrack=FieldScan|'supplies'|'network'|'drone'|NavPoint;
 export interface Waypoint extends NavPoint {id:string;label:string;hint:string}
 const at=(id:string,label:string,x:number,z:number,hint='Approach, face the console and interact with E.'):Waypoint=>({id,label,x,z,hint});
 export function missionDestination(p:Progress,onSurface:boolean,tracked?:SurfaceTrack,landing:LandingSite='survey',layout:ShipLayout=LEGACY_SHIP_LAYOUT):Waypoint {

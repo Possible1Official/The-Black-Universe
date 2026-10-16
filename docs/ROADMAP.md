@@ -316,3 +316,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Field-log expedition tracking automatically advances through receivers to the outpost; chart markers and officer survey debriefs reflect saved work. The original sample/scans/cache/return remain optional and independent.
 - Bringing the network online unlocks a third Kestrel pad, usable through PAD/L with existing guided descent, parked craft/vehicles and extraction. Revisit the console for Archive03.
 - Remaining: distinct second-world exploration, richer outpost interiors/repair animations, NPC expedition duties and measured device budgets. No global streaming, pressure or simulated signal intelligence is claimed.
+
+## ECHO companion content (2026-10-16)
+- Recover a source-animated CGTrader quadrotor after Silent Network; interact for Follow, Hold and a nearby survey scan. Field-log locating adds no permanent command overlay.
+- Follow walked corners with bounded breadcrumbs and world sweeps; hold when driving or obstructed. Original four rotor loops and material appearance retained, no new walking obstacle.
+- Save recovery and readings; deploy beside the selected pad on subsequent landings. Existing missions remain independent.
+- Remaining: richer companion duties/encounters, obstacle replanning, distinct new destinations and measured device budgets. This is scripted navigation and local readings, not general AI or aerodynamic flight.
