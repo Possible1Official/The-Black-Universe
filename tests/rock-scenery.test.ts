@@ -27,7 +27,23 @@ test('actual rotated/scaled Rapier rock hull matches rendered fallback ray hits'
 });
 
 test('tilted rocks are seated into actual terrain and contact shading remains capped/cleared',async()=>{
- const {seatRock}=await import('../src/rock-placement'),{ROCK_HULL_VERTICES}=await import('../src/rock-hull'),{terrainSampler}=await import('../src/vehicle-stance'),{terrainMesh}=await import('../src/excursion');const ground=terrainSampler(terrainMesh().vertices);
- for(const [x,z,a]of [[18,-3,.8],[-30,-12,2.3],[35,23,-1]]){const t=new THREE.Object3D();t.position.set(x,100,z);t.rotation.set(a,a*.7,a*.2);t.scale.set(.8,.64,.8);seatRock(t,ground,.8);let minimum=Infinity;for(let i=0;i<ROCK_HULL_VERTICES.length;i+=3){const p=new THREE.Vector3().fromArray(ROCK_HULL_VERTICES,i).applyMatrix4(t.matrix);minimum=Math.min(minimum,p.y-ground(p.x,p.z));}assert.ok(Math.abs(minimum+.048)<1e-6,'a support point is embedded, not hovering');}
+ const {orientRock,seatRock}=await import('../src/rock-placement'),{ROCK_HULL_VERTICES}=await import('../src/rock-hull'),{terrainSampler}=await import('../src/vehicle-stance'),{terrainMesh}=await import('../src/excursion');const ground=terrainSampler(terrainMesh().vertices);
+ for(const [x,z,a]of [[18,-3,.8],[-30,-12,2.3],[35,23,-1]]){const t=new THREE.Object3D();t.position.set(x,100,z);t.scale.set(.8,.64,.8);orientRock(t,ground,.8,a);seatRock(t,ground,.8);let minimum=Infinity,buried=0;for(let i=0;i<ROCK_HULL_VERTICES.length;i+=3){const p=new THREE.Vector3().fromArray(ROCK_HULL_VERTICES,i).applyMatrix4(t.matrix);minimum=Math.min(minimum,p.y-ground(p.x,p.z));if(p.y<=ground(p.x,p.z))buried++;}assert.ok(minimum<-.12&&buried>=5,'a broad lower band is embedded, not a balancing tip');}
  const material=new THREE.MeshStandardMaterial(),fallback=new THREE.InstancedMesh(new THREE.BoxGeometry(),material,10),instances=Array.from({length:10},(_,i)=>({matrix:new THREE.Matrix4().makeTranslation(i,0,0),color:new THREE.Color()})),scenery=new RockScenery(fallback,instances,async()=>({geometry:fallback.geometry,material}));scenery.update(new THREE.Vector3(),false,true);assert.equal(scenery.contacts().length,4);scenery.update(new THREE.Vector3(100,0,0),false,true);assert.equal(scenery.contacts().length,0);scenery.update(new THREE.Vector3(),true,false);assert.equal(scenery.contacts().length,0);
+});
+
+test('every real scenery rock lies broad-side down with bounded tilt and multiple buried support points',async()=>{
+ const {orientRock,seatRock,ROCK_TILT_LIMIT}=await import('../src/rock-placement'),{surfaceRocks,terrainMesh}=await import('../src/excursion'),{terrainSampler}=await import('../src/vehicle-stance'),{ROCK_HULL_VERTICES}=await import('../src/rock-hull');const ground=terrainSampler(terrainMesh().vertices);
+ for(const [i,r]of surfaceRocks().entries()){
+  const t=new THREE.Object3D();t.position.set(r.x,0,r.z);t.scale.set(r.radius,r.radius*.8,r.radius);orientRock(t,ground,r.radius,i*.9);const contact=seatRock(t,ground,r.radius),up=new THREE.Vector3(0,1,0).applyQuaternion(t.quaternion);assert.ok(up.angleTo(new THREE.Vector3(0,1,0))<=ROCK_TILT_LIMIT+1e-8);
+  let buried=0;const supports:THREE.Vector3[]=[];const box=new THREE.Box3();for(let j=0;j<ROCK_HULL_VERTICES.length;j+=3){const p=new THREE.Vector3().fromArray(ROCK_HULL_VERTICES,j).applyMatrix4(t.matrix);box.expandByPoint(p);if(p.y<=ground(p.x,p.z)){buried++;supports.push(p);}}
+  assert.ok(buried>=5);const size=box.getSize(new THREE.Vector3());assert.ok(Math.max(size.x,size.z)>size.y*1.15);assert.ok(contact.distanceTo(t.position)<r.radius*2);
+  // Three separated buried source points must surround the projected rock center.
+  const cross=(a:THREE.Vector3,b:THREE.Vector3,p:THREE.Vector3)=>(b.x-a.x)*(p.z-a.z)-(b.z-a.z)*(p.x-a.x);let stable=false;
+  for(let a=0;a<supports.length;a++)for(let b=a+1;b<supports.length;b++)for(let c=b+1;c<supports.length;c++){
+   const u=supports[a],v=supports[b],w=supports[c],signs=[cross(u,v,t.position),cross(v,w,t.position),cross(w,u,t.position)];
+   if(Math.abs(cross(u,v,w))>r.radius*r.radius*.03&&(signs.every(x=>x>=-1e-8)||signs.every(x=>x<=1e-8)))stable=true;
+  }
+  assert.ok(stable,'center lies above a broad buried support triangle');
+ }
 });

@@ -1,0 +1,56 @@
+{
+  "input_derivative_sha256": "5c8757a715b1fd0bc52de9a919f41e86f783861b43c79ab090c88a19e438fcfc",
+  "output_sha256": "a1a559f3991f522735a11c7680190b3a87388fc38615f760799de931d7ed293a",
+  "output_bytes": 1650336,
+  "triangles": 27928,
+  "primitives": 14,
+  "image_sha256": [
+    "f318fd1e4679059c68cd2fae49445b52fd85184f06b8d9686a0ca312d81325de",
+    "1753b1ef8da2fa48854b36ca42dfd53b7f58530032dbfa5ec84874e4e3557b9f",
+    "844aa2b0124e143c7a21b1683107b255e2c2abc3494f6d7bd67ab368c116330c",
+    "9bdbba036a48d127490a21eb9714aebe42e3cbbf5e5192664b100f849c106cbb"
+  ],
+  "triangle_attribute_multiset_sha256": "91663f3a970285e52238d816dabca145f673c0c2df72a25f503de72133e54669",
+  "triangle_data_preserved": true,
+  "hips": {
+    "FrontRight": [
+      -0.398,
+      1.05,
+      -0.515
+    ],
+    "FrontLeft": [
+      0.398,
+      1.05,
+      -0.515
+    ],
+    "RearRight": [
+      -0.264,
+      0.94,
+      0.645
+    ],
+    "RearLeft": [
+      0.264,
+      0.94,
+      0.645
+    ]
+  },
+  "parts": {
+    "FrontRight": {
+      "rim_triangles": 226,
+      "arm_triangles": 774
+    },
+    "FrontLeft": {
+      "rim_triangles": 222,
+      "arm_triangles": 782
+    },
+    "RearRight": {
+      "rim_triangles": 336,
+      "arm_triangles": 196
+    },
+    "RearLeft": {
+      "rim_triangles": 328,
+      "arm_triangles": 204
+    }
+  },
+  "animations": []
+}

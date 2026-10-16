@@ -290,3 +290,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Depth tint/opacity, soft shallows, animated ripple normals and an angle-dependent constant sky approximation; High adds a second ripple family. Pause/hidden-view clocks freeze and quality changes reuse the same resources.
 - Existing13 CGTrader resources, terrain/vehicle collision and captured animations unchanged. No new download, reflection pass, light or collider.
 - Remaining: authored distant terrain/horizon, measured mobile GPU budgets, actual scene reflection/refraction, underwater rendering, swimming/buoyancy and water interaction. This remains a visual pond approximation.
+
+## Rock stability and actual rover hinges (2026-10-16)
+- Remove random rock pitch/roll: yaw varies freely, terrain tilt caps at12°, and a broad lower band embeds in the ground. All101 projected model centers sit inside a triangle of buried support vertices; render/collision transforms stay shared.
+- Repair the reviewed rover derivative: rims/arms were baked into the fixed chassis while only rubber tires moved. Preserve every triangle/material/attribute and image; repartition into four hinged arms, complete wheels and inboard steering knuckles.
+- Rigid arm arcs, independent terrain support, wheel carrier counter-rotation and separate steering/spin. Remove floating rover spring overlays; retain bike suspension.
+- Remaining: force-based multibody suspension/tire forces, exact irregular-rock center-of-mass/friction simulation and measured physical-device budgets. These are bounded kinematic presentation fixes.
