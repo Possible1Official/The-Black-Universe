@@ -1,0 +1,32 @@
+{
+  "source_archive_sha256": "ad260feedaaeb325c6246769238f6f0db125342166264827e9ceacffb0f9216d",
+  "source_glb_sha256": "0204881d802594cd23320bd927af5d7f2084bd4c3b3f20c672b5566b21ecb099",
+  "glb_sha256": "ed3a643c09ed559ce570ae8e6c449ae11a80af33599a9364d0cb608f31adb5c8",
+  "source_triangles": 2360,
+  "instanced_straight_triangles": 2928,
+  "door_leaf_triangles": 360,
+  "runtime_runway_and_two_doors_triangles": 3648,
+  "images": 2,
+  "texture_dimensions": [
+    128,
+    128
+  ],
+  "clips": [
+    "Door_Open"
+  ],
+  "source_mesh_material_texture_animation_buffers_preserved": true,
+  "dimensions_gltf_xyz": [
+    12.571428571,
+    6.035294118,
+    24
+  ],
+  "interior_clearance": [
+    11,
+    5.4
+  ],
+  "limitations": [
+    "Six source straight cells widened and raised for shuttle clearance; low-poly palette artwork, not photoreal scanned surfaces.",
+    "Original Door_Open clip reused for interlocked leaves; source corner/dead-end geometry is not rendered.",
+    "Separate game structural shell supplies bounded clean collision, not imported trim collision."
+  ]
+}

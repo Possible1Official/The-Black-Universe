@@ -5,6 +5,7 @@ import {JUMP_SPEED} from './pilot-controls';
 import {requestedAsset} from './requested-assets';
 import {BikeRiderContact} from './rider-contact';
 import {FootContact} from './foot-contact';
+import {RiderArmsVisibility} from './bike-view';
 
 // Source Walking clip travels 1.313 m in one 26-frame cycle (30 FPS).
 export const WALK_STRIDE = 1.313094;
@@ -15,6 +16,8 @@ export class CrewVisual {
   private run?:THREE.AnimationAction;private ride?:THREE.AnimationAction;private jump?:THREE.AnimationAction;private airBlend=0;
   private bikeContact?:BikeRiderContact;
   private footContact?:FootContact;
+  private riderArms?:RiderArmsVisibility;
+  setBikeFirstPerson(first:boolean){if(first)(this.riderArms??=new RiderArmsVisibility(this.root)).setFirstPerson(true);else this.riderArms?.setFirstPerson(false);}
   constructor(readonly root: THREE.Object3D, clips: THREE.AnimationClip[],private readonly walkStride=WALK_STRIDE,private readonly runStride=2.2) {
     const idle=clips.find(c=>c.name==='Idle'),walk=clips.find(c=>c.name==='Walking');
     if(!idle||!walk)throw new Error('Crew asset needs Idle and Walking clips');
@@ -25,6 +28,7 @@ export class CrewVisual {
     this.update(0,0,0);
   }
   update(dt:number,distance:number,blend:number,running=0,riding=false,airborne=false,verticalSpeed=0){
+    this.setBikeFirstPerson(false);
     this.releaseFootContact();
     this.releaseBikeContact();
     this.idle.time=(this.idle.time+dt)%this.idle.getClip().duration;

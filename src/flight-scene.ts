@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import {NYSA_CENTER,NYSA_RADIUS,flightGoal,canApproach,type FlightState} from './flight';
 import {STATION_HULL,STATION_ASSEMBLY} from './station';
 import {attachRequested} from './requested-assets';
+import {LAUNCH_BAY} from './launch-layout';
+import {createRunwayShell} from './runway-shell';
 import {loadAuthoredAsset} from './authored-assets';
 export function makeShuttle(){
   const root=new THREE.Group(),hull=new THREE.MeshStandardMaterial({color:0x344655,metalness:.7,roughness:.35}),trim=new THREE.MeshStandardMaterial({color:0xd0d8d8,metalness:.6,roughness:.4}),glow=new THREE.MeshBasicMaterial({color:0x67e6ff});
@@ -21,7 +23,7 @@ export function createFlightScene(camera:THREE.PerspectiveCamera,planetMaterial:
   for(const b of STATION_HULL)block(b.size[0],b.size[1],b.size[2],b.position[0],b.position[1],b.position[2]);
   const habitat=new THREE.Group();habitat.position.set(STATION_ASSEMBLY.position[0],STATION_ASSEMBLY.position[1]-STATION_ASSEMBLY.size[1]/2,STATION_ASSEMBLY.position[2]);station.add(habitat);
   block(88,28,120,0,14,0,metal,habitat);
-  const runway=new THREE.Group();runway.position.set(0,-5,-24);runway.scale.y=1.5;station.add(runway);attachRequested('corridor',runway).catch(()=>console.warn('Orbital runway asset unavailable'));
+  const runway=new THREE.Group();runway.position.set(0,0,LAUNCH_BAY.centerZ);station.add(runway,createRunwayShell());attachRequested('corridor',runway).catch(()=>console.warn('Orbital runway asset unavailable'));
   const craft=makeShuttle();scene.add(craft);craft.visible=false;
   for(const x of [-22,22])block(1,12,1,x,0,-32,light);
   for(const x of [-45,45])block(23,.4,2,x,6.3,20,light);

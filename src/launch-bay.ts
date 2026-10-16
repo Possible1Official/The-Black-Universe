@@ -3,7 +3,9 @@ import RAPIER from '@dimforge/rapier3d-compat';
 import {makeShuttle} from './flight-scene';
 import {loadAuthoredAsset} from './authored-assets';
 import {SHUTTLE_SIZE} from './shuttle';
-import {LAUNCH_BAY,LOCAL_JET_Y,RUNWAY_DEPARTURE_SECONDS} from './launch-layout';
+import {requestedAsset} from './requested-assets';
+import {RunwayDoor} from './runway-door';
+import {LAUNCH_BAY,LOCAL_JET_Y,RUNWAY_DEPARTURE_SECONDS,RUNWAY_CLEAR_WIDTH} from './launch-layout';
 export {LAUNCH_BAY} from './launch-layout';
 export type LaunchPhase='parked'|'sealing'|'opening'|'departing'|'away'|'return-sealing'|'return-opening'|'return-turn'|'return-parking'|'return-closing'|'return-access'|'arrived';
 const smooth=(t:number)=>t*t*(3-2*t);
@@ -36,12 +38,14 @@ export class LaunchInterlock{
 export class LaunchBay{
  readonly root=new THREE.Group();readonly jet=makeShuttle();readonly state=new LaunchInterlock();
  readonly inner:THREE.Mesh;readonly outer:THREE.Mesh;private innerCollider?:RAPIER.Collider;private outerCollider?:RAPIER.Collider;hull?:RAPIER.Collider;
+ private world?:RAPIER.World;private authoredDoors?:[RunwayDoor,RunwayDoor];
  constructor(load=true){
   this.root.name='Kestrel launch airlock';const metal=new THREE.MeshStandardMaterial({color:0x526674,metalness:.65,roughness:.48}),stripe=new THREE.MeshBasicMaterial({color:0x72dde8});
   const leaf=(w:number,h:number,z:number)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,.25),metal);mesh.position.set(0,h/2,z);mesh.castShadow=mesh.receiveShadow=true;this.root.add(mesh);const marking=new THREE.Mesh(new THREE.BoxGeometry(w*.8,.06,.27),stripe);marking.position.y=.15;mesh.add(marking);return mesh;};
-  this.inner=leaf(3.4,3.4,LAUNCH_BAY.innerZ);this.outer=leaf(7.4,5.4,LAUNCH_BAY.outerZ);this.root.add(this.jet);this.jet.position.set(0,LOCAL_JET_Y,LAUNCH_BAY.parkZ);
+  this.inner=leaf(3.4,3.4,LAUNCH_BAY.innerZ);this.outer=leaf(RUNWAY_CLEAR_WIDTH,5.4,LAUNCH_BAY.outerZ);this.root.add(this.jet);this.jet.position.set(0,LOCAL_JET_Y,LAUNCH_BAY.parkZ);
+  if(load)void requestedAsset('corridor').then(asset=>{const inner=new RunwayDoor(asset,3.4,3.4,LAUNCH_BAY.innerZ),outer=new RunwayDoor(asset,RUNWAY_CLEAR_WIDTH,5.4,LAUNCH_BAY.outerZ);this.authoredDoors=[inner,outer];this.root.add(inner.root,outer.root);if(this.world){inner.init(this.world);outer.init(this.world);}this.sync();}).catch(()=>console.warn('Authored doors unavailable; solid sliding-up fallback retained'));
   if(load)void loadAuthoredAsset('craft',[this.jet]).catch(()=>console.warn('Parked jet asset unavailable; shuttle fallback retained'));
  }
- init(world:RAPIER.World){this.innerCollider=world.createCollider(RAPIER.ColliderDesc.cuboid(1.7,1.7,.125).setTranslation(0,1.7,LAUNCH_BAY.innerZ));this.outerCollider=world.createCollider(RAPIER.ColliderDesc.cuboid(3.7,2.7,.125).setTranslation(0,2.7,LAUNCH_BAY.outerZ));this.hull=world.createCollider(RAPIER.ColliderDesc.cuboid(SHUTTLE_SIZE[0]/2,SHUTTLE_SIZE[1]/2,SHUTTLE_SIZE[2]/2).setTranslation(0,LOCAL_JET_Y+SHUTTLE_SIZE[1]/2,LAUNCH_BAY.parkZ));}
- sync(){const s=this.state;this.inner.position.y=1.7+s.inner*4;this.outer.position.y=2.7+s.outer*6;this.innerCollider?.setTranslation(this.inner.position);this.outerCollider?.setTranslation(this.outer.position);this.jet.position.z=s.jetZ;this.jet.rotation.y=s.jetYaw;this.jet.visible=s.phase!=='away';this.hull?.setEnabled(!s.boarded&&s.phase==='parked');}
+ init(world:RAPIER.World){this.world=world;this.authoredDoors?.forEach(d=>d.init(world));this.innerCollider=world.createCollider(RAPIER.ColliderDesc.cuboid(1.7,1.7,.125).setTranslation(0,1.7,LAUNCH_BAY.innerZ));this.outerCollider=world.createCollider(RAPIER.ColliderDesc.cuboid(RUNWAY_CLEAR_WIDTH/2,2.7,.125).setTranslation(0,2.7,LAUNCH_BAY.outerZ));this.hull=world.createCollider(RAPIER.ColliderDesc.cuboid(SHUTTLE_SIZE[0]/2,SHUTTLE_SIZE[1]/2,SHUTTLE_SIZE[2]/2).setTranslation(0,LOCAL_JET_Y+SHUTTLE_SIZE[1]/2,LAUNCH_BAY.parkZ));}
+ sync(){const s=this.state;this.inner.visible=this.outer.visible=!this.authoredDoors;this.innerCollider?.setEnabled(!this.authoredDoors);this.outerCollider?.setEnabled(!this.authoredDoors);this.authoredDoors?.[0].update(s.inner);this.authoredDoors?.[1].update(s.outer);this.inner.position.y=1.7+s.inner*4;this.outer.position.y=2.7+s.outer*6;this.innerCollider?.setTranslation(this.inner.position);this.outerCollider?.setTranslation(this.outer.position);this.jet.position.z=s.jetZ;this.jet.rotation.y=s.jetYaw;this.jet.visible=s.phase!=='away';this.hull?.setEnabled(!s.boarded&&s.phase==='parked');}
 }
