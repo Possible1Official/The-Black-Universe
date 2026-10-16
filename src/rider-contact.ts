@@ -3,7 +3,8 @@ import * as THREE from 'three';
 // Reviewed grip centers on the existing, 2.5 m CGTrader Turbo Bike. These are
 // chassis contacts: the suspended turbine does not move the handlebars.
 export const BIKE_GRIPS=[new THREE.Vector3(-.45,1.273,-.56),new THREE.Vector3(.45,1.29,-.534)] as const;
-export const BIKE_RIDER_SEAT=new THREE.Vector3(0,-.05,.05);
+export const BIKE_FEET=[new THREE.Vector3(-.43,.42,.24),new THREE.Vector3(.43,.42,.24)] as const;
+export const BIKE_RIDER_SEAT=new THREE.Vector3(0,-.05,-.02);
 const point=(o:THREE.Object3D)=>o.getWorldPosition(new THREE.Vector3());
 function worldRotation(o:THREE.Object3D,q:THREE.Quaternion){
   const parent=o.parent?.getWorldQuaternion(new THREE.Quaternion())??new THREE.Quaternion();
@@ -30,9 +31,9 @@ export function solveArm(upper:THREE.Object3D,lower:THREE.Object3D,hand:THREE.Ob
 export class BikeRiderContact{
   private readonly saved=new Map<THREE.Object3D,THREE.Quaternion>();
   private readonly bones=new Map<string,THREE.Bone>();
-  private errors:number[]=[];
+  private errors:number[]=[];private footErrors:number[]=[];
   constructor(readonly root:THREE.Object3D){root.traverse(o=>{if(o instanceof THREE.Bone)this.bones.set(o.name.replace(':',''),o);});}
-  restore(){for(const [bone,q]of this.saved)bone.quaternion.copy(q);this.saved.clear();this.errors=[];}
+  restore(){for(const [bone,q]of this.saved)bone.quaternion.copy(q);this.saved.clear();this.errors=[];this.footErrors=[];}
   private bone(name:string){
     // This CGTrader rig labels its little fingers as a second Ring chain;
     // glTF sanitizes the source .001 suffix to 001. Keep the skin unchanged.
@@ -44,7 +45,7 @@ export class BikeRiderContact{
     const spine=this.bone('Spine'),neck=this.bone('Neck');
     if(!spine)return;
     const rotation=bike.getWorldQuaternion(new THREE.Quaternion()),x=new THREE.Vector3(1,0,0).applyQuaternion(rotation),up=new THREE.Vector3(0,1,0).applyQuaternion(rotation);
-    this.save(spine);rotateWorld(spine,new THREE.Quaternion().setFromAxisAngle(x,-.65));
+    this.save(spine);rotateWorld(spine,new THREE.Quaternion().setFromAxisAngle(x,-.4));
     if(neck){this.save(neck);rotateWorld(neck,new THREE.Quaternion().setFromAxisAngle(x,.5));}
     for(const [i,side]of ['Left','Right'].entries()){
       const upper=this.bone(side+'Arm'),lower=this.bone(side+'ForeArm'),hand=this.bone(side+'Hand');
@@ -66,6 +67,16 @@ export class BikeRiderContact{
       }
       this.errors.push(hand.localToWorld(palm.clone()).distanceTo(palmTarget));
     }
+    for(const [i,side]of ['Left','Right'].entries()){
+      const hip=this.bone(side+'UpLeg'),knee=this.bone(side+'Leg'),foot=this.bone(side+'Foot');if(!hip||!knee||!foot)continue;
+      for(const bone of [hip,knee,foot])this.save(bone);const sole=foot.getWorldQuaternion(new THREE.Quaternion());
+      const target=bike.localToWorld(BIKE_FEET[i].clone()),pole=bike.localToWorld(new THREE.Vector3(i===0?-.9:.9,.9,-.6));
+      solveArm(hip,knee,foot,target,pole);worldRotation(foot,sole);this.footErrors.push(point(foot).distanceTo(target));
+    }
+    if(bike.userData.requested==='bike'&&!bike.getObjectByName('Rider footrests')){
+      const rests=new THREE.Group();rests.name='Rider footrests';const geometry=new THREE.BoxGeometry(.18,.04,.28),material=new THREE.MeshStandardMaterial({color:0x202a2d,metalness:.65,roughness:.5});
+      for(const side of [-1,1]){const pad=new THREE.Mesh(geometry,material);pad.position.set(side*.43,.27,.24);pad.castShadow=pad.receiveShadow=true;rests.add(pad);}bike.add(rests);
+    }
   }
-  snapshot(){return {active:this.saved.size>0,palmErrors:[...this.errors]};}
+  snapshot(){return {active:this.saved.size>0,palmErrors:[...this.errors],footErrors:[...this.footErrors]};}
 }

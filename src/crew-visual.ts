@@ -5,7 +5,7 @@ import {JUMP_SPEED} from './pilot-controls';
 import {requestedAsset} from './requested-assets';
 import {BikeRiderContact} from './rider-contact';
 import {FootContact} from './foot-contact';
-import {RiderArmsVisibility} from './bike-view';
+import {RiderBodyVisibility} from './bike-view';
 
 // Source Walking clip travels 1.313 m in one 26-frame cycle (30 FPS).
 export const WALK_STRIDE = 1.313094;
@@ -16,8 +16,9 @@ export class CrewVisual {
   private run?:THREE.AnimationAction;private ride?:THREE.AnimationAction;private jump?:THREE.AnimationAction;private airBlend=0;
   private bikeContact?:BikeRiderContact;
   private footContact?:FootContact;
-  private riderArms?:RiderArmsVisibility;
-  setBikeFirstPerson(first:boolean){if(first)(this.riderArms??=new RiderArmsVisibility(this.root)).setFirstPerson(true);else this.riderArms?.setFirstPerson(false);}
+  private riderBody?:RiderBodyVisibility;
+  bikeEye(target:THREE.Vector3){return this.riderBody?.eye(target,this.root)??target;}
+  setBikeFirstPerson(first:boolean){if(first)(this.riderBody??=new RiderBodyVisibility(this.root)).setFirstPerson(true);else this.riderBody?.setFirstPerson(false);}
   constructor(readonly root: THREE.Object3D, clips: THREE.AnimationClip[],private readonly walkStride=WALK_STRIDE,private readonly runStride=2.2) {
     const idle=clips.find(c=>c.name==='Idle'),walk=clips.find(c=>c.name==='Walking');
     if(!idle||!walk)throw new Error('Crew asset needs Idle and Walking clips');
@@ -43,7 +44,7 @@ export class CrewVisual {
   releaseBikeContact(){this.bikeContact?.restore();}
   fitFootContact(ground:(x:number,z:number)=>number){(this.footContact??=new FootContact(this.root)).apply(ground);}
   releaseFootContact(){this.footContact?.restore();}
-  snapshot(){return {idleTime:this.idle.time,walkTime:this.walk.time,walkWeight:this.walk.getEffectiveWeight(),runWeight:this.run?.getEffectiveWeight()??0,ridingWeight:this.ride?.getEffectiveWeight()??0,jumpWeight:this.jump?.getEffectiveWeight()??0,jumpTime:this.jump?.time??0,contact:this.bikeContact?.snapshot()??null,feet:this.footContact?.snapshot()??null};}
+  snapshot(){return {bikeFirstPerson:this.riderBody?.firstPerson??false,idleTime:this.idle.time,walkTime:this.walk.time,walkWeight:this.walk.getEffectiveWeight(),runWeight:this.run?.getEffectiveWeight()??0,ridingWeight:this.ride?.getEffectiveWeight()??0,jumpWeight:this.jump?.getEffectiveWeight()??0,jumpTime:this.jump?.time??0,contact:this.bikeContact?.snapshot()??null,feet:this.footContact?.snapshot()??null};}
 }
 let crewAsset:ReturnType<GLTFLoader['loadAsync']>|undefined;
 export async function loadCrewVisuals(actors:THREE.Group[]):Promise<CrewVisual[]> {
