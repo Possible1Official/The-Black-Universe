@@ -18,6 +18,10 @@ Cyber Biker player, ridable Turbo Bike and Sci-fi Rover on Nysa, the selected fl
 
 Nysa now has two remote receiver repair sites and a walk-in communications outpost. Open **J / FIELD LOG → Track next expedition objective**, repair both receivers in either order, then transmit from the outpost. Bringing the network online unlocks a third **Relay landing pad** for Kestrel, activates the tracking antenna and reveals an archive about the forge. Progress saves alongside the existing survey; you can still return at any time. [Expedition guide](docs/RELAY-EXPEDITION.md).
 
+## Signal Vault
+
+After restoring Silent Network, **J / FIELD LOG → Track Signal Vault** guides you to a new sealed research site at **X66 / Z76**. Tune its exterior receiver to **17.4 Hz /120°**, lock the carrier, watch the source-animated door open, then walk inside to recover **Archive04**. Calibration and recovery save independently of your original survey. [Controls and scope](docs/SIGNAL-VAULT.md).
+
 ## Expedition 001
 
 **Clear view:** information panels start hidden. Click **INFO** / press **H** to show or hide them. Click **1P / 3P** / press **C** to switch first/third person for both walking and flying. Touch movement, E, Brake/Boost/Target and pause remain usable with panels hidden. Preferences persist locally. See [camera and HUD scope](docs/VIEWS.md).

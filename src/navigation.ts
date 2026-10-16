@@ -1,3 +1,4 @@
+import {vaultStep} from './signal-vault';
 import {LEGACY_SHIP_LAYOUT,type ShipLayout} from './ship-layout';
 import {bulkheadPanels} from './bulkheads';
 import type {Progress} from './state';
@@ -8,11 +9,12 @@ import {SUPPLY_CACHE} from './supplies';
 import {FIELD_SITES,type FieldScan} from './survey';
 import {expeditionStep} from './relay-expedition';
 export interface NavPoint {x:number;z:number}
-export type SurfaceTrack=FieldScan|'supplies'|'network'|'drone'|NavPoint;
+export type SurfaceTrack=FieldScan|'supplies'|'network'|'drone'|'vault'|NavPoint;
 export interface Waypoint extends NavPoint {id:string;label:string;hint:string}
 const at=(id:string,label:string,x:number,z:number,hint='Approach, face the console and interact with E.'):Waypoint=>({id,label,x,z,hint});
 export function missionDestination(p:Progress,onSurface:boolean,tracked?:SurfaceTrack,landing:LandingSite='survey',layout:ShipLayout=LEGACY_SHIP_LAYOUT):Waypoint {
   const pad=landingPad(landing);
+  if(onSurface&&tracked==='vault'){const step=vaultStep(p.vault);return at('vault-'+step.id,step.label,SURFACE_ORIGIN+step.x,step.z,p.vault.calibrated?'Enter the open vault and approach the archive terminal.':'Tune the exterior receiver. Archive 03 at the outpost gives its carrier and bearing.');}
   if(onSurface&&tracked==='network'){const step=expeditionStep(p.network);return at('network-'+step.id,step.label,SURFACE_ORIGIN+step.x,step.z,step.id==='uplink'?'Enter the open outpost and use its uplink console.':'Approach the amber receiver console. Press E to repair it.');}
   if(onSurface&&typeof tracked==='object'&&Number.isFinite(tracked.x)&&Number.isFinite(tracked.z)&&Math.abs(tracked.x)<=SITE_HALF-3&&Math.abs(tracked.z)<=SITE_HALF-3)return at('surface-pin','Survey waypoint',SURFACE_ORIGIN+tracked.x,tracked.z,'Straight-line guidance only; choose a clear route around rocks. Field log restores mission guidance.');
   if(onSurface&&tracked==='supplies'&&!p.supplies.cacheClaimed)return at('supplies','Coolant supply cache',SURFACE_ORIGIN+SUPPLY_CACHE.x,SUPPLY_CACHE.z,'Recover cartridges with E when your reserve has space.');

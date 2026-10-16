@@ -322,3 +322,10 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Follow walked corners with bounded breadcrumbs and world sweeps; hold when driving or obstructed. Original four rotor loops and material appearance retained, no new walking obstacle.
 - Save recovery and readings; deploy beside the selected pad on subsequent landings. Existing missions remain independent.
 - Remaining: richer companion duties/encounters, obstacle replanning, distinct new destinations and measured device budgets. This is scripted navigation and local readings, not general AI or aerodynamic flight.
+
+## Signal Vault exploration (2026-10-16)
+- New sealed walk-in research site at X66/Z76, built from three reviewed CGTrader kit cells, original animated door, source-textured cargo/recorder props and shared render/physics terrain.
+- Optional two-control receiver tuning with graded signal feedback; restoring Silent Network enables locking the carrier and opening the vault. Walk inside to recover Archive04.
+- Field-log map/step guidance, persistent calibration/archive and officer debrief; existing sample/readings/ECHO remain independent. Door motion pauses and saves restore the open pose.
+- Refresh parent world transforms before initializing imported door colliders; verify closed/front shoulder blocking and open floor seams with actual capsules.
+- Remaining: distinct second-world travel, richer interiors/encounters and measured device budgets. The vault is authored local content and a bounded puzzle, not simulated signal intelligence.

@@ -46,3 +46,5 @@
 @media(max-width:600px) and (min-height:451px){#speedControl{bottom:140px}#hud.piloting #stick,#hud.piloting[data-information="false"] #stick{bottom:140px}}
 
 #movementControls{display:none}#movementControls[hidden]{display:none!important}@media(pointer:coarse){#movementControls{position:absolute;right:max(20px,env(safe-area-inset-right));bottom:145px;display:flex;gap:10px;pointer-events:auto}#movementControls button{min-width:64px;min-height:48px;padding:10px;background:#071621c9;touch-action:manipulation}#movementControls button[aria-pressed="true"]{background:#91dadd;color:#071621}}#hud[data-information="true"] #movementControls{bottom:210px}@media(pointer:coarse) and (max-height:450px){#movementControls{bottom:145px}#hud[data-information="true"] #movementControls{bottom:175px}}
+
+#vaultPanel label{display:block;margin:.9rem 0 .35rem;color:#c3e3e9}#vaultPanel output{float:right;color:#8de3de}#vaultPanel input[type=range]{display:block;width:100%;min-height:40px;accent-color:#78d4ce}#vaultPanel button{width:100%;margin:.5rem 0}
