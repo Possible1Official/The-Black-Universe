@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {WATER_LEVEL} from './biomes';
-import {createGroundMaterial,groundTint,GROUND_TILE_METERS} from './terrain-material';
+import {createGroundMaterial,groundTint,groundBlend,GROUND_TILE_METERS} from './terrain-material';
 import {LANDING,LANDING_PLAN,landingPad,type LandingSite,SAMPLE,SITE_HALF,SURFACE_ORIGIN,terrainHeight,terrainMesh,surfaceRocks} from './excursion';
 import {FIELD_SITES,type FieldScan} from './survey';
 import {SurfaceContact} from './surface-contact';
@@ -13,12 +13,14 @@ export function createSurface(){
   const group=new THREE.Group();group.position.x=SURFACE_ORIGIN;group.visible=false;
   const mesh=terrainMesh(),geometry=new THREE.BufferGeometry();
   geometry.setAttribute('position',new THREE.BufferAttribute(mesh.vertices,3));geometry.setIndex(new THREE.BufferAttribute(mesh.indices,1));geometry.computeVertexNormals();
-  const colors=new Float32Array(mesh.vertices.length),uv=new Float32Array(mesh.vertices.length/3*2),normals=geometry.getAttribute('normal');
+  const blends=new Float32Array(mesh.vertices.length),colors=new Float32Array(mesh.vertices.length),uv=new Float32Array(mesh.vertices.length/3*2),normals=geometry.getAttribute('normal');
   for(let i=0;i<colors.length;i+=3){
     const color=groundTint(mesh.vertices[i+1],normals.getY(i/3),mesh.vertices[i],mesh.vertices[i+2]);colors.set([color.r,color.g,color.b],i);
+    blends.set(groundBlend(mesh.vertices[i],mesh.vertices[i+2],normals.getY(i/3)),i);
     uv.set([mesh.vertices[i]/GROUND_TILE_METERS,mesh.vertices[i+2]/GROUND_TILE_METERS],i/3*2);
   }
   geometry.setAttribute('uv',new THREE.BufferAttribute(uv,2));
+  geometry.setAttribute('groundBlend',new THREE.BufferAttribute(blends,3));
   geometry.setAttribute('color',new THREE.BufferAttribute(colors,3));
   const groundMaterial=createGroundMaterial();
   const contact=new SurfaceContact();contact.bind(groundMaterial.material);

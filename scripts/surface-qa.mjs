@@ -17,7 +17,7 @@ try{
     for(const [name,x,z,yaw] of [['landing',396.2,22,0],['outcrop',406,-3,-Math.PI/8]]){
       await page.evaluate(({x,z,yaw})=>window.__erebus.place(x,z,yaw),{x,z,yaw});await page.waitForTimeout(700);
       const s=await page.evaluate(()=>window.__erebus.snapshot());assert.equal(s.onSurface,true);assert.equal(s.render.lighting.visibleSources+s.render.lighting.visibleProxies,0);
-      assert.equal(s.surfaceMaterials.albedo,true);assert.equal(s.surfaceMaterials.normalMap,quality==='high');assert.equal(s.surfaceMaterials.roughnessMap,quality==='high');assert.equal(s.surfaceMaterials.cpuBytes,196608);
+      assert.equal(s.surfaceMaterials.albedo,true);assert.equal(s.surfaceMaterials.bumpMap,quality==='high');assert.equal(s.surfaceMaterials.roughnessMap,quality==='high');assert.equal(s.surfaceMaterials.cpuBytes,65536);
       samples.push({quality,name,render:s.render,materials:s.surfaceMaterials});
       if(process.argv[3])await page.screenshot({path:`${process.argv[3]}/${quality}-${name}.png`});
     }
