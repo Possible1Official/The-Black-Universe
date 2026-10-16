@@ -1,3 +1,4 @@
+import {createRockCollider} from '../src/rock-collider';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import RAPIER from '@dimforge/rapier3d-compat';
@@ -27,7 +28,7 @@ test('both parking areas at each pad allow initial vehicle travel through the co
  await RAPIER.init();const surface=createSurface();
  for(const pad of LANDING_PLAN)for(const kind of ['bike','rover'] as const){const world=new RAPIER.World({x:0,y:-9.81,z:0});try{
  world.timestep=1/60;world.createCollider(RAPIER.ColliderDesc.trimesh(surface.mesh.vertices,surface.mesh.indices).setTranslation(SURFACE_ORIGIN,0,0));
- for(const o of surface.obstacles)world.createCollider(RAPIER.ColliderDesc.ball(o.radius).setTranslation(o.x,o.y,o.z));
+ for(const o of surface.obstacles)createRockCollider(world,o);
  for(const o of surface.landmarkBoxes)world.createCollider(RAPIER.ColliderDesc.cuboid(o.size[0]/2,o.size[1]/2,o.size[2]/2).setTranslation(SURFACE_ORIGIN+o.x,o.y,o.z));
  world.createCollider(RAPIER.ColliderDesc.cuboid(2.47,1.42,3.32).setTranslation(SURFACE_ORIGIN+pad.x,1.42,pad.z));
  world.step();const x=pad.x+(kind==='bike'?7:-8),z=pad.z+7,vehicle=new GroundVehicle(kind,world,{x:SURFACE_ORIGIN+x,y:terrainHeight(x,z),z});world.step();

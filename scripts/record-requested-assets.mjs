@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 const definitions={
+ rock:{creator:'dimdimich',model_id:898927,url:'https://www.cgtrader.com/free-3d-models/scanned/various/rock-pbr-game-ready',triangle_budget:1000,transfer_budget:1500000},
  canister:{creator:'desanlisadrien1',model_id:4044829,url:'https://www.cgtrader.com/free-3d-models/space/other/scifi-asset-pack',triangle_budget:1500,transfer_budget:450000},
  cargo:{creator:'desanlisadrien1',model_id:4044829,url:'https://www.cgtrader.com/free-3d-models/space/other/scifi-asset-pack',triangle_budget:600,transfer_budget:400000},
  resident:{creator:'seemlyhasan',model_id:2712319,url:'https://www.cgtrader.com/free-3d-models/character/woman/cute-girl-5122a81c-b888-4276-affd-71031a1ddb5a',triangle_budget:40000,transfer_budget:3000000},

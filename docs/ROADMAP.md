@@ -266,3 +266,10 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Preserve captured Walking/Running/Jump clips; fade adjustment as a boot swings, restore source pose before each mixer update, and clear on jumping, riding, first person and leaving Nysa.
 - Skip when root support is elevated above/below the terrain so height-field fitting cannot pull a character standing on a prop down into it. No source/model/map changes.
 - Remaining: world-space foot locking, exact boot/rock/prop contacts, ship-floor IK and real-device CPU/GPU measurement. This is bounded visual fitting, not physical leg locomotion.
+
+## Authored Nysa rocks with bounded detail (2026-10-16)
+- Review three genuinely free CGTrader rock listings; incorporate dimdimich's908-triangle PBR scan with albedo, corrected OpenGL tangent normals and packed AO/roughness/metallic maps.
+- Keep101 rock X/Z positions and reserved routes; seat each rotated rock into the actual terrain. Share a25-vertex/46-triangle coarse hull between collision and distant/loading fallback, replacing oversized old spheres for this flatter scan.
+- One instanced detailed draw: at most12 rocks within24 m in Performance,20 within36 m in High, with hysteresis. Lazy surface-entry download, safe failure fallback, explicit retry, cached re-entry and no physics swap during LOD.
+- Match fallback color to measured source albedo; soft ground contact for the four nearest rocks shares the terrain shader. No new lights, decals or shadow pass.
+- Remaining: more authored rock varieties/biome scenery, seamless LOD fades, projected directional shadows and real-device rendering/convex-collision budgets. The rest of Nysa's landscape remains procedural.

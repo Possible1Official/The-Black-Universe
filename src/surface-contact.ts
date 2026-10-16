@@ -11,10 +11,10 @@ export function contactStrength(kind:ContactKind,gap:number){
   return footprint[kind][2]*(1-t)*(1-t);
 }
 
-/** Four uniforms shared by terrain and pads: no extra draw, map or depth layer. */
+/** Eight bounded contacts shared by terrain and pads: no extra draw, map or depth layer. */
 export class SurfaceContact {
-  private readonly ellipses={value:kinds.map(()=>new THREE.Vector4(0,0,1,1))};
-  private readonly poses={value:kinds.map(()=>new THREE.Vector4(1,0,0,0))};
+  private readonly ellipses={value:Array.from({length:8},()=>new THREE.Vector4(0,0,1,1))};
+  private readonly poses={value:Array.from({length:8},()=>new THREE.Vector4(1,0,0,0))};
   clear(){for(const p of this.poses.value)p.z=0;}
   update(kind:ContactKind,pose:ContactPose,ground:number){
     const i=kinds.indexOf(kind),gap=pose.y-ground;
@@ -22,6 +22,9 @@ export class SurfaceContact {
     const spread=1+THREE.MathUtils.clamp(gap,0,footprint[kind][3])*.12;
     this.ellipses.value[i].set(pose.x,pose.z,footprint[kind][0]*spread,footprint[kind][1]*spread);
     this.poses.value[i].set(Math.cos(pose.yaw),Math.sin(pose.yaw),contactStrength(kind,gap),0);
+  }
+  updateRock(slot:number,x:number,z:number,width:number,depth:number){
+    if(slot<0||slot>=4)return;const i=slot+4;this.ellipses.value[i].set(x,z,Math.max(.05,width),Math.max(.05,depth));this.poses.value[i].set(1,0,.28,0);
   }
   bind(material:THREE.MeshStandardMaterial){
     const before=material.onBeforeCompile,cache=material.customProgramCacheKey();
@@ -31,11 +34,12 @@ export class SurfaceContact {
       shader.vertexShader='varying vec2 vContactXZ;\n'+shader.vertexShader;
       shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',
         'vContactXZ = (modelMatrix * vec4(transformed, 1.0)).xz;\n#include <project_vertex>');
-      shader.fragmentShader='varying vec2 vContactXZ;\nuniform vec4 contactEllipses[4];\nuniform vec4 contactPoses[4];\n'+shader.fragmentShader;
+      shader.fragmentShader='varying vec2 vContactXZ;\nuniform vec4 contactEllipses[8];\nuniform vec4 contactPoses[8];\n'+shader.fragmentShader;
       shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`
         float contactVisibility = 1.0;
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 8; i++) {
           vec4 ellipse = contactEllipses[i], pose = contactPoses[i];
+          if (pose.z <= 0.0) continue;
           vec2 d = vContactXZ - ellipse.xy;
           vec2 local = vec2(pose.x*d.x-pose.y*d.y, pose.y*d.x+pose.x*d.y) / ellipse.zw;
           float softContact = 1.0 - smoothstep(0.05, 1.0, length(local));
@@ -45,7 +49,7 @@ export class SurfaceContact {
         outgoingLight *= contactVisibility;
         #include <opaque_fragment>`);
     };
-    material.customProgramCacheKey=()=>cache+'/surface-contact-v1';
+    material.customProgramCacheKey=()=>cache+'/surface-contact-v2';
     material.needsUpdate=true;
   }
   snapshot(){return kinds.map((kind,i)=>({kind,ellipse:this.ellipses.value[i].toArray(),pose:this.poses.value[i].toArray()}));}

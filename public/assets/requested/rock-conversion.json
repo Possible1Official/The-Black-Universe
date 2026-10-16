@@ -1,0 +1,30 @@
+{
+  "source_sha256": "34fc5f7ae813335026886bd9a937575de4469d8ed0affc3d1f63082b016faac8",
+  "source_archive_sha256": "a72a6caf8e5c142d9d71ef2555a66420711a4702dcb1da16694e77fec97028af",
+  "source_triangles": 908,
+  "source_actions": [],
+  "source_bounds": [
+    [
+      -0.04821539297699928,
+      -0.031237201765179634,
+      -0.001532020978629589
+    ],
+    [
+      0.052076052874326706,
+      0.03626115620136261,
+      0.05733177065849304
+    ]
+  ],
+  "fit": "centered unit enclosing sphere, uniform scaling, no decimation",
+  "maps": {
+    "size": 512,
+    "normal": "DirectX green inverted to OpenGL, then vectors renormalized",
+    "orm": "source AO/roughness/metallic in RGB"
+  },
+  "animations": [],
+  "collision_hull": {
+    "vertices": 25,
+    "triangles": 46,
+    "method": "26 support directions, coarse convex hull; same data for fallback and Rapier"
+  }
+}

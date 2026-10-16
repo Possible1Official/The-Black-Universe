@@ -1,4 +1,5 @@
 import './style.css';
+import {createRockCollider} from './rock-collider';
 import {startFlight,startRunwayFlight,stepFlight,beginApproach,canApproach,flightDistance,flightSpeed,flightGoal,isSurfaceFlight,surfaceFlightPose,cloudOpacity,approachGuidance,captureLook,DOCKING_SECONDS,NYSA_CENTER,type FlightState,type FlightLeg} from './flight';
 import {inDockingZone} from './station';
 import {createFlightScene,makeShuttle} from './flight-scene';
@@ -475,7 +476,7 @@ function setSurfaceView(landing:boolean){
   // Entering the descent view must not overwrite the original ship visibility cache.
   if(landing&&shipVisibility.size===0){for(const node of shipNodes){shipVisibility.set(node,node.visible);node.visible=false;}}
   else if(!landing){for(const [node,visible] of shipVisibility)node.visible=visible;shipVisibility.clear();}
-  surface.group.visible=landing;if(landing)void loadCargoCache();
+  surface.group.visible=landing;if(landing){void loadCargoCache();void surface.rockScenery.load(true);}
   scene.background=landing?surfaceSky:new THREE.Color('#02050d');scene.fog=landing?new THREE.FogExp2(surfaceSky,.0035):null;
 }
 $('deployNysa').onclick=()=>{
@@ -636,8 +637,10 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
   renderPass.scene=flight&&!groundFlight?flightWorld.scene:scene;
   if(camera.parent!==renderPass.scene)renderPass.scene.add(camera);
   landedShuttle.visible=!groundFlight;flightClouds.style.opacity=String(flight?cloudOpacity(flight):0);camera.updateMatrixWorld();
+  surface.rockScenery.update(new THREE.Vector3(camera.position.x-SURFACE_ORIGIN,camera.position.y,camera.position.z),$<HTMLSelectElement>('quality').value==='high',surface.group.visible);
   surface.contact.clear();
   if(surface.group.visible){
+    for(const [i,rock]of surface.rockScenery.contacts().entries())surface.contact.updateRock(i,rock.x+SURFACE_ORIGIN,rock.z,rock.width,rock.depth);
     // World X/Z matches shader fragments; height follows the actual render mesh.
     surface.contact.update('player',{x:avatar.position.x,y:avatar.position.y,z:avatar.position.z,yaw:avatar.rotation.y,visible:avatar.visible&&!riding},vehicleGround(avatar.position.x-SURFACE_ORIGIN,avatar.position.z));
     for(const [kind,mesh] of vehicleVisuals)surface.contact.update(kind,{x:SURFACE_ORIGIN+mesh.position.x,y:mesh.position.y,z:mesh.position.z,yaw:groundVehicles.get(kind)!.yaw,visible:mesh.visible},vehicleGround(mesh.position.x,mesh.position.z));
@@ -708,7 +711,7 @@ async function boot(){await RAPIER.init();world=new RAPIER.World({x:0,y:-9.81,z:
   extractionTarget.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(.16,1.2,.16).setTranslation(SURFACE_ORIGIN,1.2,LANDING.z+SHUTTLE_HATCH_Z));
   parkedShuttleCollider=world.createCollider(RAPIER.ColliderDesc.cuboid(SHUTTLE_SIZE[0]/2,SHUTTLE_SIZE[1]/2,SHUTTLE_SIZE[2]/2).setTranslation(SURFACE_ORIGIN,SHUTTLE_SIZE[1]/2,LANDING.z));
   sampleTarget.collider=world.createCollider(RAPIER.ColliderDesc.ball(.6).setTranslation(SURFACE_ORIGIN+SAMPLE.x,terrainHeight(SAMPLE.x,SAMPLE.z)+.45,SAMPLE.z));
-  for(const rock of surface.obstacles)world.createCollider(RAPIER.ColliderDesc.ball(rock.radius).setTranslation(rock.x,rock.y,rock.z));
+  for(const rock of surface.obstacles)createRockCollider(world,rock);
   for(const b of surface.landmarkBoxes)world.createCollider(RAPIER.ColliderDesc.cuboid(b.size[0]/2,b.size[1]/2,b.size[2]/2).setTranslation(SURFACE_ORIGIN+b.x,b.y,b.z));
   surface.scanners.forEach((s,i)=>{fieldTargets[i].collider=world.createCollider(RAPIER.ColliderDesc.cuboid(s.size[0]/2,s.size[1]/2,s.size[2]/2).setTranslation(s.position.x,s.position.y-.45,s.position.z));});
   for(const [index,s] of solids.entries()){const collider=world.createCollider(RAPIER.ColliderDesc.cuboid(s.size[0]/2,s.size[1]/2,s.size[2]/2).setTranslation(s.pos[0],s.pos[1],s.pos[2]));if(s.target)s.target.collider=collider;if(index>=structureStart&&index<structureEnd)structuralColliders.push(collider);}for(const d of doors)d.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(.14,1.6,.975).setTranslation(d.x,1.6,SHIP_LAYOUT.doorZ));player=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(SHIP_LAYOUT.spawn.x,.9,SHIP_LAYOUT.spawn.z));playerCollider=world.createCollider(RAPIER.ColliderDesc.capsule(PLAYER_SHAPE.halfHeight,PLAYER_SHAPE.radius),player);controller=world.createCharacterController(PLAYER_SHAPE.offset);controller.enableAutostep(PLAYER_SHAPE.stepHeight,PLAYER_SHAPE.stepWidth,true);controller.enableSnapToGround(.2);controller.setMaxSlopeClimbAngle(Math.PI/4);

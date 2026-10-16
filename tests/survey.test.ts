@@ -1,3 +1,4 @@
+import {createRockCollider} from '../src/rock-collider';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import RAPIER from '@dimforge/rapier3d-compat';
@@ -30,7 +31,7 @@ test('expanded terrain routes reach both rendered scanners through real Rapier a
     assert.equal(SITE_HALF,128);assert.equal(surface.mesh.indices.length/3,73728);assert.equal(surface.mesh.vertices.length/3,37249);
     assert.ok(surface.obstacles.length<=128);assert.equal(surface.landmarkBoxes.length,5);assert.equal(surface.scanners.length,2);
     world.createCollider(RAPIER.ColliderDesc.trimesh(surface.mesh.vertices,surface.mesh.indices));
-    for(const r of surface.obstacles)world.createCollider(RAPIER.ColliderDesc.ball(r.radius).setTranslation(r.x-SURFACE_ORIGIN,r.y,r.z));
+    for(const r of surface.obstacles)createRockCollider(world,r,-SURFACE_ORIGIN);
     for(const b of surface.landmarkBoxes)world.createCollider(RAPIER.ColliderDesc.cuboid(b.size[0]/2,b.size[1]/2,b.size[2]/2).setTranslation(b.x,b.y,b.z));
     const scanners=surface.scanners.map(s=>world.createCollider(RAPIER.ColliderDesc.cuboid(s.size[0]/2,s.size[1]/2,s.size[2]/2).setTranslation(s.position.x-SURFACE_ORIGIN,s.position.y-.45,s.position.z)));
     const body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(-3.8,1.05,22)),capsule=world.createCollider(RAPIER.ColliderDesc.capsule(.55,.3),body),controller=world.createCharacterController(.015);
