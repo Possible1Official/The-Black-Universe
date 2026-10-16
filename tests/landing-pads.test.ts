@@ -5,7 +5,7 @@ import {startFlight,surfaceFlightPose,SURFACE_FLIGHT_SECONDS,stepFlight} from '.
 import {missionDestination} from '../src/navigation';
 import {freshProgress} from '../src/state';
 import {SHUTTLE_HATCH_Z} from '../src/shuttle';
-test('both pads have flat ground and rock-free approach space',()=>{
+test('all landing pads have flat ground and rock-free approach space',()=>{
  for(const pad of LANDING_PLAN){for(const [dx,dz] of [[0,0],[3,0],[0,3],[-2,-2]])assert.equal(terrainHeight(pad.x+dx,pad.z+dz),0);for(const rock of surfaceRocks())assert.ok(Math.hypot(rock.x-pad.x,rock.z-pad.z)>=6);}
 });
 test('site-specific lift preserves the original flight path shape and returns to the selected pad',()=>{
