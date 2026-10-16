@@ -278,3 +278,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Smooth sand/stone/organic-soil pattern weights follow regional influence and slope; highlands mix stone/sand. Rotated larger-scale modulation reduces the obvious four-meter color repeat.
 - One linear packed texture supplies both quality modes; High adds matching bump and regional roughness. Existing CGTrader assets, terrain collision and soft contact shading remain.
 - Remaining: authored ground scans/erosion, more surface vegetation variety, measured physical-device GPU/memory budgets and broader planetary exploration. Current ground remains procedural.
+
+## Authored wetland vegetation (2026-10-16)
+- Compare three free CGTrader plant packs; incorporate two small Nicholas-3D grass clumps with original mesh data,512px cutout albedo/normal maps and corrected opacity.
+- Replace240 cones with64 terrain-fitted clumps, clearing standing water, steep slopes, rocks and mission props. Two instanced batches share the resource; safe rooted fallback and explicit re-entry retry.
+- Gentle root-anchored visual wind pauses with gameplay. Approximate thin-leaf diffuse lighting restores a source translucency cue without emission; source has no captured animation.
+- Remaining: denser authored vegetation/other biomes, measured physical-device alpha-overdraw/memory budgets, terrain-conforming individual roots, interactive vegetation and physically based leaf scattering.

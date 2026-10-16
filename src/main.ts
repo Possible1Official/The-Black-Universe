@@ -476,7 +476,7 @@ function setSurfaceView(landing:boolean){
   // Entering the descent view must not overwrite the original ship visibility cache.
   if(landing&&shipVisibility.size===0){for(const node of shipNodes){shipVisibility.set(node,node.visible);node.visible=false;}}
   else if(!landing){for(const [node,visible] of shipVisibility)node.visible=visible;shipVisibility.clear();}
-  surface.group.visible=landing;if(landing){void loadCargoCache();void surface.rockScenery.load(true);}
+  surface.group.visible=landing;if(landing){void loadCargoCache();void surface.rockScenery.load(true);void surface.plants.load(true);}
   scene.background=landing?surfaceSky:new THREE.Color('#02050d');scene.fog=landing?new THREE.FogExp2(surfaceSky,.0035):null;
 }
 $('deployNysa').onclick=()=>{
@@ -638,6 +638,7 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
   if(camera.parent!==renderPass.scene)renderPass.scene.add(camera);
   landedShuttle.visible=!groundFlight;flightClouds.style.opacity=String(flight?cloudOpacity(flight):0);camera.updateMatrixWorld();
   surface.rockScenery.update(new THREE.Vector3(camera.position.x-SURFACE_ORIGIN,camera.position.y,camera.position.z),$<HTMLSelectElement>('quality').value==='high',surface.group.visible);
+  surface.plants.update(dt,active&&!dialogueOpen&&surface.group.visible);
   surface.contact.clear();
   if(surface.group.visible){
     for(const [i,rock]of surface.rockScenery.contacts().entries())surface.contact.updateRock(i,rock.x+SURFACE_ORIGIN,rock.z,rock.width,rock.depth);

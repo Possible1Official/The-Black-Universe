@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 const definitions={
+ grass:{creator:'Nicholas-3D',model_id:3875260,url:'https://www.cgtrader.com/free-3d-models/plant/grass/realistic-grass-pack-for-games',triangle_budget:100,transfer_budget:750000},
  rock:{creator:'dimdimich',model_id:898927,url:'https://www.cgtrader.com/free-3d-models/scanned/various/rock-pbr-game-ready',triangle_budget:1000,transfer_budget:1500000},
  canister:{creator:'desanlisadrien1',model_id:4044829,url:'https://www.cgtrader.com/free-3d-models/space/other/scifi-asset-pack',triangle_budget:1500,transfer_budget:450000},
  cargo:{creator:'desanlisadrien1',model_id:4044829,url:'https://www.cgtrader.com/free-3d-models/space/other/scifi-asset-pack',triangle_budget:600,transfer_budget:400000},
@@ -19,7 +20,7 @@ const sha=b=>crypto.createHash('sha256').update(b).digest('hex');const assets={}
 for(const [kind,definition] of Object.entries(definitions)){
  const file=`src/assets/requested/${kind}.ebup`;if(!fs.existsSync(file))continue;
  const glb=fs.readFileSync(`.local/requested-optimized/${kind}.glb`),packed=fs.readFileSync(file);const gltf=JSON.parse(glb.subarray(20,20+glb.readUInt32LE(12)).toString());
- const primitives=gltf.meshes.flatMap(m=>m.primitives),triangles=primitives.reduce((sum,p)=>sum+(p.indices?gltf.accessors[p.indices].count:gltf.accessors[p.attributes.POSITION].count)/3,0);
+ const primitives=gltf.meshes.flatMap(m=>m.primitives),triangles=primitives.reduce((sum,p)=>sum+(p.indices!==undefined?gltf.accessors[p.indices].count:gltf.accessors[p.attributes.POSITION].count)/3,0);
  const reportPath=`.local/requested-optimized/${kind==='bike'?'biker':kind}-report.json`,report=fs.existsSync(reportPath)?JSON.parse(fs.readFileSync(reportPath,'utf8')):{};
  assets[kind]={...definition,source_sha256:report.source_sha256??report.source_archive_sha256??null,rights:definition.rights??'CGTrader Royalty Free License (no AI), incorporated derivative only.',glb_bytes:glb.length,glb_sha256:sha(glb),resource_bytes:packed.length,resource_sha256:sha(packed),triangles,primitives:primitives.length,images:gltf.images?.length??0,animations:gltf.animations?.map(a=>a.name)??[],source_retained_privately:true};
 }

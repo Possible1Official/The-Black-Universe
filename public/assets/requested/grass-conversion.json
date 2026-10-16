@@ -1,0 +1,119 @@
+{
+  "source_sha256": "884af32b1cbb3fa0e85f27df67c97ed57629ebda8aee95f263ca2697e9b04da3",
+  "source_blend_sha256": "b8490ebbe4a442ab6d2b5d3b7bf75ef4204df0e2a0f1c4bc64d116de80123826",
+  "source_bytes": 3791444,
+  "output_bytes": 656536,
+  "selected_source_nodes": [
+    0,
+    5
+  ],
+  "triangles": [
+    40,
+    40
+  ],
+  "bounds": [
+    {
+      "name": "Wheat_Grass_LowPoly",
+      "size": [
+        0.8,
+        0.3170868540989978,
+        0.7946241834030007
+      ],
+      "floor": 0,
+      "scale": 1.105950395201413
+    },
+    {
+      "name": "Grass_Jumbled_Low_Dense",
+      "size": [
+        0.6882930428106837,
+        0.5887873629898905,
+        0.8
+      ],
+      "floor": 0,
+      "scale": 2.1158274835225295
+    }
+  ],
+  "animations": [],
+  "source_actions": [],
+  "alpha_fix": "Source Blend uses transparent/mixed leaf shaders; supplied GLB omitted alphaMode. Restore MASK .35, double-sided. Preserve base RGBA and cutoff coverage after filtering. No emission.",
+  "images": [
+    {
+      "name": "WheatGrass_Clump_Diffuse-WheatGrass_Clump_Opacity",
+      "source_sha256": "1e14800e00d2f9149b66856bd9625b76479108a6c7d6684802b7a79cdfc89dde",
+      "output_sha256": "c7b5da339649e84d3ea6d7d0263d87f879c3648630a9c0545127e7a9e8b2d7e5",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "normal_renormalized": false,
+      "source_alpha_coverage": 0.15279483795166016,
+      "output_alpha_coverage": 0.15277099609375
+    },
+    {
+      "name": "WheatGrass_Clump_Normal",
+      "source_sha256": "48e96a07a9078ecd796add8dc65b738cf06547fcebe2ad60a156c6b3b182dc05",
+      "output_sha256": "87f3cf0d8118f60e0b44d4175e595531566a8ad7b1bd4fbb119e6672e20c906d",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "normal_renormalized": true,
+      "source_alpha_coverage": null,
+      "output_alpha_coverage": null
+    },
+    {
+      "name": "Grass_Clumps_B.png-Grass_Clumps_B_Opacity.png",
+      "source_sha256": "4a40b0ca9da1cfd38f731170557b1fbf6c9f64a0145096456c22a3d51cae68a5",
+      "output_sha256": "2d2d5a61e647bae8b69d1d1c50d7fa124c9965203ac06a41b2ee5356498bc0d5",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "normal_renormalized": false,
+      "source_alpha_coverage": 0.08811092376708984,
+      "output_alpha_coverage": 0.08798599243164062
+    },
+    {
+      "name": "Grass_Clumps_B_Normal",
+      "source_sha256": "836a53fe2c49ef58c00980970be447cd31d0f3fe82adfd0a1a72b0da01beeb27",
+      "output_sha256": "6769f345b3fe3db52992595933142831f5685cc562c559718332fbb413de9c48",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "size": [
+        512,
+        512
+      ],
+      "normal_renormalized": true,
+      "source_alpha_coverage": null,
+      "output_alpha_coverage": null
+    }
+  ],
+  "preserved_mesh_views_sha256": {
+    "5": "cdc8e6a38d002a6a5395efa37ba7bdad3bf1fd0b58ac3334f5c96d1f6e385684",
+    "0": "7a9905dd0f0d4557af5a82a5f87e064827f9580f78e237ce000c6026f37a05a7",
+    "1": "ea6121177c11a9d88d43f7b3903134e68d69acf5e47121aa6a128aa7c8f568bd",
+    "2": "a0cea21b15aff6686fe0d18c3303a5fe3dc598ef41908afc34560eb15d90a04d",
+    "3": "486197eac438dc23fc21e77ce838b00f98b814a1abde7f2c402b530ed58bd91c",
+    "4": "8ee8e618cd50888eba36622fb201ba6cd376cee2123881c429953e43a08dd365",
+    "41": "ce0447f34d5b22985e4f53eb438d866773eaf736c30fdf23972bea509d4fab70",
+    "36": "569e87908bd4420cc65880360dad5a4b5ec3ec0fc83344644e5a37535c86f327",
+    "37": "5080c670c114fafb94b3ce1f21cb477c46641d059f9563281b48423c479f0c45",
+    "38": "cd543fd35e9919b656fd092673001478bf97129be8d580beb4beb4c26e19b974",
+    "39": "d6f56e80bdb0cee136407fd3a8ca4d4b48be8a823430254e454581337d46017b",
+    "40": "966728e9cc5d9fc20f907e27fbc298254911435abef6007630221dd27c8fcda5"
+  }
+}
