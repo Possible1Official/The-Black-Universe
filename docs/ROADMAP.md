@@ -321,7 +321,7 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Recover a source-animated CGTrader quadrotor after Silent Network; interact for Follow, Hold and a nearby survey scan. Field-log locating adds no permanent command overlay.
 - Follow walked corners with bounded breadcrumbs and world sweeps; hold when driving or obstructed. Original four rotor loops and material appearance retained, no new walking obstacle.
 - Save recovery and readings; deploy beside the selected pad on subsequent landings. Existing missions remain independent.
-- Remaining: richer companion duties/encounters, obstacle replanning, distinct new destinations and measured device budgets. This is scripted navigation and local readings, not general AI or aerodynamic flight.
+- Remaining: richer companion duties/encounters, global obstacle replanning, distinct new destinations and measured device budgets. This is scripted navigation and local readings, not general AI or aerodynamic flight.
 
 ## Signal Vault exploration (2026-10-16)
 - New sealed walk-in research site at X66/Z76, built from three reviewed CGTrader kit cells, original animated door, source-textured cargo/recorder props and shared render/physics terrain.
@@ -335,3 +335,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Saved cargo phase, field-log/map step guidance, officer debrief and16m/s rover cruise reward. Re-entry retains cargo, reset restores14m/s; bike and older missions remain independent.
 - Preserve all source rover/cargo geometry/maps and articulated wheel motion. Cargo follows the chassis rigidly with no new mounted collider; field/depot collision matches the one transferred crate.
 - Remaining: physical loading animation, dynamic cargo forces, more contracts/encounters, distinct worlds and measured device budgets. This is a bounded kinematic transport interaction, not a cargo physics simulation.
+
+## ECHO local obstacle routing (2026-10-17)
+- Follow now attempts a bounded terrain-supported detour around an obstructed breadcrumb, then rejoins the existing walked route. Actual swept-volume movement remains authoritative, including after a path is found.
+- Short obstruction debounce, capped local grid/query work and cooldown; sealed/unsupported/tight paths still stop safely. Hold, scan, boarding, redeployment and pause preserve their expected behavior.
+- Original reviewed CGTrader drone geometry, materials and captured rotor motion unchanged; no new stock downloads, render resources or permanent controls.
+- Remaining: global replanning, richer companion duties/encounters, distinct destinations and measured physical-device budgets. Local grid searches can fail even when a distant route exists.
