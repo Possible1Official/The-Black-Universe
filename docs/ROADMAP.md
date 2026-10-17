@@ -1,5 +1,11 @@
 # Roadmap
 
+## Vega guided station tour (2026-10-17)
+- Optional five-stop physical tour: navigation, forge, engineering, observatory and habitat, with progress-aware briefings and explicit continuation.
+- Wait for the visitor, open room bulkheads, protect crew against closing doors, and reverse traversed lanes on cancellation; normal bridge patrol resumes afterward.
+- Reuse existing captured Mixamo crew motion and reviewed CGTrader interiors without modifying asset/material bytes. No new permanent overlay or mission/save dependency.
+- Remaining: distinct second-world travel, larger navigation graphs, richer NPC duties and measured device budgets. This is an authored local guide, not general-purpose AI.
+
 Vision: an immersive, physically coherent browser universe with explorable vessels and worlds, believable characters, and increasingly capable NPCs. This is a long-term program, not a promise of television-level realism from one build.
 
 ## Foundation (released v0.1.0)

@@ -1,5 +1,9 @@
 # Asset pipeline
 
+## Vega station tour (2026-10-17)
+
+Reuse the existing Intrepid CGTrader interior, original textured stations and locally captured Mixamo Ely crew walking/idle clips. All14 CGTrader derivative files, original maps/material settings, provenance and animation bytes are unchanged. This cycle adds no stock download, conversion, raw-source redistribution, geometry, map, light or collider. The guide follows sixteen authored lane points using actual capsule collision and the existing motion blend; briefings are scripted and progress-aware. No repair/pointing/gesture animation is available or claimed. Optional INFO guidance and conversation buttons add no permanent screen overlay. Additional bounded CPU math and crew-door occupancy checks have not been benchmarked on a physical device. No fresh CGTrader/Mixamo login is needed; no private session survival is claimed.
+
 ## Current release
 Ship, forge, planets, panels, floor and terrain maps remain procedural. Vega and Ion use the same locally bundled **Ely by K. Atienza** character, each with an independent skeleton and animation mixer. Procedural articulated androids remain a failure fallback. These are game characters with captured motion, not photorealistic people or general AI. Runtime uses no Mixamo account/token or remote CDN.
 
