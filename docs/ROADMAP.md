@@ -1,16 +1,23 @@
 # Roadmap
 
+## Vesper ECHO companion (2026-10-17)
+- Recover ECHO on Nysa to bring the reviewed CGTrader drone and its source rotor loop on Vesper expeditions.
+- Approach for Follow/Hold/Scan; collision-swept breadcrumb following and bounded local detours use the basin's own world. Vehicles make ECHO hold.
+- Two-second scans record unread frost/warmth readings only within8m and uninterrupted clear sight; readings share normal saved survey progress. Optional field-log tracking locates ECHO.
+- Pause freezes movement/scanning/rotors; re-entry starts beside the apron holding, with cached source geometry/materials and no new collider.
+- Remaining: authored encounters, companion cargo/ship duties, wider navigation and physical-device budgets. This remains a bounded local controller, not general-purpose AI.
+
 ## Vesper ground vehicles (2026-10-17)
 - Reviewed CGTrader Turbo Bike and Sci-fi Rover now accompany Kestrel at Vesper's apron; mount, drive, brake and collision-checked dismount in the separate basin world.
 - Original maps and captured rider pose retained; full-body bike1P/3P, hinged rover arms, wheel/knuckle movement and bike banking/shocks reuse existing systems with exact Vesper mesh support.
 - Independent look, left speed/right steer, pause cleanup, calibrated rover cruise, bounded cached re-entry and no scans/boarding while mounted.
-- Remaining: Vesper encounters/companion/cargo, broader landscapes and physical-device budgets. Suspension is visual support fitting, not force-based vehicle dynamics.
+- Remaining: Vesper encounters/cargo, broader landscapes and physical-device budgets. Suspension is visual support fitting, not force-based vehicle dynamics.
 
 ## Vesper second-world expedition (2026-10-17)
 - Archive05 unlocks manual approach and guided capture/descent to a distinct frozen-basin destination; visible globe safety hull and chase-camera/receiver occlusion.
 - Separate rendered/collision terrain, stable scanned rocks, apron and parked jet, two readings, gated Archive06, additive save/debrief and guided return with an outward orbital handoff.
 - Existing character walking/run/jump and CGTrader rock/shuttle/recorder geometry/maps retained. Pause, re-entry, reset and safe reload supported; INFO/1P/3P unchanged.
-- Remaining: Vesper companion, richer authored landscapes/interiors, global streaming, encounters and physical-device budgets. This is one bounded sector, not a full planet or simulated biosphere.
+- Remaining: richer authored landscapes/interiors, global streaming, encounters and physical-device budgets. This is one bounded sector, not a full planet or simulated biosphere.
 
 ## Vega guided station tour (2026-10-17)
 - Optional five-stop physical tour: navigation, forge, engineering, observatory and habitat, with progress-aware briefings and explicit continuation.

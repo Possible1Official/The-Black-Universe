@@ -17,31 +17,33 @@ export function droneMotion(world:RAPIER.World,position:TrailPoint,delta:TrailPo
  const hit=world.castShape(position,{x:0,y:0,z:0,w:1},direction,new RAPIER.Ball(DRONE_RADIUS),0,length,true,undefined,undefined,observer);
  return direction.multiplyScalar(hit?Math.max(0,hit.time_of_impact-.015):length);
 }
-export function droneScanSite(position:TrailPoint,recorded:readonly FieldScan[],anchors:readonly {id:FieldScan;position:TrailPoint}[],visible:(anchor:TrailPoint,id:FieldScan)=>boolean){
+export function droneScanSite<T extends string>(position:TrailPoint,recorded:readonly T[],anchors:readonly {id:T;position:TrailPoint}[],visible:(anchor:TrailPoint,id:T)=>boolean){
  return anchors.filter(a=>!recorded.includes(a.id)&&Math.hypot(a.position.x-position.x,a.position.y-position.y,a.position.z-position.z)<=8&&visible(a.position,a.id)).sort((a,b)=>Math.hypot(a.position.x-position.x,a.position.z-position.z)-Math.hypot(b.position.x-position.x,b.position.z-position.z))[0]?.id;
 }
-export class SurveyDrone{
+export class SurveyDrone<T extends string=FieldScan>{
  readonly root=new THREE.Group();readonly follow=new DroneFollow();private readonly visual=new THREE.Group();
  private readonly fallback:THREE.Mesh;private mixer?:THREE.AnimationMixer;private loaded=false;private attempted=false;private pending?:Promise<void>;
- private powered=false;private time=0;private scan?:{id:FieldScan;remaining:number};
+ private powered=false;private time=0;private scan?:{id:T;remaining:number};
  private obstruction=0;private detourCooldown=0;private detours=0;private lastSearch={sweeps:0,samples:0,found:false};
- constructor(private readonly ground:(x:number,z:number)=>number){
+ constructor(private readonly ground:(x:number,z:number)=>number,private readonly options:{originX?:number;validScan?:(id:string)=>boolean}={}){
   this.root.name='ECHO survey companion';this.root.visible=false;this.root.add(this.visual);
   this.fallback=new THREE.Mesh(new THREE.OctahedronGeometry(.3,1),new THREE.MeshStandardMaterial({color:0xc0ccd2,metalness:.25,roughness:.55}));this.visual.add(this.fallback);this.arrive(false,{x:0,z:0});
  }
  arrive(recovered:boolean,pad:{x:number;z:number}){
   this.powered=recovered;this.hold();const at=recovered?{x:pad.x-5.6,z:pad.z+5.8}:DRONE_DOCK;
-  this.root.position.set(SURFACE_ORIGIN+at.x,this.ground(at.x,at.z)+DRONE_HEIGHT,at.z);this.root.rotation.set(0,0,0);this.visual.position.y=0;this.time=0;this.mixer?.setTime(0);
+  this.root.position.set((this.options.originX??SURFACE_ORIGIN)+at.x,this.ground(at.x,at.z)+DRONE_HEIGHT,at.z);this.root.rotation.set(0,0,0);this.visual.position.y=0;this.time=0;this.mixer?.setTime(0);
  }
  recover(){this.powered=true;}
+ get available(){return this.powered;}
+ get scanning(){return this.scan?.id;}
  hold(){this.follow.hold();this.scan=undefined;this.obstruction=0;this.detourCooldown=0;}
  startFollowing(visitor:TrailPoint){if(!this.powered)return;this.hold();this.follow.follow(visitor);}
- startScan(id:FieldScan){if(!this.powered||!isFieldScan(id))return;this.hold();this.scan={id,remaining:2};}
+ startScan(id:T){if(!this.powered||!(this.options.validScan??isFieldScan)(id))return;this.hold();this.scan={id,remaining:2};}
  visitor(world:RAPIER.World,position:TrailPoint,observer:RAPIER.Collider){
   const hit=world.castRay(new RAPIER.Ray({x:position.x,y:position.y+.1,z:position.z},{x:0,y:-1,z:0}),5,true,undefined,undefined,observer);
-  return {x:position.x,y:(hit?position.y+.1-hit.timeOfImpact:this.ground(position.x-SURFACE_ORIGIN,position.z))+DRONE_HEIGHT,z:position.z};
+  return {x:position.x,y:(hit?position.y+.1-hit.timeOfImpact:this.ground(position.x-(this.options.originX??SURFACE_ORIGIN),position.z))+DRONE_HEIGHT,z:position.z};
  }
- step(world:RAPIER.World,visitor:TrailPoint,observer:RAPIER.Collider,dt:number,onFoot=true):FieldScan|undefined{
+ step(world:RAPIER.World,visitor:TrailPoint,observer:RAPIER.Collider,dt:number,onFoot=true):T|undefined{
   if(!this.powered||!Number.isFinite(dt)||dt<=0)return;dt=Math.min(dt,.05);
   if(!onFoot){this.hold();return;}
   if(this.scan){this.scan.remaining=Math.max(0,this.scan.remaining-dt);if(this.scan.remaining<=1e-8){const id=this.scan.id;this.scan=undefined;return id;}return;}

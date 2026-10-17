@@ -8,6 +8,8 @@ This is a playable foundation toward an ambitious universe simulation. It does n
 
 Vesper now has the reviewed Turbo Bike and Sci-fi Rover beside its landing apron. E mounts/dismounts, left slider controls speed, right joystick steers, and Brake/Space stops. Camera look stays independent. Original textured rider/body and hinged suspension carry over from Nysa; see [Vesper controls and scope](docs/VESPER.md).
 
+Recovered **ECHO** now accompanies Vesper visits, using its reviewed CGTrader model and source rotor loop. Approach for Follow/Hold or a two-second nearby sampler scan; FIELD LOG can locate it. Vehicles make it wait, and readings share existing saved survey progress.
+
 ## Run
 
 Node.js 22+: `npm ci`, then `npm run dev`. Open the printed URL. `npm test` verifies progression/save invariants; `npm run build` checks TypeScript and produces static `dist/`. `npm run preview` serves that build. With the dev server running, `npm run test:browser` exercises the mission and collision flow in Chromium (first install it with `npx playwright install chromium`).
