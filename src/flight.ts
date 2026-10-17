@@ -3,6 +3,7 @@ import {inDockingZone,stationRecovery} from './station';
 import {landingPad,type LandingSite} from './excursion';
 import {LAUNCH_BAY,LOCAL_JET_Y,RUNWAY_EXIT_SPEED} from './launch-layout';
 import {SHUTTLE_EYE_HEIGHT} from './shuttle';
+import {WAYFINDER,WAYFINDER_HULL} from './orbital-layout';
 export const MANUAL_CRUISE_SPEED=110;
 export type Vec3={x:number;y:number;z:number};
 export const NYSA_CENTER:Vec3={x:0,y:0,z:-1200};
@@ -88,11 +89,11 @@ export function brakePrediction(f:FlightState,yaw:number,pitch:number){
   }
   return {displacement,steps,time:steps*dt,distance:Math.hypot(displacement.x,displacement.y,displacement.z)};
 }
-export function approachGuidance(f:FlightState,yaw:number,pitch:number){
-  const target=flightGoal(f),distance=flightDistance(f),speed=flightSpeed(f),dx=(target.x-f.position.x)/Math.max(distance,.001),dy=(target.y-f.position.y)/Math.max(distance,.001),dz=(target.z-f.position.z)/Math.max(distance,.001);
+export function approachGuidance(f:FlightState,yaw:number,pitch:number,objective?:{target:Vec3;range:number;speed:number;ready:boolean}){
+  const target=objective?.target??flightGoal(f),distance=Math.hypot(target.x-f.position.x,target.y-f.position.y,target.z-f.position.z),speed=flightSpeed(f),dx=(target.x-f.position.x)/Math.max(distance,.001),dy=(target.y-f.position.y)/Math.max(distance,.001),dz=(target.z-f.position.z)/Math.max(distance,.001);
   const closing=f.velocity.x*dx+f.velocity.y*dy+f.velocity.z*dz,lateral=Math.sqrt(Math.max(0,speed*speed-closing*closing));
   const stop=brakePrediction(f,yaw,pitch),stopToward=Math.max(0,stop.displacement.x*dx+stop.displacement.y*dy+stop.displacement.z*dz);
-  return {closing,lateral,stop,ready:canApproach(f),brakeNow:f.phase==='flying'&&speed>SAFE_SPEED&&closing>5&&distance<=APPROACH_RANGE+stopToward+15,movingAway:closing< -5};
+  return {closing,lateral,stop,ready:objective?.ready??canApproach(f),brakeNow:f.phase==='flying'&&speed>(objective?.speed??SAFE_SPEED)&&closing>5&&distance<=(objective?.range??APPROACH_RANGE)+stopToward+15,movingAway:closing< -5};
 }
 export function stepFlight(previous:FlightState,input:FlightInput,dt:number):FlightState {
   if(!Number.isFinite(dt)||dt<=0)return previous;
@@ -114,7 +115,7 @@ export function stepFlight(previous:FlightState,input:FlightInput,dt:number):Fli
   Object.assign(f,advanceThrust(f,input,dt));
   for(const axis of ['x','y','z'] as const)f.position[axis]+=f.velocity[axis]*dt;
   // At the fixed 60 Hz step, displacement is <=3 m, far below these hull radii.
-  for(const [center,radius] of [[NYSA_CENTER,NYSA_RADIUS+8]] as const){
+  for(const [center,radius] of [[NYSA_CENTER,NYSA_RADIUS+8],[WAYFINDER,WAYFINDER_HULL]] as const){
     const p=f.position,dx=p.x-center.x,dy=p.y-center.y,dz=p.z-center.z,d=Math.hypot(dx,dy,dz);
     if(d<radius){const clearance=radius+.01,scale=clearance/Math.max(d,.001);p.x=center.x+dx*scale;p.y=center.y+dy*scale;p.z=center.z+(d>.001?dz*scale:clearance);f.velocity={x:0,y:0,z:0};f.throttle=0;f.collisions++;}
   }

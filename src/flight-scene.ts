@@ -36,10 +36,11 @@ export function createFlightScene(camera:THREE.PerspectiveCamera){
   const dashboard=block(2.2,.2,.7,0,-.65,-1.2,metal,cockpit);dashboard.rotation.x=.12;
   block(.8,.035,.28,0,-.53,-1.3,light,cockpit);for(const x of [-.85,.85]){const strut=block(.07,1.6,.07,x,.05,-1.2,metal,cockpit);strut.rotation.z=x*.15;}
   cockpit.visible=false;
-  return {scene,cockpit,craft,habitat,gates,loadCockpit(){return attachRequested('cockpit',cockpit);},loadHabitat(){return loadAuthoredAsset('station',[habitat]);},update(f:FlightState,dt:number,brakeNow=false){
-    const goal=flightGoal(f),outward=f.leg==='nysa'?1:-1;
+  return {scene,cockpit,craft,habitat,gates,loadCockpit(){return attachRequested('cockpit',cockpit);},loadHabitat(){return loadAuthoredAsset('station',[habitat]);},update(f:FlightState,dt:number,brakeNow=false,objective?:{target:{x:number;y:number;z:number};ready:boolean}){
+    const goal=objective?.target??flightGoal(f),outward=f.leg==='nysa'?1:-1;
     gates.forEach((gate,i)=>{gate.position.set(goal.x,goal.y,goal.z+outward*i*50);gate.rotation.z+=dt*.3;});
-    gateMaterial.color.setHex(canApproach(f)?0x83f0c1:brakeNow?0xffbb72:0x77e6ee);
+    if(objective)gates.forEach((gate,i)=>{gate.visible=i===0;gate.scale.setScalar(.45);gate.lookAt(f.position.x,f.position.y,f.position.z);});else gates.forEach((gate,i)=>{gate.visible=true;gate.scale.setScalar(1+i*.3);gate.rotation.set(0,0,gate.rotation.z);});
+    gateMaterial.color.setHex((objective?.ready??canApproach(f))?0x83f0c1:brakeNow?0xffbb72:0x77e6ee);
     cockpit.visible=true;camera.position.copy(f.position);camera.updateMatrixWorld();
   },hide(){cockpit.visible=false;craft.visible=false;}};
 }

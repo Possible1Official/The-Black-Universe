@@ -11,6 +11,9 @@ import {createPlanetTextures} from './planet';
 import {SharedSpace,FORGE_CENTER,SPACE_COLOR} from './shared-space';
 import {RelayOutpost} from './relay-outpost';
 import {SurveyDrone,droneScanSite} from './survey-drone';
+import {OrbitalProbe} from './orbital-probe';
+import {OrbitalScan,SIGNAL_ARCHIVE,SIGNAL_RANGE,SIGNAL_SPEED,signalBlock,signalDistance} from './orbital-signal';
+import {WAYFINDER} from './orbital-layout';
 import {GameAudio} from './game-audio';
 import {FootstepPace,type FootSurface} from './soundscape';
 import {biomeAt} from './biomes';
@@ -157,6 +160,7 @@ const clouds=new THREE.Mesh(new THREE.SphereGeometry(NYSA_RADIUS+2,48,32),new TH
 const companion=sphere(65,-350,90,-850,new THREE.MeshStandardMaterial({color:0x806b78,roughness:1}));
 const sharedSpace=new SharedSpace(starfield,forge,planet,atmosphere,clouds,companion);scene.add(sharedSpace.root);
 const flightWorld=createFlightScene(camera);
+const orbitalProbe=new OrbitalProbe();flightWorld.scene.add(orbitalProbe.root);orbitalProbe.setRecovered(progress.signalRecovered);
 // Reactor with nested containment chambers.
 const reactor=new THREE.Group();reactor.position.set(-10,1.8,-6);scene.add(reactor);
 const reactorMaterial=cyan.clone();
@@ -175,6 +179,7 @@ let onSurface=false;
 let trackedField:SurfaceTrack|undefined;
 let landingSite:LandingSite='survey';
 let flight:FlightState|null=null,flightBrake=false,flightBoost=false;
+let trackedSignal=false;const orbitalScan=new OrbitalScan();
 let captureViewStart={yaw:0,pitch:0};
 let pilot={yaw:0,pitch:0},speedDemand=0;
 let riding:GroundVehicle|null=null;const groundVehicles=new Map<VehicleKind,GroundVehicle>();const vehicleVisuals=new Map<VehicleKind,THREE.Group>();const vehicleTargets=new Map<VehicleKind,Target>();
@@ -323,7 +328,7 @@ $('play').onclick=()=>{clearInput();skipPowerFrame=true;active=true;$('overlay')
 canvas.onclick=()=>{if(active&&!dialogueOpen&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});};
 $('audio').onchange=()=>{try{localStorage.setItem('erebus-audio',$<HTMLInputElement>('audio').checked?'enabled':'muted');}catch{}footstepPace.reset();initAudio();};
 $('quality').onchange=()=>{const high=$<HTMLSelectElement>('quality').value==='high';renderer.setPixelRatio(Math.min(devicePixelRatio,high?1.75:1));renderer.shadowMap.enabled=high;bloom.enabled=high;surface.setQuality(high);lightBudget.configure(high,!onSurface&&!flight);resize();};
-$('reset').onclick=()=>{if(onSurface||flight||launchBay.state.boarded){flight=null;flightWorld.hide();travel(false);}launchBay.state.reset();launchBay.sync();trackedField=undefined;landingSite='survey';progress=freshProgress();syncSalvage();signalVault.setState(progress.vault,true);vaultFrequency=15;vaultBearing=0;signalVault.tune(vaultFrequency,vaultBearing);surveyDrone.arrive(false,landingPad());surface.setScans([]);relayOutpost.setState(progress.network);surface.setRelayOnline(false);save();paintPower();planet.visible=atmosphere.visible=false;notify('Mission progress reset.');};
+$('reset').onclick=()=>{if(onSurface||flight||launchBay.state.boarded){flight=null;flightWorld.hide();travel(false);}trackedSignal=false;orbitalScan.cancel();orbitalProbe.setRecovered(false);launchBay.state.reset();launchBay.sync();trackedField=undefined;landingSite='survey';progress=freshProgress();syncSalvage();signalVault.setState(progress.vault,true);vaultFrequency=15;vaultBearing=0;signalVault.tune(vaultFrequency,vaultBearing);surveyDrone.arrive(false,landingPad());surface.setScans([]);relayOutpost.setState(progress.network);surface.setRelayOnline(false);save();paintPower();planet.visible=atmosphere.visible=false;notify('Mission progress reset.');};
 function showPower(){
   speakingCrew=undefined;
   showDialogue('ENGINEERING / POWER DISTRIBUTION','Balance the forge bus against thermal load. Sustained Genesis routing reduces cooling and can trip containment. Life support remains on emergency power during a trip.');
@@ -423,7 +428,7 @@ surface.setScans(progress.fieldScans);
 const fieldLog=document.createElement('button');fieldLog.id='fieldLog';fieldLog.hidden=true;fieldLog.setAttribute('aria-keyshortcuts','J');$('navigationHud').append(fieldLog);
 const surveyPanel=document.createElement('section');surveyPanel.id='surveyPanel';surveyPanel.hidden=true;surveyPanel.setAttribute('aria-label','Nysa field log');$('dialogue').insertBefore(surveyPanel,$('closeDialogue'));
 fieldLog.onclick=()=>{
-  if(!active||dialogueOpen||flight||riding||!progress.forged)return;
+  if(!active||dialogueOpen||(flight&&flight.phase!=='flying')||riding||!progress.forged)return;
   speakingCrew=undefined;showDialogue('NYSA / FIELD LOG','Explore the survey sites or restore Nysa’s silent relay network. Repair both remote receivers, then activate the communications outpost to unlock a new Kestrel landing pad. You can return at any time.');surveyPanel.replaceChildren();surveyPanel.hidden=false;
   const mapClose=document.createElement('button');mapClose.id='closeFieldLog';mapClose.textContent='Close field log';mapClose.onclick=closeDialogue;surveyPanel.append(mapClose);
   const map=document.createElement('canvas');map.id='surveyMap';map.setAttribute('role','img');map.setAttribute('aria-label','Nysa terrain relief, north up. Tap to place a waypoint; coordinate controls below provide a keyboard alternative.');surveyPanel.append(map);
@@ -450,6 +455,7 @@ fieldLog.onclick=()=>{
   const droneRow=document.createElement('article'),droneTitle=document.createElement('strong'),droneText=document.createElement('p'),trackDrone=document.createElement('button');droneTitle.textContent='ECHO / SURVEY COMPANION';droneText.textContent=progress.droneRecovered?`Recovered · ${surveyDrone.snapshot().status}. ECHO follows on foot, holds when you drive, and can scan unread sites within8m. Approach it for commands.`:progress.network.online?'ECHO is waiting beside the communications outpost. Approach and press E to reactivate it.':'Restore Silent Network to reactivate the survey drone beside the outpost.';trackDrone.dataset.track='drone';trackDrone.textContent='Locate ECHO';trackDrone.disabled=!onSurface;trackDrone.onclick=()=>{trackedField='drone';closeDialogue();};droneRow.append(droneTitle,droneText,trackDrone);surveyPanel.append(droneRow);
   const reserveRow=document.createElement('article'),reserveTitle=document.createElement('strong'),reserveText=document.createElement('p'),trackReserve=document.createElement('button');reserveTitle.textContent='Coolant supply cache';reserveText.textContent=`Reserve ${progress.supplies.coolant}/2 · ${progress.supplies.cacheClaimed?'CACHE RECOVERED':`Local X ${SUPPLY_CACHE.x} / Z ${SUPPLY_CACHE.z} · one-time refill`}`;trackReserve.textContent=onSurface?'Track cache':'Land on Nysa to recover';trackReserve.disabled=!onSurface||progress.supplies.cacheClaimed;trackReserve.dataset.track='supplies';trackReserve.onclick=()=>{trackedField='supplies';closeDialogue();};reserveRow.append(reserveTitle,reserveText,trackReserve);surveyPanel.append(reserveRow);
   const mission=document.createElement('button');mission.id='trackMission';mission.textContent='Restore mission guidance';mission.disabled=!onSurface;mission.onclick=()=>{trackedField=undefined;closeDialogue();};surveyPanel.append(mission);
+  const orbitalRow=document.createElement('article'),orbitalTitle=document.createElement('strong'),orbitalText=document.createElement('p'),orbitalTrack=document.createElement('button');orbitalRow.id='orbitalSignal';orbitalTitle.textContent='ORBITAL EXPEDITION / WAYFINDER';orbitalText.textContent=progress.signalRecovered?SIGNAL_ARCHIVE:progress.vault.archived?'Archive 04 decodes a derelict relay at sector X−420 / Y95 / Z−360. Fly Kestrel within45m, brake below6m/s and point its nose at the relay. E scans for three seconds.':'Recover Signal Vault Archive 04 to decode the orbital relay.';orbitalTrack.dataset.track='signal';orbitalTrack.textContent='Track Wayfinder in orbit';orbitalTrack.disabled=!progress.vault.archived;orbitalTrack.onclick=()=>{trackedSignal=true;orbitalScan.cancel();closeDialogue();notify(flight?'WAYFINDER tracked. T returns to Nysa/Erebus guidance.':'WAYFINDER tracked for your next manual spaceflight.');};orbitalRow.append(orbitalTitle,orbitalText,orbitalTrack);surveyPanel.prepend(orbitalRow);
   $('speaker').tabIndex=-1;$('speaker').focus({preventScroll:true});$('dialogue').scrollTop=0;
 };
 const landedShuttle=makeShuttle();landedShuttle.position.set(0,0,LANDING.z);surface.group.add(landedShuttle);
@@ -470,12 +476,13 @@ const speedControl=document.createElement('label');speedControl.id='speedControl
 const velocityMarker=document.createElement('div');velocityMarker.id='velocityMarker';velocityMarker.hidden=true;velocityMarker.setAttribute('aria-hidden','true');velocityMarker.innerHTML='<span>◇</span><small>VELOCITY</small>';$('hud').append(velocityMarker);
 const projectedVelocity=new THREE.Vector3(),velocityForward=new THREE.Vector3();let approachWarning=false;
 for(const [id,set] of [['flightBrake',(v:boolean)=>flightBrake=v],['flightBoost',(v:boolean)=>flightBoost=v]] as const){const button=$(id);button.onpointerdown=e=>{button.setPointerCapture(e.pointerId);set(true);};button.onpointerup=button.onpointercancel=()=>set(false);}
-$('flightTarget').onclick=()=>{if(flight?.phase==='flying'){flight={...flight,leg:flight.leg==='nysa'?'erebus':'nysa'};paintNavigation();}};
-$('flightPad').onclick=()=>{if(flight?.phase==='flying'&&flight.leg==='nysa'){flight={...flight,site:nextLandingSite(flight.site,progress.network.online)};paintNavigation();}};
+$('flightTarget').onclick=()=>{if(flight?.phase==='flying'){orbitalScan.cancel();if(trackedSignal)trackedSignal=false;else flight={...flight,leg:flight.leg==='nysa'?'erebus':'nysa'};paintNavigation();}};
+$('flightPad').onclick=()=>{if(!trackedSignal&&flight?.phase==='flying'&&flight.leg==='nysa'){flight={...flight,site:nextLandingSite(flight.site,progress.network.online)};paintNavigation();}};
 function requestRunwayAccess(){if(launchBay.state.requestAccess()){notify('Runway inner door '+(launchBay.state.access?'opening. Board the parked jet at its cyan marker.':'closing.'));}else notify('Launch interlock active.');}
 function boardParkedJet(){const blocked=landingBlock(progress.forged,progress.power.tripped);if(blocked){notify(blocked);return;}if(!launchBay.state.board()){notify('Launch interlock is busy.');return;}void flightWorld.loadCockpit().catch(()=>console.warn('Cockpit fallback active'));clearInput();playerCollider.setEnabled(false);nearest=undefined;yaw=0;pitch=0;notify('Boarded Kestrel. Inner door sealing before outer door opens.');}
 function launchFlight(leg:FlightLeg,fromRunway=false){
   if(flight)return;
+  orbitalScan.cancel();void orbitalProbe.load(true);
   void flightWorld.loadCockpit().catch(()=>console.warn('Cockpit asset unavailable; generated instruments retained'));
   void loadAuthoredAsset('craft',[landedShuttle,flightWorld.craft,surfaceCraft]).catch(()=>console.warn('Craft asset unavailable; procedural shuttle fallback active.'));
   void flightWorld.loadHabitat().catch(()=>console.warn('Station asset unavailable; docking habitat fallback active.'));
@@ -591,11 +598,18 @@ function paintNavigation(){
   const visible=active&&!dialogueOpen;
   if(launchBay.state.boarded){flightHud.hidden=!visible;fieldLog.hidden=true;speedControl.hidden=true;$('hud').classList.add('piloting');for(const id of ['flightBrake','flightBoost','flightTarget','flightPad'])$(id).hidden=true;$('flightTelemetry').textContent='KESTREL / LAUNCH AIRLOCK';$('flightStatus').textContent=launchBay.state.status;return;}
   $('hud').classList.toggle('piloting',!!flight||!!riding);speedControl.hidden=!visible||(!flight&&!riding);speedSlider.disabled=!riding&&flight?.phase!=='flying';speedSlider.value=String(Math.round(speedDemand*100));$('speedPercent').textContent=speedSlider.value+'%';speedSlider.setAttribute('aria-valuetext',speedSlider.value+' percent');
-  fieldLog.hidden=!visible||!!flight||!!riding||!progress.forged;fieldLog.textContent=`FIELD LOG / J · ${progress.fieldScans.length}/${FIELD_SITES.length} · RELAY ${progress.network.online?'ONLINE':progress.network.repairs.length+'/2'}`;
+  fieldLog.hidden=!visible||(!!flight&&flight.phase!=='flying')||!!riding||!progress.forged;fieldLog.textContent=`FIELD LOG / J · ${progress.fieldScans.length}/${FIELD_SITES.length} · RELAY ${progress.network.online?'ONLINE':progress.network.repairs.length+'/2'}`;
   flightHud.hidden=!visible||(!flight&&!riding);$('flightBrake').hidden=false;$('flightTarget').hidden=$('flightPad').hidden=!!riding;$('flightBoost').hidden=!!riding;if(riding){$('flightTelemetry').textContent=`${riding.kind.toUpperCase()} · ${riding.speed.toFixed(1)} m/s`;$('flightStatus').textContent='BRAKE then E to dismount'+(riding.kind==='rover'?(progress.salvage==='loaded'?' · RECORDER SECURED':progress.salvage==='delivered'?' · CRUISE16 m/s':''):'');}
   $('navigationHud').hidden=!visible;
   if(!visible)return;
   if(flight){
+    if(trackedSignal&&flight.phase==='flying'){
+      const reading=navigationReading(flight.position,pilot.yaw,WAYFINDER),distance=signalDistance(flight.position),speed=flightSpeed(flight),blocked=signalBlock(flight,progress.vault.archived,pilot.yaw,pilot.pitch);
+      const advice=approachGuidance(flight,pilot.yaw,pilot.pitch,{target:WAYFINDER,range:SIGNAL_RANGE,speed:SIGNAL_SPEED,ready:!blocked});approachWarning=advice.brakeNow;
+      $('compassHeading').textContent=`${reading.direction} / ${Math.round(reading.heading)}°`;$('navLabel').textContent='Wayfinder orbital relay';$('navDistance').textContent=`${Math.round(distance)} m · ${reading.turn}`;$('navArrow').style.transform=`rotate(${reading.relativeDegrees}deg)`;
+      $('navHint').textContent=`Relay altitude95m. Nose within20°, range45m, speed≤6m/s. ${Math.round(advice.closing)} m/s closing · stop ~${Math.round(advice.stop.distance)}m. T restores landing guidance.`;$('navigationHud').dataset.destination='flight-signal';
+      $('flightTelemetry').textContent=`${speed.toFixed(1)} m/s · WAYFINDER ${Math.round(distance)}m`;$('flightStatus').textContent=orbitalScan.active?`RECEIVING ARCHIVE ${Math.round(orbitalScan.snapshot().progress*100)}%`:advice.brakeNow?'WAYFINDER / BRAKE NOW':blocked??(progress.signalRecovered?'[ E ] READ ARCHIVE 05':'[ E ] SCAN WAYFINDER');flightHud.dataset.approach=advice.ready?'ready':advice.brakeNow?'brake':'cruise';$('flightPad').hidden=true;$('flightTarget').textContent='TARGET: WAYFINDER / T';return;
+    }
     const ground=isSurfaceFlight(flight),pose=ground?surfaceFlightPose(flight.timer,flight.phase==='ascending',flight.site):null;
     const target=pose?landingPad(flight.site):flight.phase==='landing'?NYSA_CENTER:flight.phase==='docking'?{x:0,y:0,z:52}:flightGoal(flight);
     const reading=navigationReading(pose?.position??flight.position,pose?.yaw??pilot.yaw,target),distance=flightDistance(flight),speed=flightSpeed(flight);
@@ -644,7 +658,7 @@ function selectTarget(){
     if(distance<best&&direction.normalize().dot(forward)>.45&&clearSight(world,eye,t.position,playerCollider,t.collider)){selected=t;best=distance;}
   }return selected;
 }
-function interact(){if(!active||dialogueOpen||launchBay.state.boarded)return;if(riding){if(riding.speed>1){notify('Brake to stop before dismounting.');return;}const p=dismountPosition(world,riding,playerCollider,(x,z)=>terrainHeight(x-SURFACE_ORIGIN,z));if(!p){notify('No clear dismount space. Move to open ground.');return;}yaw=riding.yaw+yaw;avatar.rotation.set(0,riding.yaw+Math.PI,0);riding=null;playerCollider.setEnabled(true);player.setTranslation(p,true);player.setNextKinematicTranslation(p);clearInput();speedDemand=0;return;}if(flight){if(flight.phase!=='flying')return;if(canApproach(flight)){captureViewStart={yaw:pilot.yaw,pitch:pilot.pitch};flight=beginApproach(flight);clearInput();notify(flight.leg==='nysa'?'Guided orbital capture in progress.':'Aligning with the Erebus bay entrance.');}else notify(flight.leg==='erebus'&&flightDistance(flight)<=100&&!inDockingZone(flight.position)?'Approach the front bay beacons or enter the open hangar.':'Reach the approach ring and brake below 18 m/s.');return;}nearest=selectTarget();nearest?.action();}
+function interact(){if(!active||dialogueOpen||launchBay.state.boarded)return;if(riding){if(riding.speed>1){notify('Brake to stop before dismounting.');return;}const p=dismountPosition(world,riding,playerCollider,(x,z)=>terrainHeight(x-SURFACE_ORIGIN,z));if(!p){notify('No clear dismount space. Move to open ground.');return;}yaw=riding.yaw+yaw;avatar.rotation.set(0,riding.yaw+Math.PI,0);riding=null;playerCollider.setEnabled(true);player.setTranslation(p,true);player.setNextKinematicTranslation(p);clearInput();speedDemand=0;return;}if(flight){if(flight.phase!=='flying')return;if(trackedSignal){const blocked=signalBlock(flight,progress.vault.archived,pilot.yaw,pilot.pitch);if(blocked)notify(blocked);else if(progress.signalRecovered)showDialogue('WAYFINDER / ARCHIVE 05',SIGNAL_ARCHIVE);else if(orbitalScan.begin(flight,progress.vault.archived,pilot.yaw,pilot.pitch))notify('Receiving archive. Keep aligned and below6m/s for three seconds.');return;}if(canApproach(flight)){captureViewStart={yaw:pilot.yaw,pitch:pilot.pitch};flight=beginApproach(flight);clearInput();notify(flight.leg==='nysa'?'Guided orbital capture in progress.':'Aligning with the Erebus bay entrance.');}else notify(flight.leg==='erebus'&&flightDistance(flight)<=100&&!inDockingZone(flight.position)?'Approach the front bay beacons or enter the open hangar.':'Reach the approach ring and brake below 18 m/s.');return;}nearest=selectTarget();nearest?.action();}
 $('touchAction').onclick=interact;
 let touchRunning=false;
 const movementControls=document.createElement('nav');movementControls.id='movementControls';movementControls.hidden=true;movementControls.setAttribute('aria-label','On-foot movement');movementControls.innerHTML='<button id="touchRun" aria-pressed="false" aria-keyshortcuts="Shift">RUN</button><button id="touchJump" aria-keyshortcuts="Space">JUMP</button>';$('hud').append(movementControls);
@@ -681,6 +695,7 @@ function physicsStep(){
     if(flight.phase==='descending'&&phase!=='descending'){setLandingSite(flight.site);setSurfaceView(true);notify('NYSA · Cloud break. Landing pad acquired.');}
     if(phase==='ascending'&&flight.phase==='launching'){pilot={yaw:Math.PI,pitch:0};yaw=0;pitch=0;}
     if(flight.collisions>old)notify('Hull safety recovery · thrust cut.');
+    const scanning=orbitalScan.active;if(trackedSignal&&orbitalScan.step(flight,progress.vault.archived,pilot.yaw,pilot.pitch,fixed)){progress={...progress,signalRecovered:true};orbitalProbe.setRecovered(true);save();tone(830);notify('ARCHIVE 05 recovered. Read it in FIELD LOG / J.');}else if(scanning&&!orbitalScan.active)notify('Scan interrupted: '+orbitalScan.reason);
     if(flight.phase==='landed'||flight.phase==='docked'){const landing=flight.phase==='landed';flight=null;flightWorld.hide();if(landing)travel(true);else beginBayReturn();}return;
   }
   for(const d of doors){const occupied=Math.abs(player.translation().x-d.x)<.9&&Math.abs(player.translation().z-SHIP_LAYOUT.doorZ)<1.3;if(!d.open&&occupied)d.open=true;d.progress=THREE.MathUtils.damp(d.progress,d.open?1:0,5,fixed);d.mesh.position.y=1.6+d.progress*3.7;d.collider?.setTranslation({x:d.x,y:d.mesh.position.y,z:SHIP_LAYOUT.doorZ});}
@@ -707,7 +722,7 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
       if(onSurface)suspension.update(mesh,(x,z)=>v.supportHeight(x,z,playerCollider)??vehicleGround(x-SURFACE_ORIGIN,z),dt);
       if(kind==='bike'){if(turboFeedback.root.parent!==mesh)mesh.add(turboFeedback.root);turboFeedback.update(riding===v,onSurface&&thirdPerson&&mesh.userData.requested==='bike',keys.has('Space')||flightBrake,speedDemand,v.speed,dt);turboFeedback.root.position.y=.409+suspension.podOffset;}
       const t=vehicleTargets.get(kind)!;t.position.set(pos.x+Math.cos(v.yaw)*(VEHICLE_SPEC[kind].half[0]+.4),pos.y+.4,pos.z-Math.sin(v.yaw)*(VEHICLE_SPEC[kind].half[0]+.4));}
-    if(flight){flightWorld.update(flight,dt,approachWarning);
+    if(flight){flightWorld.update(flight,dt,approachWarning,trackedSignal&&flight.phase==='flying'?{target:WAYFINDER,ready:!signalBlock(flight,progress.vault.archived,pilot.yaw,pilot.pitch)}:undefined);
       if(flight.phase==='landing'||flight.phase==='docking'){const look=captureLook(flight.position,flight.leg),blend=THREE.MathUtils.smoothstep(flight.timer,0,.8);yaw=captureViewStart.yaw+Math.atan2(Math.sin(look.yaw-captureViewStart.yaw),Math.cos(look.yaw-captureViewStart.yaw))*blend;pitch=captureViewStart.pitch+(look.pitch-captureViewStart.pitch)*blend;pilot={yaw,pitch};yaw=0;pitch=0;}
       camera.rotation.set(pilot.pitch+pitch,pilot.yaw+yaw,0);
       if(isSurfaceFlight(flight)){const pose=surfaceFlightPose(flight.timer,flight.phase==='ascending',flight.site);camera.position.set(SURFACE_ORIGIN+pose.position.x,pose.position.y,pose.position.z);camera.rotation.set(pose.pitch,pose.yaw,0);$('location').textContent=flight.phase==='descending'?'NYSA / DESCENT':'NYSA / ASCENT';$('coordinates').textContent=`RADAR ALT ${pose.altitude.toFixed(1)} m`;$('flightTelemetry').textContent=`RADAR ALT ${pose.altitude.toFixed(1)} m · ${Math.round(pose.progress*100)}%`;}
@@ -715,7 +730,7 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
     else {camera.position.set(p.x,p.y+.74+Math.sin(elapsed*9)*.018*Math.min(moving,1),p.z);camera.rotation.set(pitch,yaw,0);$('location').textContent=onSurface?`NYSA / SURVEY SITE · ${landingPad(landingSite).label.toUpperCase()}`:p.x< -SHIP_LAYOUT.roomBoundary?'ENGINEERING':p.x>SHIP_LAYOUT.roomBoundary?'OBSERVATORY':p.z<LAUNCH_BAY.innerZ?'KESTREL / LAUNCH RUNWAY':p.z< -5?'COMMAND DECK':'HABITAT CONCOURSE';$('coordinates').textContent=`${onSurface?'SURFACE':'SECTOR 00.00'} / X ${(p.x-(onSurface?SURFACE_ORIGIN:0)).toFixed(1)} · Z ${p.z.toFixed(1)}`;nearest=riding?undefined:selectTarget();}
     if(flight)feedback.step(flight,pilot.yaw,keys.has('Space')||flightBrake,keys.has('ShiftLeft')||keys.has('ShiftRight')||flightBoost,dt);
     updatePlayerView();
-    const prompt=launchBay.state.boarded?'':riding?'[ E ] Stop and dismount':flight?(canApproach(flight)?`[ E ] ${flight.leg==='nysa'?'Land on Nysa':'Dock with Erebus'}`:''):nearest?`[ E ] ${nearest.name}`:'';$('interaction').style.display=prompt?'block':'none';$('interaction').textContent=prompt;$('touchAction').setAttribute('aria-label',prompt||'Interact');
+    const prompt=launchBay.state.boarded?'':riding?'[ E ] Stop and dismount':flight?(trackedSignal?(flight.phase==='flying'&&!signalBlock(flight,progress.vault.archived,pilot.yaw,pilot.pitch)?'[ E ] '+(progress.signalRecovered?'Read Archive 05':'Scan Wayfinder'):''):canApproach(flight)?`[ E ] ${flight.leg==='nysa'?'Land on Nysa':'Dock with Erebus'}`:''):nearest?`[ E ] ${nearest.name}`:'';$('interaction').style.display=prompt?'block':'none';$('interaction').textContent=prompt;$('touchAction').setAttribute('aria-label',prompt||'Interact');
   }else{$('interaction').style.display='none';}
   if(active&&gameAudio&&$<HTMLInputElement>('audio').checked){
     const boarded=launchBay.state.boarded,brake=keys.has('Space')||flightBrake;

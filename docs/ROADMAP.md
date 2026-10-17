@@ -347,3 +347,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Brake suppresses load/boost, pause/mute suspend audio and clear one-shots, resume reuses the bounded graph, and the menu choice persists. Silent fallback remains playable without audio support.
 - Locally synthesized sound, no downloaded samples or model/material/animation changes. Captured motion cadence is preserved; feet do not trigger sound from held movement intent alone.
 - Remaining: recorded/positional sound, acoustic occlusion, exact foot-contact synchronization, device listening/latency/performance validation and richer exploration destinations.
+
+## Wayfinder orbital expedition (2026-10-17)
+- A visible orbital relay away from the usual Nysa route, with cyan/green guidance and a physical safety hull. Reuse the reviewed CGTrader payload with original PBR maps and connected game-authored panels/aerial.
+- Archive04 unlocks tracking; controlled piloted approach, speed/range/nose/visibility gates and three active seconds of reception recover Archive05. Target cancellation restores existing landing markers and pads.
+- Additive saved discovery, field-log tracking/reading during manual flight and officer debrief. Pause/interruption/reset/reload remain safe; old missions stay independent.
+- Remaining: a distinct second-world destination, station-to-relay NPC duties, more authored satellite detail and physical-device budgets. This is one bounded sector expedition, not a reachable new planet or general scanner simulation.

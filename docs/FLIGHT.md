@@ -45,6 +45,10 @@ During manual flight toward Nysa, click PAD or press L to choose Survey pad (loc
 
 The current expansion uses a left vertical target-speed slider and right steering joystick. W/S adjust target speed, A/D turn, arrows pitch and mouse/touch drag looks independently. The selected CGTrader ship and first-person cockpit are authored derivatives; the survey sector expands to 256 meters. Earlier references to uploaded craft/generated cockpit/128-meter terrain describe prior releases. Guided capture and separate orbital/surface representations remain.
 
+## Wayfinder receiver
+
+After recovering Signal Vault Archive04, FIELD LOG/J can track the new [Wayfinder orbital expedition](ORBITAL-SIGNAL.md). Its manual-flight objective uses45m/6m/s stopping guidance and three active seconds of nose-aligned reception, independently of the existing Nysa/Erebus flight leg. T cancels receiver tracking and restores landing guidance. Manual flight now permits opening the field log, which freezes motion like other dialogue. The visible relay has a7m safety sphere; no third landing destination or new planet is added.
+
 
 ## Bow runway launch interlock (2026-10-15)
 
