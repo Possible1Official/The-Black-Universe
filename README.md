@@ -26,6 +26,10 @@ After restoring Silent Network, **J / FIELD LOG → Track Signal Vault** guides 
 
 After Silent Network, **J / FIELD LOG → Track lost recorder** starts an optional transport run. Park the rover beside the recorder at **X−98 / Z80**, brake, dismount and use its terminal to load it onto the rear rack. Deliver it to the outpost depot at **X69 / Z−73** to unlock **16m/s rover cruise**. Cargo and the upgrade persist across visits. [Controls and limits](docs/ROVER-SALVAGE.md).
 
+## Wayfinder orbital expedition
+
+Recover Signal Vault **Archive04**, then choose **J / FIELD LOG → Track Wayfinder in orbit**. Pilot Kestrel to a new visible relay at sector **X−420 / Y95 / Z−360**, brake below6m/s within45m, align the nose and press **E** for three seconds of reception. Recover saved **Archive05**; **T** restores normal landing guidance. The field log now also opens during manual spaceflight. [Controls, asset reuse and limits](docs/ORBITAL-SIGNAL.md).
+
 ## Expedition 001
 
 **Clear view:** information panels start hidden. Click **INFO** / press **H** to show or hide them. Click **1P / 3P** / press **C** to switch first/third person for both walking and flying. Touch movement, E, Brake/Boost/Target and pause remain usable with panels hidden. Preferences persist locally. See [camera and HUD scope](docs/VIEWS.md).
