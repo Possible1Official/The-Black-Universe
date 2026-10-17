@@ -1,5 +1,13 @@
 # Asset pipeline
 
+## Vesper expedition reuse (2026-10-17)
+
+Reuse the reviewed CGTrader scanned rock, flying ship, cockpit and recorder, sharing original geometry/material/image references through existing caches. All14 derivative/provenance/image/motion files remain byte-identical. No login, download, stock conversion or raw-source redistribution. Static equipment has no source animation; character movement uses existing captured Mixamo walk/run/jump clips. No scanning/landing rig is claimed.
+
+New procedural artwork:512×256RGBA globe map (~512KiB before mips),128²RGBA grain/bump map (~64KiB before mips),96² ground grid18,432 triangles plus768 distant-rim triangles. SurfaceContact reuses its bounded shader approximation. At most32 rocks use up to12 detailed instances plus coarse fallbacks; steep placements settle until at least9 coarse supports are buried, or are rejected. Colliders share final transforms. Distant rim remains outside the visible colliding perimeter. No planetary streaming or physical rock stability simulation.
+
+One additional globe draw in shared space. The lazy surface scene adds hemisphere/non-shadowed directional lighting and shares existing3500-star geometry with a separate fog-free material. Existing source maps stream only if uncached. The surface world/scene stay cached for bounded re-entry; Nysa is not rendered/simulated during the visit. New physics/CPU/render allocations are not a measured FPS/memory improvement. See VESPER/PROGRESS for evidence and limits.
+
 ## Vega station tour (2026-10-17)
 
 Reuse the existing Intrepid CGTrader interior, original textured stations and locally captured Mixamo Ely crew walking/idle clips. All14 CGTrader derivative files, original maps/material settings, provenance and animation bytes are unchanged. This cycle adds no stock download, conversion, raw-source redistribution, geometry, map, light or collider. The guide follows sixteen authored lane points using actual capsule collision and the existing motion blend; briefings are scripted and progress-aware. No repair/pointing/gesture animation is available or claimed. Optional INFO guidance and conversation buttons add no permanent screen overlay. Additional bounded CPU math and crew-door occupancy checks have not been benchmarked on a physical device. No fresh CGTrader/Mixamo login is needed; no private session survival is claimed.

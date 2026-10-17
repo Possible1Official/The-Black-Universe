@@ -4,6 +4,7 @@ import {landingPad,type LandingSite} from './excursion';
 import {LAUNCH_BAY,LOCAL_JET_Y,RUNWAY_EXIT_SPEED} from './launch-layout';
 import {SHUTTLE_EYE_HEIGHT} from './shuttle';
 import {WAYFINDER,WAYFINDER_HULL} from './orbital-layout';
+import {VESPER,VESPER_RADIUS} from './vesper';
 export const MANUAL_CRUISE_SPEED=110;
 export type Vec3={x:number;y:number;z:number};
 export const NYSA_CENTER:Vec3={x:0,y:0,z:-1200};
@@ -115,7 +116,7 @@ export function stepFlight(previous:FlightState,input:FlightInput,dt:number):Fli
   Object.assign(f,advanceThrust(f,input,dt));
   for(const axis of ['x','y','z'] as const)f.position[axis]+=f.velocity[axis]*dt;
   // At the fixed 60 Hz step, displacement is <=3 m, far below these hull radii.
-  for(const [center,radius] of [[NYSA_CENTER,NYSA_RADIUS+8],[WAYFINDER,WAYFINDER_HULL]] as const){
+  for(const [center,radius] of [[NYSA_CENTER,NYSA_RADIUS+8],[WAYFINDER,WAYFINDER_HULL],[VESPER,VESPER_RADIUS+8]] as const){
     const p=f.position,dx=p.x-center.x,dy=p.y-center.y,dz=p.z-center.z,d=Math.hypot(dx,dy,dz);
     if(d<radius){const clearance=radius+.01,scale=clearance/Math.max(d,.001);p.x=center.x+dx*scale;p.y=center.y+dy*scale;p.z=center.z+(d>.001?dz*scale:clearance);f.velocity={x:0,y:0,z:0};f.throttle=0;f.collisions++;}
   }

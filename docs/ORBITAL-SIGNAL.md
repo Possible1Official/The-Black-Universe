@@ -1,5 +1,7 @@
 # Wayfinder orbital expedition
 
+Archive05 now charts the reachable **Vesper** survey basin. Choose FIELD LOG → Track Vesper landing to begin a second-world expedition; see [Vesper](VESPER.md). The original relay scan controls below remain unchanged.
+
 Recover **Archive04** inside the Signal Vault on Nysa. In **J / FIELD LOG**, choose **Track Wayfinder in orbit**. You can select it aboard, on Nysa, or during manual spaceflight. Launch/board Kestrel normally; guidance switches to the relay during manual flight. The field log is also available during manual flight, freezing motion while open. Guided launch/capture/descent/docking still keep the log unavailable.
 
 Wayfinder sits at sector **X−420 / Y95 / Z−360**, away from the usual Nysa corridor. Fly toward its cyan ring and adjust pitch toward the actual visible target; the label reports altitude95m in the sector frame. Use a modest speed demand for the final approach. Brake to **6m/s or less within45m**, point Kestrel's nose within20° of the relay, then press **E** or the touch interaction button. Receive for **three active seconds**. Nose alignment uses steering, independently of camera free look.

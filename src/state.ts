@@ -5,12 +5,13 @@ import {freshPower,parsePower,forgeReadiness,type PowerState} from './power';
 import {isFieldScan,type FieldScan} from './survey';
 import {freshSupplies,parseSupplies,type Supplies} from './supplies';
 import {freshNetwork,parseNetwork,type RelayNetwork} from './relay-expedition';
+import {parseVesper,type VesperReading} from './vesper';
 export const SAVE_KEY='black-universe-v2';
 export const LEGACY_SAVE_KEY='black-universe-v1';
 export type Relay = 'engineering' | 'navigation' | 'observatory';
-export interface Progress { version: 2; relays: Relay[]; forged: boolean; power: PowerState; surveyed: boolean; fieldScans:FieldScan[]; supplies:Supplies; network:RelayNetwork; droneRecovered:boolean; vault:VaultProgress; salvage:SalvagePhase; signalRecovered:boolean; }
+export interface Progress { version: 2; relays: Relay[]; forged: boolean; power: PowerState; surveyed: boolean; fieldScans:FieldScan[]; supplies:Supplies; network:RelayNetwork; droneRecovered:boolean; vault:VaultProgress; salvage:SalvagePhase; signalRecovered:boolean; vesperReadings:VesperReading[];vesperArchived:boolean; }
 export const RELAYS: Relay[] = ['engineering', 'navigation', 'observatory'];
-export const freshProgress = (): Progress => ({version:2,relays:[],forged:false,power:freshPower(),surveyed:false,fieldScans:[],supplies:freshSupplies(),network:freshNetwork(),droneRecovered:false,vault:freshVault(),salvage:'waiting',signalRecovered:false});
+export const freshProgress = (): Progress => ({version:2,relays:[],forged:false,power:freshPower(),surveyed:false,fieldScans:[],supplies:freshSupplies(),network:freshNetwork(),droneRecovered:false,vault:freshVault(),salvage:'waiting',signalRecovered:false,vesperReadings:[],vesperArchived:false});
 export function parseProgress(raw: string | null): Progress {
   try {
     const p = JSON.parse(raw ?? 'null');
@@ -18,7 +19,8 @@ export function parseProgress(raw: string | null): Progress {
     const relays = [...new Set<Relay>(p.relays)];
     const forged=p.forged && relays.length===3;
     const network=parseNetwork(p.network,forged),vault=parseVault(p.vault,network.online);
-    return {version:2,relays,forged,power:p.version===1?freshPower():parsePower(p.power),surveyed:p.surveyed===true && forged,fieldScans:forged&&Array.isArray(p.fieldScans)?[...new Set<FieldScan>(p.fieldScans.filter(isFieldScan))]:[],supplies:parseSupplies(p.supplies,forged),network,droneRecovered:network.online&&p.droneRecovered===true,vault,salvage:parseSalvage(p.salvage,network.online),signalRecovered:vault.archived&&p.signalRecovered===true};
+    const signalRecovered=vault.archived&&p.signalRecovered===true,vesper=parseVesper(p.vesperReadings,p.vesperArchived,signalRecovered);
+    return {version:2,relays,forged,power:p.version===1?freshPower():parsePower(p.power),surveyed:p.surveyed===true && forged,fieldScans:forged&&Array.isArray(p.fieldScans)?[...new Set<FieldScan>(p.fieldScans.filter(isFieldScan))]:[],supplies:parseSupplies(p.supplies,forged),network,droneRecovered:network.online&&p.droneRecovered===true,vault,salvage:parseSalvage(p.salvage,network.online),signalRecovered,vesperReadings:vesper.readings,vesperArchived:vesper.archived};
   } catch { return freshProgress(); }
 }
 export function activateRelay(p: Progress, relay: Relay): Progress {return {...p,relays:[...new Set([...p.relays,relay])]};}
