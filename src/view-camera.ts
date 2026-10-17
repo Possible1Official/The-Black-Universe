@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import {STATION_HULL,STATION_ASSEMBLY} from './station';
 import {NYSA_CENTER,NYSA_RADIUS} from './flight';
+import {VESPER,VESPER_RADIUS} from './vesper';
 
 // Near-plane clearance is deliberately wider than the player's eye ray.
 const cameraShape=new RAPIER.Ball(.22);
@@ -27,9 +28,9 @@ export function orbitalCameraDistance(from:THREE.Vector3,to:THREE.Vector3){
     if(near<=far&&near>=0&&near<=1)fraction=Math.min(fraction,Math.max(0,near-.05/length));
   }
   // Keep the chase camera outside the visual planet too, even during capture.
-  const offset=from.clone().sub(new THREE.Vector3(NYSA_CENTER.x,NYSA_CENTER.y,NYSA_CENTER.z)),r=NYSA_RADIUS+.25;
-  const a=delta.lengthSq(),b=2*offset.dot(delta),c=offset.lengthSq()-r*r,disc=b*b-4*a*c;
-  if(a>0&&disc>=0){const t=(-b-Math.sqrt(disc))/(2*a);if(t>=0&&t<=1)fraction=Math.min(fraction,Math.max(0,t-.05/length));}
+  for(const [center,radius] of [[NYSA_CENTER,NYSA_RADIUS],[VESPER,VESPER_RADIUS]] as const){const offset=from.clone().sub(new THREE.Vector3(center.x,center.y,center.z)),r=radius+.25;
+    const a=delta.lengthSq(),b=2*offset.dot(delta),c=offset.lengthSq()-r*r,disc=b*b-4*a*c;
+    if(a>0&&disc>=0){const t=(-b-Math.sqrt(disc))/(2*a);if(t>=0&&t<=1)fraction=Math.min(fraction,Math.max(0,t-.05/length));}}
   return length*fraction;
 }
 

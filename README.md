@@ -1,6 +1,6 @@
 # The Black Universe
 
-An evolving browser science-fiction game: explore the starship **Erebus**, restore its power network, awaken a colossal **universe forge**, then pilot **Kestrel** through space and land on **Nysa**.
+An evolving browser science-fiction game: explore the starship **Erebus**, restore its power network, awaken a colossal **universe forge**, then pilot **Kestrel** through space to **Nysa** and the charted **Vesper** basin.
 
 **Play:** https://the-black-universe-erebus.harshit-0207.chatgpt.site
 
@@ -27,6 +27,8 @@ After restoring Silent Network, **J / FIELD LOG → Track Signal Vault** guides 
 After Silent Network, **J / FIELD LOG → Track lost recorder** starts an optional transport run. Park the rover beside the recorder at **X−98 / Z80**, brake, dismount and use its terminal to load it onto the rear rack. Deliver it to the outpost depot at **X69 / Z−73** to unlock **16m/s rover cruise**. Cargo and the upgrade persist across visits. [Controls and limits](docs/ROVER-SALVAGE.md).
 
 ## Wayfinder orbital expedition
+
+**New destination:** Archive05 unlocks **FIELD LOG → Track Vesper landing**. Pilot to the frozen world's near-side ring, brake below18m/s and press E for guided landing. Explore a separate96m basin on foot, scan frost/geothermal warmth, recover Archive06 and board the parked jet to return to orbital flight. Original CGTrader rock/shuttle/recorder maps and captured character motion are retained. [Vesper controls and limits](docs/VESPER.md).
 
 Recover Signal Vault **Archive04**, then choose **J / FIELD LOG → Track Wayfinder in orbit**. Pilot Kestrel to a new visible relay at sector **X−420 / Y95 / Z−360**, brake below6m/s within45m, align the nose and press **E** for three seconds of reception. Recover saved **Archive05**; **T** restores normal landing guidance. The field log now also opens during manual spaceflight. [Controls, asset reuse and limits](docs/ORBITAL-SIGNAL.md).
 

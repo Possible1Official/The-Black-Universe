@@ -1,0 +1,13 @@
+# Vesper frozen-basin expedition
+
+Recover Wayfinder **Archive05**, then choose **J / FIELD LOG → Track Vesper landing**. Fly Kestrel to Vesper's near-side approach ring at sector **710/130/−1090**, within100m and below18m/s, then press **E**. **T** cancels tracking and restores ordinary Nysa/Erebus guidance. The frozen globe has its own visible physical safety hull.
+
+Three seconds of orbital capture lead into seven seconds of guided descent. Land beside the parked jet in a new96×96m survey basin. Walk, run and jump with existing controls and captured Mixamo clips; INFO remains optional, C switches first/third person. Follow guidance to the western **frost shelf** and northeastern **warm fissure**. Approach each sampler and press E. Both readings unlock **Archive06** at the northern recorder platform. The field log and Vega's survey debrief reflect your findings.
+
+You can leave at any time: approach Kestrel's aft hatch on the southern apron and press E. Seven-second ascent and three-second departure restore manual flight at the same orbital endpoint and13⅓m/s outward speed, targeting Erebus. You can then pilot to Erebus or switch back to Nysa normally. Vesper is selected through the field log rather than adding another item to T's existing two-target cycle.
+
+Readings/archive save additively with Nysa missions, cargo and ECHO. Reload starts safely aboard and retains findings. Re-entry reuses the same world/resources. Reset clears the survey and exits to Erebus. Pause/dialogue freeze walking and guidance. Interactions require proximity, aim and clear sight; Archive05 gates entry and two distinct readings gate Archive06.
+
+Vesper has a separate Rapier world and scene; its terrain cannot alter Nysa's collision mesh, props or vehicle tuning. Rendered/collision terrain share a96² grid. Prepared apron, rim rails and equipment have visible matching proxies. Scanned rocks use the reviewed CGTrader mesh/coarse hull with multiple buried supports. The distant crater rim is scenery outside the physical perimeter. Shuttle/recorder source geometry and PBR maps are shared unchanged; these static sources have no animation. Existing character motion is reused.
+
+Scope: one bounded **on-foot** basin, not global streaming, a simulated biosphere, force-based orbital mechanics or Vesper vehicles/ECHO. Nysa's vehicles/ECHO remain available there. Ground, sky and globe artwork are procedural, with grain/bump, frost/basalt variation, soft ground contact and distant crater walls. No photorealism or physical-device GPU/FPS/memory claim.

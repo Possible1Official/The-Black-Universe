@@ -1,5 +1,7 @@
 # Wayfinder orbital expedition
 
+Archive05 now charts the reachable **Vesper** survey basin. Choose FIELD LOG → Track Vesper landing to begin a second-world expedition; see [Vesper](VESPER.md). The original relay scan controls below remain unchanged.
+
 Recover **Archive04** inside the Signal Vault on Nysa. In **J / FIELD LOG**, choose **Track Wayfinder in orbit**. You can select it aboard, on Nysa, or during manual spaceflight. Launch/board Kestrel normally; guidance switches to the relay during manual flight. The field log is also available during manual flight, freezing motion while open. Guided launch/capture/descent/docking still keep the log unavailable.
 
 Wayfinder sits at sector **X−420 / Y95 / Z−360**, away from the usual Nysa corridor. Fly toward its cyan ring and adjust pitch toward the actual visible target; the label reports altitude95m in the sector frame. Use a modest speed demand for the final approach. Brake to **6m/s or less within45m**, point Kestrel's nose within20° of the relay, then press **E** or the touch interaction button. Receive for **three active seconds**. Nose alignment uses steering, independently of camera free look.
@@ -8,7 +10,7 @@ Scan conditions are rechecked every physics step. Excess speed, range, lost alig
 
 Completion saves **Archive05**, turns the receiver indicator green and adds the decoded record to the field log and officer survey debrief. E near the relay can reread it. Reload starts safely aboard with discovery and older survey/rover/ECHO progress retained; tracking and an in-progress scan are transient. Mission reset clears the archive. Old/malformed saves default unrecovered; the saved flag requires valid recovered Vault/network progress.
 
-The story reports evidence of another biosphere. **Another planet is not yet reachable.** Wayfinder adds an optional flight/exploration objective in the existing sector.
+The story reports evidence of another biosphere and charts Vesper's landing basin. After this relay scan, choose **Track Vesper landing** in the field log for the follow-on expedition. Wayfinder remains an optional orbital exploration objective in the existing sector.
 
 ## Physical appearance and limits
 

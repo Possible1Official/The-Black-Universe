@@ -1,5 +1,11 @@
 # Roadmap
 
+## Vesper second-world expedition (2026-10-17)
+- Archive05 unlocks manual approach and guided capture/descent to a distinct frozen-basin destination; visible globe safety hull and chase-camera/receiver occlusion.
+- Separate rendered/collision terrain, stable scanned rocks, apron and parked jet, two readings, gated Archive06, additive save/debrief and guided return with an outward orbital handoff.
+- Existing character walking/run/jump and CGTrader rock/shuttle/recorder geometry/maps retained. Pause, re-entry, reset and safe reload supported; INFO/1P/3P unchanged.
+- Remaining: Vesper vehicles/companion, richer authored landscapes/interiors, global streaming, encounters and physical-device budgets. This is one bounded on-foot sector, not a full planet or simulated biosphere.
+
 ## Vega guided station tour (2026-10-17)
 - Optional five-stop physical tour: navigation, forge, engineering, observatory and habitat, with progress-aware briefings and explicit continuation.
 - Wait for the visitor, open room bulkheads, protect crew against closing doors, and reverse traversed lanes on cancellation; normal bridge patrol resumes afterward.
