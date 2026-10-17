@@ -1,5 +1,11 @@
 # Asset pipeline
 
+## Vesper ECHO reuse (2026-10-17)
+
+Reuse the reviewed CGTrader ECHO drone derivative unchanged:8 meshes/15,366 triangles, authored metallic materials and the existing source rotor animation. This source has no image textures; no replacement maps, emission glow or stock animation are invented. The four rotor nodes animate through the existing mixer. Shared cached source geometry/materials remain separate from per-instance transforms/mixer. No login/download/conversion or raw-source redistribution this cycle; all14 CGTrader derivative/provenance/motion files remain unchanged.
+
+One retained nonblocking visual instance in Vesper, with no new collider, map, light or shadow pass. Existing swept-ball movement, bounded breadcrumb queue and capped local detour searches are reused with local-world coordinates; the default Nysa origin and scan IDs remain unchanged. Source load retries explicitly on re-entry without duplicate clones. Browser evidence covers the rendered original materials and rotor movement; software-WebGL rendering is not a physical-device FPS/memory benchmark.
+
 ## Vesper vehicle reuse (2026-10-17)
 
 Reuse the already reviewed CGTrader Turbo Bike, Sci-fi Rover and Cyber Biker with original image/material/geometry references and captured Riding clip. All14 derivative/provenance/motion files remain unchanged; no acquisition/login or new stock animation claim. Source wheel, knuckle and complete hip-hinged arm assemblies retain the established rover rig; bike suspension and grip contact reuse existing helpers. Static vehicle source files have no driving clips: spin, steer, hinge support and banking are game-authored presentation.
