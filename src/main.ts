@@ -11,6 +11,10 @@ import {createPlanetTextures} from './planet';
 import {SharedSpace,FORGE_CENTER,SPACE_COLOR} from './shared-space';
 import {RelayOutpost} from './relay-outpost';
 import {SurveyDrone,droneScanSite} from './survey-drone';
+import {GameAudio} from './game-audio';
+import {FootstepPace,type FootSurface} from './soundscape';
+import {biomeAt} from './biomes';
+import {PLAYER_MOTION_STRIDES,CREW_MOTION_STRIDES} from './locomotion-strides';
 import {REPAIR_SITES,OUTPOST,repairRelay,activateUplink,uplinkBlock} from './relay-expedition';
 import {loadCrewVisuals,loadPlayerVisual,type CrewVisual} from './crew-visual';
 import {loadAuthoredAsset} from './authored-assets';
@@ -195,7 +199,7 @@ terminal('Scan the new world',0,-10.5,'DEEP SCAN','TARGET / NYSA',()=>{
 terminal('Open engineering diagnostics',-6.2,-7.4,'CONTAINMENT','POWER ROUTING',showPower);
 terminal('Launch survey shuttle',0,4.4,'SHUTTLE BAY','KESTREL / FLIGHT CONTROL',()=>boardParkedJet());
 for(const [x,z]of [[2.8,-17.8],[-2.8,-20.2]])terminal('Runway inner door '+(z>-19?'station':'bay'),x,z,'AIRLOCK','RUNWAY ACCESS',()=>requestRunwayAccess(),textPanel('ACCESS','INNER DOOR'));
-let world:RAPIER.World, player:RAPIER.RigidBody, playerCollider:RAPIER.Collider, controller:RAPIER.KinematicCharacterController;
+let world:RAPIER.World, player:RAPIER.RigidBody, playerCollider:RAPIER.Collider, controller:RAPIER.KinematicCharacterController,surfaceTerrainCollider:RAPIER.Collider;
 let parkedShuttleCollider:RAPIER.Collider;
 const structuralColliders:RAPIER.Collider[]=[];
 const structureStart=solids.length;
@@ -293,20 +297,31 @@ function syncCrew(){
   }
 }
 function updateHud(){const spans=$('relays').children;RELAYS.forEach((r,i)=>spans[i].classList.toggle('done',progress.relays.includes(r)));$('system').textContent=progress.forged?'GENESIS STABLE':`POWER RELAYS ${progress.relays.length}/3`;$('objective').textContent=progress.forged?'A universe begins':progress.relays.length===3?'Initialize the architect':'Awaken the architect';$('missionText').textContent=progress.forged?(progress.surveyed?'Nysa sample secured. Launch Kestrel for another survey flight.':'Scan Nysa, launch Kestrel and land at the survey site.'):progress.relays.length===3?'All relays synchronized. Use the central architect terminal at the forward window.':'Restore three power relays, then initialize the universe forge from the bridge.';if(onSurface){$('objective').textContent=progress.surveyed?'Return to Erebus':'Survey the luminous outcrop';$('missionText').textContent=progress.surveyed?'Sample secured. Board Kestrel at the landing pad, then fly back to Erebus.':'Walk toward the luminous outcrop northeast of the landing pad. Interact with E to secure a sample.';}relayTargets.forEach((t,i)=>{const relay:Relay[]=['engineering','navigation','observatory'];if(t.screen&&t.screen.userData.online!==progress.relays.includes(relay[i])){const old=t.screen.material as THREE.MeshBasicMaterial;old.map?.dispose();old.dispose();t.screen.userData.online=progress.relays.includes(relay[i]);t.screen.material=textPanel(relay[i].toUpperCase(),progress.relays.includes(relay[i])?'RELAY / ONLINE':'RELAY / STANDBY',progress.relays.includes(relay[i])?'#83f0c1':'#79e4ed');}});}
-let audioContext:AudioContext|undefined,hum:GainNode|undefined;
-function initAudio(){try{audioContext??=new AudioContext();void audioContext.resume();if(!hum){hum=audioContext.createGain();hum.gain.value=.018;hum.connect(audioContext.destination);for(const f of [48,72]){const o=audioContext.createOscillator();o.frequency.value=f;o.connect(hum);o.start();}}hum.gain.value=$<HTMLInputElement>('audio').checked?.018:0;}catch{ /* silent fallback */ }}
-function tone(frequency:number){if(!audioContext||!$<HTMLInputElement>('audio').checked)return;const o=audioContext.createOscillator(),g=audioContext.createGain();o.frequency.value=frequency;g.gain.setValueAtTime(.05,audioContext.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+.4);o.connect(g);g.connect(audioContext.destination);o.start();o.stop(audioContext.currentTime+.4);}
+let audioContext:AudioContext|undefined,gameAudio:GameAudio|undefined;const footstepPace=new FootstepPace();
+$('audio').nextSibling!.textContent=' Game audio';
+try{$<HTMLInputElement>('audio').checked=localStorage.getItem('erebus-audio')!=='muted';}catch{/* Optional preference. */}
+function initAudio(){try{
+  const enabled=$<HTMLInputElement>('audio').checked&&active;
+  if(!enabled){gameAudio?.mute(true);void audioContext?.suspend().catch(()=>{});return;}
+  audioContext??=new AudioContext();gameAudio??=new GameAudio(audioContext);gameAudio.mute(false);void audioContext.resume().catch(()=>{});
+}catch{/* Unsupported audio remains silent and playable. */}}
+function tone(frequency:number){if(active&&$<HTMLInputElement>('audio').checked)gameAudio?.cue(frequency);}
+function footSurface():FootSurface{
+  if(!onSurface)return 'metal';const p=player.translation(),hit=world.castRay(new RAPIER.Ray(p,{x:0,y:-1,z:0}),2,true,undefined,undefined,playerCollider);
+  if(hit&&hit.collider.handle!==surfaceTerrainCollider.handle)return hit.collider.shape.type===RAPIER.ShapeType.ConvexPolyhedron?'stone':'metal';
+  const biome=biomeAt(p.x-SURFACE_ORIGIN,p.z);return biome==='dunes'?'sand':biome==='wetland'?'wet':'stone';
+}
 const crewPanel=document.createElement('section');crewPanel.id='crewPanel';crewPanel.hidden=true;crewPanel.setAttribute('aria-label','Officer briefing topics');$('dialogue').insertBefore(crewPanel,$('closeDialogue'));
 for(const [id,label] of [['mission','Next objective'],['survey','Survey debrief'],['systems','Ship systems']] as const){const button=document.createElement('button');button.dataset.briefing=id;button.textContent=label;button.onclick=()=>{if(active&&dialogueOpen&&!crewPanel.hidden&&speakingCrew)openCrewBriefing(speakingCrew,id);};crewPanel.append(button);}
 function openCrewBriefing(name:string,topic:BriefingTopic){speakingCrew=name;showDialogue(`OFFICER ${name}`,crewBriefing(name,progress,topic));crewPanel.hidden=false;for(const b of Array.from(crewPanel.querySelectorAll('button')))b.setAttribute('aria-pressed',String(b.dataset.briefing===topic));}
 function showDialogue(name:string,line:string){$('crewPanel').hidden=true;$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;$('surveyPanel').hidden=true;$('suppliesPanel').hidden=true;$('dronePanel').hidden=true;$('vaultPanel').hidden=true;dialogueOpen=true;clearInput();$('speaker').textContent=name;$('speech').textContent=line;$('dialogue').hidden=false;paintNavigation();document.exitPointerLock?.();}
 function closeDialogue(){save(false);clearInput();$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;$('suppliesPanel').hidden=true;$('crewPanel').hidden=true;dialogueOpen=false;speakingCrew=undefined;$('dialogue').hidden=true;paintNavigation();if(active&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});}
 $('closeDialogue').onclick=closeDialogue;
-function pause(){save(false);active=false;clearInput();powerAccumulator=0;paintNavigation();$('overlay').hidden=false;$('play').innerHTML='RESUME EXPEDITION <span>↗</span>';document.exitPointerLock?.();if(hum)hum.gain.value=0;}
+function pause(){save(false);active=false;clearInput();powerAccumulator=0;paintNavigation();$('overlay').hidden=false;$('play').innerHTML='RESUME EXPEDITION <span>↗</span>';document.exitPointerLock?.();gameAudio?.mute(true);void audioContext?.suspend().catch(()=>{});}
 $('menu').onclick=pause;
 $('play').onclick=()=>{clearInput();skipPowerFrame=true;active=true;$('overlay').hidden=true;paintNavigation();initAudio();if(!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>notify('Click the scene to enable mouse look.'));};
 canvas.onclick=()=>{if(active&&!dialogueOpen&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});};
-$('audio').onchange=()=>{if(active)initAudio();};
+$('audio').onchange=()=>{try{localStorage.setItem('erebus-audio',$<HTMLInputElement>('audio').checked?'enabled':'muted');}catch{}footstepPace.reset();initAudio();};
 $('quality').onchange=()=>{const high=$<HTMLSelectElement>('quality').value==='high';renderer.setPixelRatio(Math.min(devicePixelRatio,high?1.75:1));renderer.shadowMap.enabled=high;bloom.enabled=high;surface.setQuality(high);lightBudget.configure(high,!onSurface&&!flight);resize();};
 $('reset').onclick=()=>{if(onSurface||flight||launchBay.state.boarded){flight=null;flightWorld.hide();travel(false);}launchBay.state.reset();launchBay.sync();trackedField=undefined;landingSite='survey';progress=freshProgress();syncSalvage();signalVault.setState(progress.vault,true);vaultFrequency=15;vaultBearing=0;signalVault.tune(vaultFrequency,vaultBearing);surveyDrone.arrive(false,landingPad());surface.setScans([]);relayOutpost.setState(progress.network);surface.setRelayOnline(false);save();paintPower();planet.visible=atmosphere.visible=false;notify('Mission progress reset.');};
 function showPower(){
@@ -649,7 +664,7 @@ document.addEventListener('click',e=>{if(e instanceof PointerEvent&&joystickClic
 stick.onpointerdown=e=>{if(!active||dialogueOpen)return;stickPointer=e.pointerId;joystickClicks.add(e.pointerId);stick.setPointerCapture(e.pointerId);moveStick(e);};
 function moveStick(e:PointerEvent){const r=stick.getBoundingClientRect();touchMove.set((e.clientX-r.left-r.width/2)/38,(e.clientY-r.top-r.height/2)/38);if(touchMove.length()>1)touchMove.normalize();thumb.style.transform=`translate(${touchMove.x*32}px,${touchMove.y*32}px)`;}
 stick.onpointermove=e=>{if(e.pointerId===stickPointer)moveStick(e);};stick.onpointerup=stick.onpointercancel=e=>{stickPointer=undefined;touchMove.set(0,0);thumb.style.transform='';if(e.type==='pointercancel')joystickClicks.delete(e.pointerId);else setTimeout(()=>joystickClicks.delete(e.pointerId),500);};
-function clearInput(){touchRunning=false;$('touchRun').setAttribute('aria-pressed','false');jumpBuffer=0;flightBrake=flightBoost=false;motionClock.reset();discardMovementFrame=true;velocity.set(0,0,0);keys.clear();touchMove.set(0,0);stickPointer=undefined;lookPointer=undefined;thumb.style.transform='';}
+function clearInput(){footstepPace.reset();touchRunning=false;$('touchRun').setAttribute('aria-pressed','false');jumpBuffer=0;flightBrake=flightBoost=false;motionClock.reset();discardMovementFrame=true;velocity.set(0,0,0);keys.clear();touchMove.set(0,0);stickPointer=undefined;lookPointer=undefined;thumb.style.transform='';}
 function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(innerWidth,innerHeight);}window.addEventListener('resize',resize);
 const motionClock=new FixedFrameClock();let discardMovementFrame=true,skipPowerFrame=true,lastMotionSteps=0,motionStepsTotal=0,droppedMotionTime=0;
 let verticalSpeed=0,jumpBuffer=0,playerJumping=false;const fixed=FIXED_STEP;const velocity=new THREE.Vector3();
@@ -677,6 +692,8 @@ function physicsStep(){
   if(controller.computedGrounded()&&!jump.jump)playerJumping=false;const actual=player.translation(),distance=Math.hypot(actual.x-p.x,actual.z-p.z);avatarGait+=distance/1.313094*Math.PI*2;avatarBlend=THREE.MathUtils.damp(avatarBlend,Math.min(1,distance/(WALK_SPEED*fixed)),12,fixed);avatarVisual?.update(fixed,distance,avatarBlend,Math.min(1,Math.max(0,(distance/fixed-WALK_SPEED)/(RUN_SPEED-WALK_SPEED))),false,playerJumping||(!controller.computedGrounded()&&(actual.y-p.y)/fixed<-.8),verticalSpeed);
   if(distance>.0001)avatar.rotation.y=turnToward(avatar.rotation.y,Math.atan2(actual.x-p.x,actual.z-p.z),fixed);
   avatarLegs.forEach((leg,i)=>leg.rotation.x=Math.sin(avatarGait+i*Math.PI)*.35*avatarBlend);
+  const foot=footstepPace.sample(distance,controller.computedGrounded(),verticalSpeed,fixed,Math.min(1,Math.max(0,(distance/fixed-WALK_SPEED)/(RUN_SPEED-WALK_SPEED))),!!gameAudio&&$<HTMLInputElement>('audio').checked,avatar.userData.requested==='biker'?PLAYER_MOTION_STRIDES:CREW_MOTION_STRIDES);
+  if(foot)gameAudio?.foot(foot,footSurface());
   if(player.translation().y< -4){const pad=landingPad(landingSite),spawn=onSurface?{x:SURFACE_ORIGIN+pad.x-3.8,y:terrainHeight(pad.x-3.8,pad.z+2)+1.05,z:pad.z+2}:{x:SHIP_LAYOUT.spawn.x,y:.9,z:SHIP_LAYOUT.spawn.z};player.setTranslation(spawn,true);player.setNextKinematicTranslation(spawn);clearInput();verticalSpeed=0;}
 }
 const clock=new THREE.Clock();let frames=0,fpsTime=0;
@@ -700,6 +717,11 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
     updatePlayerView();
     const prompt=launchBay.state.boarded?'':riding?'[ E ] Stop and dismount':flight?(canApproach(flight)?`[ E ] ${flight.leg==='nysa'?'Land on Nysa':'Dock with Erebus'}`:''):nearest?`[ E ] ${nearest.name}`:'';$('interaction').style.display=prompt?'block':'none';$('interaction').textContent=prompt;$('touchAction').setAttribute('aria-label',prompt||'Interact');
   }else{$('interaction').style.display='none';}
+  if(active&&gameAudio&&$<HTMLInputElement>('audio').checked){
+    const boarded=launchBay.state.boarded,brake=keys.has('Space')||flightBrake;
+    const guided=boarded&&['departing','return-turn','return-parking'].includes(launchBay.state.phase);
+    gameAudio.update({location:flight?'flight':onSurface?'surface':'ship',vehicle:flight||boarded?'shuttle':riding?.kind??null,speed:riding?Math.abs(riding.speed)/riding.maxSpeed:flight?flightSpeed(flight)/110:0,demand:dialogueOpen?0:riding?speedDemand:flight?feedback.power:guided?.55:0,brake,boost:!!flight&&(keys.has('ShiftLeft')||keys.has('ShiftRight')||flightBoost),tripped:progress.power.tripped});
+  }
   navigationTimer+=rawDt;if(navigationTimer>=.1){paintNavigation();navigationTimer=0;}
   for(let i=0;i<rings.length;i++){rings[i].rotation.z+=dt*.035*(i%2?-1:1);rings[i].rotation.y+=dt*.012;}pylons.rotation.z=elapsed*.018;shell.rotation.y=elapsed*.06;forgeBody.rotation.y=elapsed*.03;forgeLight.scale.setScalar(.96+Math.sin(elapsed*1.4)*.04+(progress.forged?.12:0));chart.rotation.y=elapsed*.15;reactorCore.rotation.y=elapsed*.25;planet.rotation.y=elapsed*.008;clouds.rotation.y=elapsed*.015;clouds.visible=planet.visible;
   if(dialogueOpen&&speakingCrew){const c=crew.find(c=>c.name===speakingCrew)!;const p=player.translation();c.mesh.rotation.y=turnToward(c.mesh.rotation.y,Math.atan2(p.x-c.mesh.position.x,p.z-c.mesh.position.z),dt);}
@@ -787,7 +809,7 @@ async function boot(){await RAPIER.init();world=new RAPIER.World({x:0,y:-9.81,z:
   roverSalvage.init(world);salvageTargets.forEach((t,i)=>t.collider=roverSalvage.sites[i].collider);
   signalVault.init(world);vaultTargets.forEach((t,i)=>t.collider=signalVault.terminals[i].collider);
   cacheTarget.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(CACHE_SIZE.width/2,cachePlan.colliderHalfHeight,CACHE_SIZE.depth/2).setTranslation(SURFACE_ORIGIN+SUPPLY_CACHE.x,cachePlan.colliderY,SUPPLY_CACHE.z));
-  world.createCollider(RAPIER.ColliderDesc.trimesh(surface.mesh.vertices,surface.mesh.indices).setTranslation(SURFACE_ORIGIN,0,0));
+  surfaceTerrainCollider=world.createCollider(RAPIER.ColliderDesc.trimesh(surface.mesh.vertices,surface.mesh.indices).setTranslation(SURFACE_ORIGIN,0,0));
   for(const axis of ['x','z'])for(const sign of [-1,1])world.createCollider(RAPIER.ColliderDesc.cuboid(axis==='x'?1:SITE_HALF+1,4,axis==='z'?1:SITE_HALF+1).setTranslation(SURFACE_ORIGIN+(axis==='x'?sign*(SITE_HALF+1):0),2,axis==='z'?sign*(SITE_HALF+1):0));
   extractionTarget.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(.16,1.2,.16).setTranslation(SURFACE_ORIGIN,1.2,LANDING.z+SHUTTLE_HATCH_Z));
   parkedShuttleCollider=world.createCollider(RAPIER.ColliderDesc.cuboid(SHUTTLE_SIZE[0]/2,SHUTTLE_SIZE[1]/2,SHUTTLE_SIZE[2]/2).setTranslation(SURFACE_ORIGIN,SHUTTLE_SIZE[1]/2,LANDING.z));

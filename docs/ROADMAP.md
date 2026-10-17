@@ -341,3 +341,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Short obstruction debounce, capped local grid/query work and cooldown; sealed/unsupported/tight paths still stop safely. Hold, scan, boarding, redeployment and pause preserve their expected behavior.
 - Original reviewed CGTrader drone geometry, materials and captured rotor motion unchanged; no new stock downloads, render resources or permanent controls.
 - Remaining: global replanning, richer companion duties/encounters, distinct destinations and measured physical-device budgets. Local grid searches can fail even when a distant route exists.
+
+## Movement and vehicle soundscape (2026-10-17)
+- Replace the everywhere ship hum with ship machinery, Nysa wind and interior flight feedback. Add surface-specific distance-driven footsteps, single landing impacts and distinct bike/rover/shuttle motors plus speed-driven rolling sound.
+- Brake suppresses load/boost, pause/mute suspend audio and clear one-shots, resume reuses the bounded graph, and the menu choice persists. Silent fallback remains playable without audio support.
+- Locally synthesized sound, no downloaded samples or model/material/animation changes. Captured motion cadence is preserved; feet do not trigger sound from held movement intent alone.
+- Remaining: recorded/positional sound, acoustic occlusion, exact foot-contact synchronization, device listening/latency/performance validation and richer exploration destinations.

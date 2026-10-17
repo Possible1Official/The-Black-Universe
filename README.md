@@ -55,6 +55,8 @@ Desktop modern Chrome/Firefox/Edge with hardware acceleration is recommended. To
 
 See [local crew behavior](docs/CREW.md) for the implemented patrol model and its limits.
 
+**Game audio** in menu settings controls scene-specific machinery/wind, material-specific walking/running steps, landing impacts and responsive bike/rover/Kestrel motors. Footsteps follow actual ground movement; braking suppresses engine load, and pause/mute suspend sound processing. The choice persists locally. Effects are synthesized locally, with no external audio downloads. See [audio behavior and limits](docs/AUDIO.md).
+
 ## Ongoing development
 
 Read [roadmap](docs/ROADMAP.md), [progress/evidence](docs/PROGRESS.md), [automation protocol](docs/AUTONOMY.md) and [Mixamo asset status](docs/ASSETS.md). Built-in hourly tasks initiate development; GitHub Actions tests the game. Owner-private Sites hosting serves a mirrored copy of the tested GitHub source. Pages setup was blocked by the integration permission (HTTP 403). Each cycle uses a branch/PR and merges passing changes. Rollback retains Git history and baseline tags.
