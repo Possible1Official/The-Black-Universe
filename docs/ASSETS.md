@@ -1,5 +1,11 @@
 # Asset pipeline
 
+## Vesper vehicle reuse (2026-10-17)
+
+Reuse the already reviewed CGTrader Turbo Bike, Sci-fi Rover and Cyber Biker with original image/material/geometry references and captured Riding clip. All14 derivative/provenance/motion files remain unchanged; no acquisition/login or new stock animation claim. Source wheel, knuckle and complete hip-hinged arm assemblies retain the established rover rig; bike suspension and grip contact reuse existing helpers. Static vehicle source files have no driving clips: spin, steer, hinge support and banking are game-authored presentation.
+
+Two additional retained kinematic bodies/cuboid proxies and visual instances live in Vesper's separate world. Cached imports share source geometry/maps while cloning articulated object transforms. Exact96m-grid sampling and existing bounded support rays feed stance/suspension; no new texture, shadow light or shadow pass. Source asset loads retry on re-entry without duplicate attachments. Software-WebGL QA verifies rendered maps and rider placement; no physical-device speed/memory improvement is claimed.
+
 ## Vesper expedition reuse (2026-10-17)
 
 Reuse the reviewed CGTrader scanned rock, flying ship, cockpit and recorder, sharing original geometry/material/image references through existing caches. All14 derivative/provenance/image/motion files remain byte-identical. No login, download, stock conversion or raw-source redistribution. Static equipment has no source animation; character movement uses existing captured Mixamo walk/run/jump clips. No scanning/landing rig is claimed.
