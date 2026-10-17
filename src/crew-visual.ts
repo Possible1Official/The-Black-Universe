@@ -6,9 +6,10 @@ import {requestedAsset} from './requested-assets';
 import {BikeRiderContact} from './rider-contact';
 import {FootContact} from './foot-contact';
 import {RiderBodyVisibility} from './bike-view';
+import {PLAYER_MOTION_STRIDES,CREW_MOTION_STRIDES} from './locomotion-strides';
 
 // Source Walking clip travels 1.313 m in one 26-frame cycle (30 FPS).
-export const WALK_STRIDE = 1.313094;
+export const WALK_STRIDE = CREW_MOTION_STRIDES.walk;
 export class CrewVisual {
   readonly mixer: THREE.AnimationMixer;
   private idle: THREE.AnimationAction;
@@ -19,7 +20,7 @@ export class CrewVisual {
   private riderBody?:RiderBodyVisibility;
   bikeEye(target:THREE.Vector3){return this.riderBody?.eye(target,this.root)??target;}
   setBikeFirstPerson(first:boolean){if(first)(this.riderBody??=new RiderBodyVisibility(this.root)).setFirstPerson(true);else this.riderBody?.setFirstPerson(false);}
-  constructor(readonly root: THREE.Object3D, clips: THREE.AnimationClip[],private readonly walkStride=WALK_STRIDE,private readonly runStride=2.2) {
+  constructor(readonly root: THREE.Object3D, clips: THREE.AnimationClip[],private readonly walkStride:number=WALK_STRIDE,private readonly runStride:number=CREW_MOTION_STRIDES.run) {
     const idle=clips.find(c=>c.name==='Idle'),walk=clips.find(c=>c.name==='Walking');
     if(!idle||!walk)throw new Error('Crew asset needs Idle and Walking clips');
     this.mixer=new THREE.AnimationMixer(root);
@@ -61,4 +62,4 @@ export async function loadCrewVisuals(actors:THREE.Group[]):Promise<CrewVisual[]
   });
 }
 
-export async function loadPlayerVisual(actor:THREE.Group){const gltf=await requestedAsset('biker');const root=clone(gltf.scene);root.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=o.receiveShadow=true;o.frustumCulled=false;}});const visual=new CrewVisual(root,gltf.animations,1.465755,3.50991);for(const c of actor.children)c.visible=false;root.name='requested-biker';actor.add(root);actor.userData.requested='biker';return visual;}
+export async function loadPlayerVisual(actor:THREE.Group){const gltf=await requestedAsset('biker');const root=clone(gltf.scene);root.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=o.receiveShadow=true;o.frustumCulled=false;}});const visual=new CrewVisual(root,gltf.animations,PLAYER_MOTION_STRIDES.walk,PLAYER_MOTION_STRIDES.run);for(const c of actor.children)c.visible=false;root.name='requested-biker';actor.add(root);actor.userData.requested='biker';return visual;}

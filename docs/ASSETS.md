@@ -368,3 +368,7 @@ Five collision handles: two pallet boxes, two terminal boxes, one crate box; the
 ## ECHO navigation reuse (2026-10-17)
 
 Reuse RiDDDick1991's reviewed free CGTrader quadrotor with its original white/dark material values and captured four-rotor loop. No login, download, conversion or model/image/provenance change. All14 packaged derivatives retain their existing hashes. Navigation adds no mesh, texture, light, shadow map or collision handle. Ordinary follow retains one floor ray/one swept sphere per active fixed step; blocked local planning adds at most80 floor rays/160 sphere sweeps per search, with a2.5s cooldown and bounded81-node scratch state. Sealed routes still stop. This adds bounded CPU work, without a physical-device FPS/memory claim; see SURVEY-DRONE and PROGRESS for exact verification.
+
+## Movement audio (2026-10-17)
+
+No stock asset acquisition or repackaging. All14 incorporated CGTrader derivatives, images, geometry/material settings, provenance and captured motions remain unchanged. New foot/motor/wind/cue audio is synthesized locally, with no downloaded sound samples or claimed model-source sound. Walking/running use the existing captured stride lengths for cadence; the foot events are controller-driven, not new imported animations. AUDIO.md records bounded Web Audio nodes/buffer/voices and supporting-floor rays. This cycle's replaced workspace has no retained private CGTrader/Mixamo session; do not claim cookies survived or send fresh code emails for unrelated work.
