@@ -5,10 +5,10 @@ import {SITE_HALF} from './excursion';
 
 // Sample the same two triangles per grid cell used by render/Rapier, rather
 // than evaluating a curved analytic height between the exported vertices.
-export function terrainSampler(vertices:Float32Array){
- const segments=Math.sqrt(vertices.length/3)-1,spacing=SITE_HALF*2/segments;
+export function terrainSampler(vertices:Float32Array,half=SITE_HALF){
+ const segments=Math.sqrt(vertices.length/3)-1,spacing=half*2/segments;
  return (x:number,z:number)=>{
-  const gx=THREE.MathUtils.clamp((x+SITE_HALF)/spacing,0,segments),gz=THREE.MathUtils.clamp((z+SITE_HALF)/spacing,0,segments);
+  const gx=THREE.MathUtils.clamp((x+half)/spacing,0,segments),gz=THREE.MathUtils.clamp((z+half)/spacing,0,segments);
   const ix=Math.min(segments-1,Math.floor(gx)),iz=Math.min(segments-1,Math.floor(gz)),u=gx-ix,v=gz-iz;
   const a=(iz*(segments+1)+ix)*3+1,b=a+3,c=a+(segments+1)*3,d=c+3;
   return u+v<=1?vertices[a]+u*(vertices[b]-vertices[a])+v*(vertices[c]-vertices[a]):vertices[d]+(1-u)*(vertices[c]-vertices[d])+(1-v)*(vertices[b]-vertices[d]);

@@ -1,6 +1,6 @@
 # Kestrel shuttle flight
 
-**Vesper:** after Wayfinder Archive05, FIELD LOG can track a second world's landing ring at710/130/−1090. Within100m/below18m/s, E begins its guided landing. Survey its separate frozen basin on foot and board the parked jet for ascent and manual orbital return. T cancels this tracking before capture. The existing Nysa/Erebus target cycle remains unchanged. See [Vesper scope/controls](VESPER.md).
+**Vesper:** after Wayfinder Archive05, FIELD LOG can track a second world's landing ring at710/130/−1090. Within100m/below18m/s, E begins its guided landing. Survey its separate frozen basin on foot or with ground vehicles and board the parked jet for ascent and manual orbital return. T cancels this tracking before capture. The existing Nysa/Erebus target cycle remains unchanged. See [Vesper scope/controls](VESPER.md).
 
 Restore the relays and create Nysa first. Kestrel is always parked near the entrance of the bow runway while aboard. Use the inner-door panel, walk through the doorway and board at the cyan starboard marker with E. Boarding closes the inner door, then opens the outer space door; the jet waits for both conditions before a five-second guided runway departure and manual flight. A containment trip blocks outbound boarding. The existing science-array launch button and concourse launch console remain shortcuts that seat you in the same parked jet and run the same interlock. The bedroom is now directly aft of the lounge, clear of the space exit.
 

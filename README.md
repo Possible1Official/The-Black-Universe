@@ -6,6 +6,8 @@ An evolving browser science-fiction game: explore the starship **Erebus**, resto
 
 This is a playable foundation toward an ambitious universe simulation. It does not yet provide television-level photorealism, planet-wide exploration, multiplayer, or general-purpose AI NPCs.
 
+Vesper now has the reviewed Turbo Bike and Sci-fi Rover beside its landing apron. E mounts/dismounts, left slider controls speed, right joystick steers, and Brake/Space stops. Camera look stays independent. Original textured rider/body and hinged suspension carry over from Nysa; see [Vesper controls and scope](docs/VESPER.md).
+
 ## Run
 
 Node.js 22+: `npm ci`, then `npm run dev`. Open the printed URL. `npm test` verifies progression/save invariants; `npm run build` checks TypeScript and produces static `dist/`. `npm run preview` serves that build. With the dev server running, `npm run test:browser` exercises the mission and collision flow in Chromium (first install it with `npx playwright install chromium`).
@@ -28,7 +30,7 @@ After Silent Network, **J / FIELD LOG → Track lost recorder** starts an option
 
 ## Wayfinder orbital expedition
 
-**New destination:** Archive05 unlocks **FIELD LOG → Track Vesper landing**. Pilot to the frozen world's near-side ring, brake below18m/s and press E for guided landing. Explore a separate96m basin on foot, scan frost/geothermal warmth, recover Archive06 and board the parked jet to return to orbital flight. Original CGTrader rock/shuttle/recorder maps and captured character motion are retained. [Vesper controls and limits](docs/VESPER.md).
+**New destination:** Archive05 unlocks **FIELD LOG → Track Vesper landing**. Pilot to the frozen world's near-side ring, brake below18m/s and press E for guided landing. Explore a separate96m basin on foot or with the bike/rover, scan frost/geothermal warmth, recover Archive06 and board the parked jet to return to orbital flight. Original CGTrader rock/shuttle/recorder maps and captured character motion are retained. [Vesper controls and limits](docs/VESPER.md).
 
 Recover Signal Vault **Archive04**, then choose **J / FIELD LOG → Track Wayfinder in orbit**. Pilot Kestrel to a new visible relay at sector **X−420 / Y95 / Z−360**, brake below6m/s within45m, align the nose and press **E** for three seconds of reception. Recover saved **Archive05**; **T** restores normal landing guidance. The field log now also opens during manual spaceflight. [Controls, asset reuse and limits](docs/ORBITAL-SIGNAL.md).
 
