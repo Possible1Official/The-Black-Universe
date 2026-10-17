@@ -21,10 +21,11 @@ export class VesperVehicles{
   for(const kind of ['bike','rover'] as const){const p=parking[kind],vehicle=new GroundVehicle(kind,world,{...p,y:ground(p.x,p.z)}),actor=new THREE.Group(),h=VEHICLE_SPEC[kind].half;actor.name='Vesper '+kind;
    const fallback=new THREE.Mesh(new THREE.BoxGeometry(h[0]*2,h[1],h[2]*2),new THREE.MeshStandardMaterial({color:0x62747b,metalness:.6,roughness:.5}));fallback.position.y=h[1];actor.add(fallback);scene.add(actor);this.vehicles.set(kind,vehicle);this.actors.set(kind,actor);this.stances.set(kind,new VehicleStance());this.springs.set(kind,new VehicleSuspension(kind));
   }
-  world.step();
+  world.step();this.parkVisuals();
  }
  load(){if(this.pending)return this.pending;this.pending=Promise.all([...this.actors].map(([kind,actor])=>actor.userData.requested?undefined:attachRequested(kind,actor).catch(()=>console.warn('Vesper '+kind+' fallback retained; re-entry retries.')))).then(()=>{}).finally(()=>{this.pending=undefined;});return this.pending;}
- reset(calibrated=false){this.riding=null;this.demand=0;this.collider.setEnabled(true);for(const [kind,v]of this.vehicles){const p=parking[kind];v.relocate({...p,y:this.ground(p.x,p.z)});v.distance=0;v.driveCalibrated=kind==='rover'&&calibrated;this.stances.set(kind,new VehicleStance());}this.world.step();}
+ reset(calibrated=false){this.riding=null;this.demand=0;this.collider.setEnabled(true);for(const [kind,v]of this.vehicles){const p=parking[kind];v.relocate({...p,y:this.ground(p.x,p.z)});v.distance=0;v.driveCalibrated=kind==='rover'&&calibrated;this.stances.set(kind,new VehicleStance());}this.world.step();this.parkVisuals();}
+ private parkVisuals(){for(const [kind,v]of this.vehicles){const p=v.body.translation();this.stances.get(kind)!.update(kind,this.actors.get(kind)!,p.x,p.y,p.z,v.yaw,this.ground,0);}}
  stop(){this.demand=0;this.braking=true;if(this.riding){this.riding.speed=0;this.riding.turnRate=0;}}
  private candidate(yaw:number,pitch:number){const p=this.player.translation(),eye=new THREE.Vector3(p.x,p.y+.74,p.z),forward=new THREE.Vector3(0,0,-1).applyEuler(new THREE.Euler(pitch,yaw,0,'YXZ'));let found:GroundVehicle|undefined,best=3.4;
   for(const v of this.vehicles.values()){const q=v.body.translation(),delta=new THREE.Vector3(q.x,q.y+.25,q.z).sub(eye),distance=delta.length();if(distance>=best||delta.normalize().dot(forward)<.45)continue;const hit=this.world.castRay(new RAPIER.Ray(eye,delta),distance,true,undefined,undefined,this.collider,undefined,c=>c.handle!==v.collider.handle);if(!hit){found=v;best=distance;}}
