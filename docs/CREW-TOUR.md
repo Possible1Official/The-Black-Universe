@@ -1,0 +1,9 @@
+# Vega's station tour
+
+Speak with Vega aboard Erebus, then choose **Guided station tour**. Follow her along the actual Intrepid interior. She stops at navigation/deep scan, the Architect, engineering, the observatory and the habitat concourse. Speak with her at each stop for a briefing, then choose **Continue tour**. Briefings reflect your actual relay, forge, containment and coolant state; no mission is activated for you.
+
+Vega walks at her existing0.65m/s using the captured Mixamo walking/idle blend. She waits if you fall more than6m behind, stops inside0.85m personal space, and opens existing room bulkheads on approach. Doors now also protect crew from closing on them. Clear blocked lanes; she never skips a wall or teleports. INFO shows optional guidance to her; it still starts hidden. The usual mission guidance returns after the tour.
+
+**End tour / return to bridge** reverses the traversed lane instead of cutting directly across room walls. Completing all five stops returns her to bridge patrol. Pausing or conversation freezes the task. Launching or resetting cancels the tour into its return route; crew hold while you are away. Reload starts Vega safely at her ordinary bridge spawn. Tour position is transient and does not change mission saves.
+
+This is an authored sixteen-waypoint tour, not ship-wide pathfinding, generative dialogue or general AI. It can wait behind a persistent obstacle. It does not add a new planet, room or stock character. Existing reviewed CGTrader interiors, materials and all14 packaged derivatives remain byte-identical; captured crew motion is reused. No extra mesh, map, light, collider, stock download or login is needed. Per fixed step adds bounded distance/waypoint math for one officer and crew checks on the two existing doors. Device GPU performance remains unmeasured.

@@ -38,6 +38,7 @@ import {VehicleStance,terrainSampler} from './vehicle-stance';
 import {GroundVehicle,VEHICLE_SPEC,dismountPosition,type VehicleKind} from './ground-vehicle';
 import {steerPilot,targetThrottle,WALK_SPEED,RUN_SPEED,JUMP_SPEED} from './pilot-controls';
 import {crewBriefing,type BriefingTopic} from './crew-briefing';
+import {startTour,continueTour,cancelTour,planTour,recordTourMovement,tourLine,type TourState} from './crew-tour';
 import {drawSurveyMap,mapPoint,surfacePin,PIN_LIMIT} from './survey-map';
 import type {SurfaceTrack} from './navigation';
 import {walkingCamera,flightCamera,orbitalCameraDistance,surfaceCameraDistance} from './view-camera';
@@ -234,6 +235,7 @@ interface CrewMember {
   visual?: CrewVisual; body?: RAPIER.RigidBody; collider?: RAPIER.Collider; controller?: RAPIER.KinematicCharacterController;
 }
 const crew: CrewMember[] = [];
+let crewTour:TourState|null=null;
 let speakingCrew: string | undefined;
 function makeCrew(name:string,x:number,z:number,color:number){
   const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
@@ -251,7 +253,7 @@ function makeCrew(name:string,x:number,z:number,color:number){
     box(.12,.24,.14,0,-.55,0,trim,arm);arms.push(arm);
   }
   const target={name:`Speak with ${name}`,position:g.position.clone().add(new THREE.Vector3(0,1.2,0)),action:()=>{
-    openCrewBriefing(name,'mission');
+    if(name==='VEGA'&&crewTour)openTourBriefing();else openCrewBriefing(name,'mission');
   }};
   targets.push(target);
   const route:[Point,Point]=name==='VEGA'?[{x,z:z-1},{x,z:z+1.5}]:[{x,z},{x:x+1.5,z:z+1.5}];
@@ -273,7 +275,10 @@ function stepCrew(){
     c.sightWait-=fixed;
     if(Math.hypot(visitor.x-p.x,visitor.z-p.z)>2.3){c.visitorVisible=false;c.sightWait=0;}
     else if(c.sightWait<=0){c.visitorVisible=clearSight(world,{x:p.x,y:p.y+.8,z:p.z},{x:visitor.x,y:visitor.y+.74,z:visitor.z},collider,playerCollider);c.sightWait=.1;}
-    const plan=c.name==='ION'?planEngineeringDuty(c.duty,c.state,p,c.route,visitor,fixed,progress.power.tripped,speakingCrew===c.name,c.visitorVisible,INTREPID_ENGINEERING_GRAPH,SHIP_LAYOUT.diagnostics):{duty:null,...planPatrol(c.state,p,c.route,visitor,fixed,speakingCrew===c.name,c.visitorVisible)};
+    const tourPlan=c.name==='VEGA'&&crewTour?planTour(crewTour,c.state,p,visitor,fixed,speakingCrew===c.name):null;
+    if(tourPlan){const ended=!!crewTour&&!tourPlan.tour;crewTour=tourPlan.tour;if(ended)notify('VEGA / Bridge patrol resumed.');}
+    const plan=tourPlan?{duty:null,...tourPlan}:c.name==='ION'?planEngineeringDuty(c.duty,c.state,p,c.route,visitor,fixed,progress.power.tripped,speakingCrew===c.name,c.visitorVisible,INTREPID_ENGINEERING_GRAPH,SHIP_LAYOUT.diagnostics):{duty:null,...planPatrol(c.state,p,c.route,visitor,fixed,speakingCrew===c.name,c.visitorVisible)};
+    if(tourPlan&&crewTour)for(const door of doors)if(Math.hypot(p.x-door.x,p.z-SHIP_LAYOUT.doorZ)<1.5)door.open=true;
     c.duty=plan.duty;
     const dx=plan.facing.x-p.x,dz=plan.facing.z-p.z;
     const heading=Math.atan2(dx,dz);
@@ -285,7 +290,8 @@ function stepCrew(){
     const move=controller.computedMovement();
     const distance=Math.hypot(move.x,move.z), intended=Math.hypot(desired.x,desired.z);
     const forwardProgress=intended>0?Math.max(0,(move.x*desired.x+move.z*desired.z)/intended):0;
-    if(c.duty){c.duty=recordDutyMovement(c.duty,intended,forwardProgress,fixed,p,INTREPID_ENGINEERING_GRAPH);c.state=plan.state;}
+    if(tourPlan){if(crewTour)crewTour=recordTourMovement(crewTour,intended,forwardProgress,fixed);c.state=plan.state;}
+    else if(c.duty){c.duty=recordDutyMovement(c.duty,intended,forwardProgress,fixed,p,INTREPID_ENGINEERING_GRAPH);c.state=plan.state;}
     else c.state=recordPatrolMovement(plan.state,intended,forwardProgress,fixed);
     body.setNextKinematicTranslation({x:p.x+move.x,y:p.y+move.y,z:p.z+move.z});
     c.gait+=distance/.85*Math.PI*2;
@@ -318,7 +324,15 @@ function footSurface():FootSurface{
 }
 const crewPanel=document.createElement('section');crewPanel.id='crewPanel';crewPanel.hidden=true;crewPanel.setAttribute('aria-label','Officer briefing topics');$('dialogue').insertBefore(crewPanel,$('closeDialogue'));
 for(const [id,label] of [['mission','Next objective'],['survey','Survey debrief'],['systems','Ship systems']] as const){const button=document.createElement('button');button.dataset.briefing=id;button.textContent=label;button.onclick=()=>{if(active&&dialogueOpen&&!crewPanel.hidden&&speakingCrew)openCrewBriefing(speakingCrew,id);};crewPanel.append(button);}
-function openCrewBriefing(name:string,topic:BriefingTopic){speakingCrew=name;showDialogue(`OFFICER ${name}`,crewBriefing(name,progress,topic));crewPanel.hidden=false;for(const b of Array.from(crewPanel.querySelectorAll('button')))b.setAttribute('aria-pressed',String(b.dataset.briefing===topic));}
+const tourButton=document.createElement('button');tourButton.id='crewTour';tourButton.textContent='Guided station tour';crewPanel.append(tourButton);
+const tourContinue=document.createElement('button');tourContinue.id='tourContinue';tourContinue.textContent='Continue tour';crewPanel.append(tourContinue);
+const tourEnd=document.createElement('button');tourEnd.id='tourEnd';tourEnd.textContent='End tour / return to bridge';crewPanel.append(tourEnd);
+function paintTourButtons(name:string){tourButton.hidden=name!=='VEGA'||!!crewTour;tourContinue.hidden=name!=='VEGA'||crewTour?.phase!=='stop';tourEnd.hidden=name!=='VEGA'||!crewTour||crewTour.phase==='return';}
+tourButton.onclick=()=>{if(active&&dialogueOpen&&speakingCrew==='VEGA'&&!crewTour){crewTour=startTour();closeDialogue();notify('Follow Vega. Speak with her at each stop; she waits if you fall behind.');}};
+tourContinue.onclick=()=>{if(active&&dialogueOpen&&speakingCrew==='VEGA'&&crewTour?.phase==='stop'){crewTour=continueTour(crewTour);closeDialogue();}};
+tourEnd.onclick=()=>{if(active&&dialogueOpen&&speakingCrew==='VEGA'&&crewTour){crewTour=cancelTour(crewTour);closeDialogue();notify('Vega is returning to bridge patrol along the tour route.');}};
+function openTourBriefing(){if(!crewTour)return;speakingCrew='VEGA';showDialogue('VEGA / STATION TOUR',tourLine(crewTour,progress));crewPanel.hidden=false;paintTourButtons('VEGA');for(const b of Array.from(crewPanel.querySelectorAll('[data-briefing]')))b.setAttribute('aria-pressed','false');}
+function openCrewBriefing(name:string,topic:BriefingTopic){speakingCrew=name;showDialogue(`OFFICER ${name}`,crewBriefing(name,progress,topic));crewPanel.hidden=false;paintTourButtons(name);for(const b of Array.from(crewPanel.querySelectorAll<HTMLButtonElement>('[data-briefing]')))b.setAttribute('aria-pressed',String(b.dataset.briefing===topic));}
 function showDialogue(name:string,line:string){$('crewPanel').hidden=true;$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;$('surveyPanel').hidden=true;$('suppliesPanel').hidden=true;$('dronePanel').hidden=true;$('vaultPanel').hidden=true;dialogueOpen=true;clearInput();$('speaker').textContent=name;$('speech').textContent=line;$('dialogue').hidden=false;paintNavigation();document.exitPointerLock?.();}
 function closeDialogue(){save(false);clearInput();$('powerPanel').hidden=true;$('expeditionPanel').hidden=true;$('suppliesPanel').hidden=true;$('crewPanel').hidden=true;dialogueOpen=false;speakingCrew=undefined;$('dialogue').hidden=true;paintNavigation();if(active&&!matchMedia('(pointer:coarse)').matches)void canvas.requestPointerLock()?.catch(()=>{});}
 $('closeDialogue').onclick=closeDialogue;
@@ -346,6 +360,7 @@ $('resetContainment').onclick=()=>{
   if(progress.power.tripped&&!next.tripped){progress={...progress,power:next};save(false);paintPower();notify('Containment reset. Balanced routing restored.');tone(440);}
 };
 const thermalCold=new THREE.Color(0x44bed1),thermalHot=new THREE.Color(0xff4c32);
+$('reset').addEventListener('click',()=>{if(crewTour)crewTour=cancelTour(crewTour);});
 function paintPower(){
   reserveCartridges.setCount(progress.supplies.coolant);cacheCartridges.setCount(progress.supplies.cacheClaimed?0:2);
   reserveStatus.color.setHex(progress.supplies.coolant>0?0x77e5d4:0x627c88);cacheStatus.color.setHex(progress.supplies.cacheClaimed?0x627c88:0x77e5d4);
@@ -481,6 +496,7 @@ $('flightPad').onclick=()=>{if(!trackedSignal&&flight?.phase==='flying'&&flight.
 function requestRunwayAccess(){if(launchBay.state.requestAccess()){notify('Runway inner door '+(launchBay.state.access?'opening. Board the parked jet at its cyan marker.':'closing.'));}else notify('Launch interlock active.');}
 function boardParkedJet(){const blocked=landingBlock(progress.forged,progress.power.tripped);if(blocked){notify(blocked);return;}if(!launchBay.state.board()){notify('Launch interlock is busy.');return;}void flightWorld.loadCockpit().catch(()=>console.warn('Cockpit fallback active'));clearInput();playerCollider.setEnabled(false);nearest=undefined;yaw=0;pitch=0;notify('Boarded Kestrel. Inner door sealing before outer door opens.');}
 function launchFlight(leg:FlightLeg,fromRunway=false){
+  if(crewTour)crewTour=cancelTour(crewTour);
   if(flight)return;
   orbitalScan.cancel();void orbitalProbe.load(true);
   void flightWorld.loadCockpit().catch(()=>console.warn('Cockpit asset unavailable; generated instruments retained'));
@@ -504,6 +520,7 @@ function finishBayReturn(){
   notify('DOCKED · Outer door sealed. Inner door open. Step into the station or board again.');
 }
 function travel(landing:boolean){
+  if(crewTour)crewTour=cancelTour(crewTour);
   launchBay.state.reset();launchBay.sync();riding=null;playerJumping=false;if(playerCollider)playerCollider.setEnabled(true);speedDemand=0;
   orbitalThrusters.root.visible=surfaceThrusters.root.visible=false;
   clearInput();verticalSpeed=0;nearest=undefined;speakingCrew=undefined;trackedField=undefined;
@@ -638,6 +655,10 @@ function paintNavigation(){
     $('flightTarget').textContent=`TARGET: ${flight.leg.toUpperCase()} / T`;return;
   }
   const position=player.translation();
+  if(!onSurface&&crewTour){
+    const guide=crew.find(c=>c.name==='VEGA')!.body!.translation(),reading=navigationReading(position,yaw,guide);
+    $('compassHeading').textContent=`${reading.direction} / ${Math.round(reading.heading)}°`;$('navLabel').textContent=crewTour.phase==='return'?'Vega / returning to bridge':'Follow Vega / station tour';$('navDistance').textContent=`${reading.distance.toFixed(1)} m · ${reading.turn}`;$('navArrow').style.transform=`rotate(${reading.relativeDegrees}deg)`;$('navHint').textContent=crewTour.phase==='stop'?'Speak with Vega for this stop, then choose Continue tour.':crewTour.blocked>=2?'Clear Vega’s path to continue.':crewTour.waiting?'Vega is waiting. Come within six meters.':'Follow Vega; she opens the room bulkheads as she approaches.';$('navigationHud').dataset.destination='crew-tour';$('navigationHud').dataset.waypoint='crew-tour';return;
+  }
   if(onSurface&&typeof trackedField==='object'&&Math.hypot(position.x-SURFACE_ORIGIN-trackedField.x,position.z-trackedField.z)<2){trackedField=undefined;notify('SURVEY WAYPOINT REACHED · Mission guidance restored.');}
   const destination=onSurface&&trackedField==='drone'?surveyDrone.waypoint():progress.forged&&!onSurface&&!progress.power.tripped?{id:'launch',label:launchBay.state.inner>.95?'Parked Kestrel':'Runway inner door',x:launchBay.state.inner>.95?LAUNCH_BAY.boarding.x:2.8,z:launchBay.state.inner>.95?LAUNCH_BAY.boarding.z:-17.8,hint:'Open the runway door, walk to the cyan jet marker and board with E.'}:missionDestination(progress,onSurface,trackedField,landingSite,SHIP_LAYOUT);
   const waypoint=onSurface?destination:routeWaypoint(destination,position,doors.map(d=>d.open),SHIP_LAYOUT);
@@ -698,7 +719,7 @@ function physicsStep(){
     const scanning=orbitalScan.active;if(trackedSignal&&orbitalScan.step(flight,progress.vault.archived,pilot.yaw,pilot.pitch,fixed)){progress={...progress,signalRecovered:true};orbitalProbe.setRecovered(true);save();tone(830);notify('ARCHIVE 05 recovered. Read it in FIELD LOG / J.');}else if(scanning&&!orbitalScan.active)notify('Scan interrupted: '+orbitalScan.reason);
     if(flight.phase==='landed'||flight.phase==='docked'){const landing=flight.phase==='landed';flight=null;flightWorld.hide();if(landing)travel(true);else beginBayReturn();}return;
   }
-  for(const d of doors){const occupied=Math.abs(player.translation().x-d.x)<.9&&Math.abs(player.translation().z-SHIP_LAYOUT.doorZ)<1.3;if(!d.open&&occupied)d.open=true;d.progress=THREE.MathUtils.damp(d.progress,d.open?1:0,5,fixed);d.mesh.position.y=1.6+d.progress*3.7;d.collider?.setTranslation({x:d.x,y:d.mesh.position.y,z:SHIP_LAYOUT.doorZ});}
+  for(const d of doors){const occupied=[player.translation(),...crew.map(c=>c.body!.translation())].some(p=>Math.abs(p.x-d.x)<.9&&Math.abs(p.z-SHIP_LAYOUT.doorZ)<1.3);if(!d.open&&occupied)d.open=true;d.progress=THREE.MathUtils.damp(d.progress,d.open?1:0,5,fixed);d.mesh.position.y=1.6+d.progress*3.7;d.collider?.setTranslation({x:d.x,y:d.mesh.position.y,z:SHIP_LAYOUT.doorZ});}
   const input=new THREE.Vector2((keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+touchMove.x,(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0)+touchMove.y);if(input.length()>1)input.normalize();
   const speed=touchRunning||keys.has('ShiftLeft')||keys.has('ShiftRight')?RUN_SPEED:WALK_SPEED;const desired=new THREE.Vector3(input.x,0,input.y).applyAxisAngle(new THREE.Vector3(0,1,0),yaw).multiplyScalar(speed);velocity.lerp(desired,1-Math.exp(-12*fixed));
   const grounded=controller.computedGrounded(),jump=stepJumpBuffer(jumpBuffer,grounded);jumpBuffer=jump.remaining;
