@@ -564,7 +564,7 @@ function openDrone(){
   speakingCrew=undefined;
   if(!progress.network.online){showDialogue('ECHO / STANDBY','Relay control link offline. Restore both receivers and activate the outpost uplink before reactivating ECHO. FIELD LOG can track Silent Network.');return;}
   if(!progress.droneRecovered){progress={...progress,droneRecovered:true};surveyDrone.recover();save();tone(780);}
-  showDialogue('ECHO / SURVEY COMPANION','Ready. Follow uses your walked route; Hold keeps this position. I wait when you board a vehicle. Scan records an unread survey site within8m and clear sight over two seconds. Field Log can locate me.');dronePanel.hidden=false;
+  showDialogue('ECHO / SURVEY COMPANION','Ready. Follow uses your walked route, with short detours around obstacles. Sealed or tight routes make me hold safely. I wait when you board a vehicle. Scan records an unread survey site within8m and clear sight over two seconds. Field Log can locate me.');dronePanel.hidden=false;
   const scan=availableDroneScan();$<HTMLButtonElement>('droneScan').disabled=!scan;$('droneScanHint').textContent=scan?'Nearby: '+FIELD_SITES.find(s=>s.id===scan)!.label+'. Scanning stops following; choose Follow again afterward.':'No unread survey site within8m and clear sight.';
 }
 const droneTarget:Target={zone:'surface',name:'Speak to ECHO',position:surveyDrone.root.position,action:openDrone};targets.push(droneTarget);
