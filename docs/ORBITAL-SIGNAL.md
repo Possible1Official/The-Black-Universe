@@ -10,7 +10,7 @@ Scan conditions are rechecked every physics step. Excess speed, range, lost alig
 
 Completion saves **Archive05**, turns the receiver indicator green and adds the decoded record to the field log and officer survey debrief. E near the relay can reread it. Reload starts safely aboard with discovery and older survey/rover/ECHO progress retained; tracking and an in-progress scan are transient. Mission reset clears the archive. Old/malformed saves default unrecovered; the saved flag requires valid recovered Vault/network progress.
 
-The story reports evidence of another biosphere. **Another planet is not yet reachable.** Wayfinder adds an optional flight/exploration objective in the existing sector.
+The story reports evidence of another biosphere and charts Vesper's landing basin. After this relay scan, choose **Track Vesper landing** in the field log for the follow-on expedition. Wayfinder remains an optional orbital exploration objective in the existing sector.
 
 ## Physical appearance and limits
 
