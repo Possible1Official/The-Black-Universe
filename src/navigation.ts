@@ -1,3 +1,4 @@
+import {salvageStep} from './rover-salvage';
 import {vaultStep} from './signal-vault';
 import {LEGACY_SHIP_LAYOUT,type ShipLayout} from './ship-layout';
 import {bulkheadPanels} from './bulkheads';
@@ -9,11 +10,12 @@ import {SUPPLY_CACHE} from './supplies';
 import {FIELD_SITES,type FieldScan} from './survey';
 import {expeditionStep} from './relay-expedition';
 export interface NavPoint {x:number;z:number}
-export type SurfaceTrack=FieldScan|'supplies'|'network'|'drone'|'vault'|NavPoint;
+export type SurfaceTrack=FieldScan|'supplies'|'network'|'drone'|'vault'|'salvage'|NavPoint;
 export interface Waypoint extends NavPoint {id:string;label:string;hint:string}
 const at=(id:string,label:string,x:number,z:number,hint='Approach, face the console and interact with E.'):Waypoint=>({id,label,x,z,hint});
 export function missionDestination(p:Progress,onSurface:boolean,tracked?:SurfaceTrack,landing:LandingSite='survey',layout:ShipLayout=LEGACY_SHIP_LAYOUT):Waypoint {
   const pad=landingPad(landing);
+  if(onSurface&&tracked==='salvage'){const s=salvageStep(p.salvage);return at('salvage-'+(p.salvage==='waiting'?'pickup':'depot'),s.label,SURFACE_ORIGIN+s.x+1.2,s.z+.16,'Park the rover within5.5m, brake, dismount, then press E at the terminal.');}
   if(onSurface&&tracked==='vault'){const step=vaultStep(p.vault);return at('vault-'+step.id,step.label,SURFACE_ORIGIN+step.x,step.z,p.vault.calibrated?'Enter the open vault and approach the archive terminal.':'Tune the exterior receiver. Archive 03 at the outpost gives its carrier and bearing.');}
   if(onSurface&&tracked==='network'){const step=expeditionStep(p.network);return at('network-'+step.id,step.label,SURFACE_ORIGIN+step.x,step.z,step.id==='uplink'?'Enter the open outpost and use its uplink console.':'Approach the amber receiver console. Press E to repair it.');}
   if(onSurface&&typeof tracked==='object'&&Number.isFinite(tracked.x)&&Number.isFinite(tracked.z)&&Math.abs(tracked.x)<=SITE_HALF-3&&Math.abs(tracked.z)<=SITE_HALF-3)return at('surface-pin','Survey waypoint',SURFACE_ORIGIN+tracked.x,tracked.z,'Straight-line guidance only; choose a clear route around rocks. Field log restores mission guidance.');

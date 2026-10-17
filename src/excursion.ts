@@ -1,3 +1,4 @@
+import {SALVAGE_PICKUP,SALVAGE_DEPOT} from './rover-salvage';
 import {VAULT} from './signal-vault';
 // One bounded survey site, in local meters. Render and physics use the same mesh.
 import {FIELD_SITES} from './survey';
@@ -21,6 +22,7 @@ export function surfaceRocks(){
   };
   for(let i=0;i<128;i++){
     const spread=i<64?29:SITE_HALF-4,x=Math.sin(i*127.1+3)*spread,z=Math.cos(i*311.7+7)*spread;
+    if([SALVAGE_PICKUP,SALVAGE_DEPOT].some(s=>Math.hypot(x-s.x,z-s.z)<6.5))continue;
     if(Math.abs(x-VAULT.x)<8&&Math.abs(z-VAULT.z)<12)continue;
     if(Math.abs(x-OUTPOST.x)<8&&Math.abs(z-OUTPOST.z)<10)continue;
     if(REPAIR_SITES.some(s=>Math.hypot(x-s.x,z-s.z)<6))continue;

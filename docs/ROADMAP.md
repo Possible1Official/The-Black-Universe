@@ -329,3 +329,9 @@ Completion and evidence live in PROGRESS.md. Priorities may change based on obse
 - Field-log map/step guidance, persistent calibration/archive and officer debrief; existing sample/readings/ECHO remain independent. Door motion pauses and saves restore the open pose.
 - Refresh parent world transforms before initializing imported door colliders; verify closed/front shoulder blocking and open floor seams with actual capsules.
 - Remaining: distinct second-world travel, richer interiors/encounters and measured device budgets. The vault is authored local content and a bounded puzzle, not simulated signal intelligence.
+
+## Rover salvage contract (2026-10-17)
+- Recover a source-textured recorder from the western field pallet, visibly carry it on a four-contact rear rack, and deliver to the outpost depot. Park, brake and dismount for terminal transfers; remote/obstructed/moving transfers are blocked.
+- Saved cargo phase, field-log/map step guidance, officer debrief and16m/s rover cruise reward. Re-entry retains cargo, reset restores14m/s; bike and older missions remain independent.
+- Preserve all source rover/cargo geometry/maps and articulated wheel motion. Cargo follows the chassis rigidly with no new mounted collider; field/depot collision matches the one transferred crate.
+- Remaining: physical loading animation, dynamic cargo forces, more contracts/encounters, distinct worlds and measured device budgets. This is a bounded kinematic transport interaction, not a cargo physics simulation.

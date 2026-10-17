@@ -12,7 +12,8 @@ function spawnGround(world:RAPIER.World,position:{x:number;y:number;z:number},ha
 }
 export class GroundVehicle{
  readonly body:RAPIER.RigidBody;readonly collider:RAPIER.Collider;readonly controller:RAPIER.KinematicCharacterController;
- yaw=0;speed=0;vertical=0;distance=0;turnRate=0;
+ yaw=0;speed=0;vertical=0;distance=0;turnRate=0;driveCalibrated=false;
+ get maxSpeed(){return this.kind==='rover'&&this.driveCalibrated?16:VEHICLE_SPEC[this.kind].maxSpeed;}
  constructor(readonly kind:VehicleKind,readonly world:RAPIER.World,position:{x:number;y:number;z:number}){
   const h=VEHICLE_SPEC[kind].half;this.body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(position.x,spawnGround(world,position,h)+h[1],position.z));this.collider=world.createCollider(RAPIER.ColliderDesc.cuboid(h[0],h[1],h[2]),this.body);
   this.controller=world.createCharacterController(.025);this.controller.enableSnapToGround(.5);this.controller.enableAutostep(kind==='rover'?1:.45,kind==='rover'?.35:.3,true);this.controller.setMaxSlopeClimbAngle(kind==='rover'?Math.PI*.28:Math.PI*.23);
@@ -20,7 +21,7 @@ export class GroundVehicle{
  relocate(position:{x:number;y:number;z:number}){const h=VEHICLE_SPEC[this.kind].half;this.body.setTranslation({x:position.x,y:spawnGround(this.world,position,h,this.collider)+h[1],z:position.z},true);this.body.setNextKinematicTranslation(this.body.translation());this.speed=this.vertical=this.turnRate=0;this.yaw=0;this.body.setRotation({x:0,y:0,z:0,w:1},true);this.body.setNextKinematicRotation({x:0,y:0,z:0,w:1});}
  step(steer:number,throttle:number,brake:boolean,dt:number,passenger?:RAPIER.Collider){
   if(!Number.isFinite(dt)||dt<=0)return;dt=Math.min(dt,.05);
-  const target=brake?0:Math.max(0,Math.min(1,throttle))*VEHICLE_SPEC[this.kind].maxSpeed;this.speed+=(target-this.speed)*(1-Math.exp(-(brake?8:2)*dt));
+  const target=brake?0:Math.max(0,Math.min(1,throttle))*this.maxSpeed;this.speed+=(target-this.speed)*(1-Math.exp(-(brake?8:2)*dt));
   this.turnRate=-Math.max(-1,Math.min(1,steer))*Math.min(1,this.speed/2)*1.2;this.yaw+=this.turnRate*dt;
   this.body.setNextKinematicRotation({x:0,y:Math.sin(this.yaw/2),z:0,w:Math.cos(this.yaw/2)});
   this.vertical=this.controller.computedGrounded()?-.4:Math.max(-20,this.vertical-9.81*dt);
@@ -39,7 +40,7 @@ export class GroundVehicle{
   const hit=this.world.castRay(new RAPIER.Ray(from,{x:0,y:-1,z:0}),VEHICLE_SPEC[this.kind].half[1]+4,true,undefined,undefined,this.collider,undefined,c=>c.handle!==passenger?.handle);
   return hit?from.y-hit.timeOfImpact:undefined;
  }
- snapshot(){return {kind:this.kind,position:this.body.translation(),yaw:this.yaw,speed:this.speed,distance:this.distance,turnRate:this.turnRate};}
+ snapshot(){return {kind:this.kind,position:this.body.translation(),yaw:this.yaw,speed:this.speed,maxSpeed:this.maxSpeed,distance:this.distance,turnRate:this.turnRate};}
 }
 // Try clear nearby ground, never force a dismount through another solid.
 export function dismountPosition(world:RAPIER.World,vehicle:GroundVehicle,observer:RAPIER.Collider,ground:(x:number,z:number)=>number){
