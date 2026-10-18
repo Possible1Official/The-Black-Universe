@@ -1,5 +1,10 @@
 # Roadmap
 
+## GitHub Pages packaging (2026-10-18)
+- Publish `dist/` with official Pages artifact/deployment actions after main passes the existing tests/build. PRs validate without deployment; manual main workflow dispatch is supported.
+- Keep relative Vite asset paths for the project subdirectory and custom domains. Production subpath smoke script checks startup, source asset requests, pause/reload and absence of development hooks.
+- Pages source should be GitHub Actions; the integration cannot change that setting (HTTP403). Retain the existing private Sites project and built-in development scheduler separately.
+
 ## Vesper surface identity (2026-10-18)
 - Distinct pale fractured frost, exposed basalt and warm mineral deposits at the two survey sites. Smooth regional/slope blending and fine plus rotated broad detail on the existing terrain mesh.
 - One64KiB packed scalar texture replaces the former gray grain map; Performance keeps regional texture, High adds surface-specific roughness and bump. Terrain collision, routes and reviewed source assets remain unchanged.
