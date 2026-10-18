@@ -1,5 +1,11 @@
 # Roadmap
 
+## Vesper research shelter (2026-10-18)
+- Replace the exposed Archive06 pedestal with a walk-in CGTrader modular research shelter on a prepared northern foundation.
+- Original kit materials/maps and Door_Open animation, physical entrance/side/back walls, clear source floor lanes, cargo and recorder props.
+- Both survey readings release the door; exterior readout explains the lock, and players enter to recover the existing saved archive. Re-entry restores released access.
+- Remaining: richer encounters, additional distinct landmarks and physical-device budgets. The shelter is one authored-kit room, not a new planet or simulated research crew.
+
 ## Vesper ECHO companion (2026-10-17)
 - Recover ECHO on Nysa to bring the reviewed CGTrader drone and its source rotor loop on Vesper expeditions.
 - Approach for Follow/Hold/Scan; collision-swept breadcrumb following and bounded local detours use the basin's own world. Vehicles make ECHO hold.
