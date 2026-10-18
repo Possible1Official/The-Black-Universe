@@ -14,6 +14,8 @@ Vesper's **Archive06** is now inside a walk-in research shelter built from the r
 
 Meet **Dr Sora** inside the shelter: a physical, animated researcher with progress-aware survey/archive/return briefings. Approach and press E. The resident uses the existing licensed crew model and captured motion; the short patrol and conversations are authored locally.
 
+After Archive06, ask Sora for **Field walk → Start fissure walk** to visit the warm fissure together. The guide waits for you, offers a site briefing, and physically retraces the route when you choose **Return to shelter**. Existing materials and captured walking are retained.
+
 ## Run
 
 Node.js 22+: `npm ci`, then `npm run dev`. Open the printed URL. `npm test` verifies progression/save invariants; `npm run build` checks TypeScript and produces static `dist/`. `npm run preview` serves that build. With the dev server running, `npm run test:browser` exercises the mission and collision flow in Chromium (first install it with `npx playwright install chromium`).
