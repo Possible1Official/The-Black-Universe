@@ -4,6 +4,8 @@ An evolving browser science-fiction game: explore the starship **Erebus**, resto
 
 **Play:** https://the-black-universe-erebus.harshit-0207.chatgpt.site
 
+**GitHub Pages:** https://possible1official.github.io/The-Black-Universe/ (deployment status: repository **Actions → Validate game and deploy Pages**).
+
 This is a playable foundation toward an ambitious universe simulation. It does not yet provide television-level photorealism, planet-wide exploration, multiplayer, or general-purpose AI NPCs.
 
 Vesper now has the reviewed Turbo Bike and Sci-fi Rover beside its landing apron. E mounts/dismounts, left slider controls speed, right joystick steers, and Brake/Space stops. Camera look stays independent. Original textured rider/body and hinged suspension carry over from Nysa; see [Vesper controls and scope](docs/VESPER.md).
@@ -19,6 +21,12 @@ After Archive06, ask Sora for **Field walk → Start fissure walk** to visit the
 ## Run
 
 Node.js 22+: `npm ci`, then `npm run dev`. Open the printed URL. `npm test` verifies progression/save invariants; `npm run build` checks TypeScript and produces static `dist/`. `npm run preview` serves that build. With the dev server running, `npm run test:browser` exercises the mission and collision flow in Chromium (first install it with `npx playwright install chromium`).
+
+## GitHub Pages hosting
+
+The game is a static Vite application. The workflow in `.github/workflows/ci.yml` installs locked dependencies, runs tests and builds `dist/`. Only passing builds from `main` are uploaded and deployed to the `github-pages` environment; pull requests validate without publishing. The deployment job uses its scoped Pages permission to select the GitHub Actions source before deploying. If repository policy blocks that step, select **GitHub Actions** in **Settings → Pages → Build and deployment**. **Actions → Validate game and deploy Pages → Run workflow** can redeploy `main` manually. No personal deploy token or external hosting service is needed.
+
+Keep `vite.config.ts`'s relative `base: './'`: generated scripts, textures and model files then work under `/The-Black-Universe/`, on a custom domain and in local preview. Publish the **contents of `dist/`**, not the repository root or `src/`. Do not commit generated output or account/session files. For a local production subpath smoke check after `npm run build`, run `node scripts/pages-qa.mjs` with system Chromium installed (or set `CHROMIUM_PATH`). Saved game progress is stored per origin, so a first visit on GitHub Pages starts a separate save from the private Site.
 
 ## Current expansion
 
@@ -77,6 +85,6 @@ See [local crew behavior](docs/CREW.md) for the implemented patrol model and its
 
 ## Ongoing development
 
-Read [roadmap](docs/ROADMAP.md), [progress/evidence](docs/PROGRESS.md), [automation protocol](docs/AUTONOMY.md) and [Mixamo asset status](docs/ASSETS.md). Built-in hourly tasks initiate development; GitHub Actions tests the game. Owner-private Sites hosting serves a mirrored copy of the tested GitHub source. Pages setup was blocked by the integration permission (HTTP 403). Each cycle uses a branch/PR and merges passing changes. Rollback retains Git history and baseline tags.
+Read [roadmap](docs/ROADMAP.md), [progress/evidence](docs/PROGRESS.md), [automation protocol](docs/AUTONOMY.md) and [Mixamo asset status](docs/ASSETS.md). Built-in hourly tasks initiate development; GitHub Actions validates changes and deploys passing main builds to Pages. The existing owner-private Site remains separate. Each cycle uses a branch/PR and merges passing changes. Rollback retains Git history and baseline tags.
 
 No Vercel or Supabase is used. Credentials never belong in the public repo or browser bundle.
