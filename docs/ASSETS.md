@@ -1,5 +1,11 @@
 # Asset pipeline
 
+## Vesper guided field walk (2026-10-18)
+
+Reuse Sora's existing licensed crew rig/maps and captured Idle/Walking, plus reviewed CGTrader shelter/door/props and scanned rocks. Source assets, provenance and animation bytes remain unchanged; no acquisition/login/download, recolor or newly imported animation. The new route uses the existing physical actor and terrain; no new mesh, collider, map, light or shadow pass. Movement drives existing clip time/weight. No pointing/gesture clip is available or claimed.
+
+One bounded six-waypoint route with reached-node history supports the outbound walk and reverse return. Existing24m render visibility remains; this adds route/distance math without a measured performance-gain claim. The original researcher capsule size/clearance is retained. Its former fixed downward displacement opposed horizontal movement on a source ramp; gravity and a small grounded bias now keep the same collider moving across the real floor/terrain. Node route fixtures use actual geometry without image decoding; browser QA inspects original outdoor materials/pose and the mobile site briefing.
+
 ## Vesper researcher reuse (2026-10-18)
 
 Reuse the existing licensed Ely by K. Atienza crew character and captured Idle/Walking clips, with independent skeleton/mixer. This character is the existing crew asset, not a newly acquired CGTrader model. The room, kit door, cargo and recorder remain the reviewed CGTrader derivatives with original maps/source motion. All14 CGTrader derivative/provenance/motion files and Ely GLB remain byte-identical. No login/download, conversion, recolored map, invented gesture or new stock animation claim.

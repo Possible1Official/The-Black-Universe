@@ -1,5 +1,12 @@
 # Roadmap
 
+## Sora's Vesper field walk (2026-10-18)
+- After Archive06, ask Sora for Field walk → Start fissure walk. Physical route through the shelter door to the warm fissure and a new site briefing.
+- Wait beyond6m, yield inside.85m, hold when the visitor boards a vehicle, pause with menus/conversations, and stop at blocked lanes without skipping them.
+- Return to shelter reverses reached waypoints from the current position; partial cancellation does not teleport. The original local patrol resumes after arrival.
+- Correct researcher vertical motion to gravity/small grounded bias so slow walking crosses source floor ramps naturally. Original capsule, maps and captured walking retained.
+- Remaining: additional encounters/duty graphs and physical-device budgets. This is an optional authored walk, not free-form navigation or a new saved quest.
+
 ## Vesper resident researcher (2026-10-18)
 - Dr Sora physically patrols the research shelter's clear side aisle with captured idle/walking, turns toward nearby visible visitors and reverses after sustained obstruction.
 - Approach/aim/E opens survey, archive and return briefings reflecting current readings/recovery. Conversation and pause freeze motion/animation; reload/re-entry restart the local duty safely.
