@@ -1,5 +1,10 @@
 # Roadmap
 
+## Vesper surface identity (2026-10-18)
+- Distinct pale fractured frost, exposed basalt and warm mineral deposits at the two survey sites. Smooth regional/slope blending and fine plus rotated broad detail on the existing terrain mesh.
+- One64KiB packed scalar texture replaces the former gray grain map; Performance keeps regional texture, High adds surface-specific roughness and bump. Terrain collision, routes and reviewed source assets remain unchanged.
+- Remaining: authored geological formations, volumetric geothermal effects, physical ice traction and measured real-device rendering budgets. This is cosmetic surface detail, not new height relief or a thermal simulation.
+
 ## Sora's Vesper field walk (2026-10-18)
 - After Archive06, ask Sora for Field walk → Start fissure walk. Physical route through the shelter door to the warm fissure and a new site briefing.
 - Wait beyond6m, yield inside.85m, hold when the visitor boards a vehicle, pause with menus/conversations, and stop at blocked lanes without skipping them.

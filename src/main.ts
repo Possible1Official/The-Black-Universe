@@ -772,6 +772,7 @@ function frame(){requestAnimationFrame(frame);movementControls.hidden=!onFoot();
     const trip=vesperTrip;trip.researcher.show(trip.walking,trip.player.translation());trip.companion.present(dt,trip.walking,active&&!dialogueOpen);if(active&&!dialogueOpen){const budget=motionClock.advance(movementDt);lastMotionSteps=budget.steps;motionStepsTotal+=budget.steps;droppedMotionTime+=budget.dropped;for(let i=0;i<budget.steps;i++)physicsStep();}
     if(trip.phase==='done'){leaveVesper();return;}
     avatarVisual?.setBikeFirstPerson(false);avatarVisual?.releaseBikeContact();avatarVisual?.releaseFootContact();camera.fov=68;camera.near=.08;camera.updateProjectionMatrix();
+    trip.groundMaterial.setQuality($<HTMLSelectElement>('quality').value==='high');
     const targetScene=trip.present(camera,avatar,yaw,pitch,thirdPerson,flightWorld.scene);renderPass.scene=targetScene;if(camera.parent!==targetScene)targetScene.add(camera);if(targetScene===flightWorld.scene)sharedSpace.present(targetScene,camera.position);
     if(trip.walking)trip.vehicles.present(active&&!dialogueOpen?dt:0,camera,avatar,avatarVisual,yaw,pitch,thirdPerson,trip.contact);flightWorld.cockpit.visible=!trip.walking&&!thirdPerson;flightWorld.cockpit.quaternion.identity();
     const reading=navigationReading(trip.player.translation(),yaw+(trip.vehicles.riding?.yaw??0),trip.guidance().point),visible=informationVisible&&active&&!dialogueOpen;
