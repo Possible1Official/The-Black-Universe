@@ -1,5 +1,11 @@
 # Roadmap
 
+## Vesper resident researcher (2026-10-18)
+- Dr Sora physically patrols the research shelter's clear side aisle with captured idle/walking, turns toward nearby visible visitors and reverses after sustained obstruction.
+- Approach/aim/E opens survey, archive and return briefings reflecting current readings/recovery. Conversation and pause freeze motion/animation; reload/re-entry restart the local duty safely.
+- Reuse licensed Ely crew rig/motion alongside the reviewed CGTrader room/props; source geometry/maps/clips unchanged. One extra capsule, no new light or texture; hide the rendered actor beyond24m.
+- Remaining: wider duty graphs, additional encounters, distinct research characters and measured device budgets. This is a local authored patrol and scripted conversation, not general-purpose AI.
+
 ## Vesper research shelter (2026-10-18)
 - Replace the exposed Archive06 pedestal with a walk-in CGTrader modular research shelter on a prepared northern foundation.
 - Original kit materials/maps and Door_Open animation, physical entrance/side/back walls, clear source floor lanes, cargo and recorder props.

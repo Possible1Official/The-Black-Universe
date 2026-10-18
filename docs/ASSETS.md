@@ -1,5 +1,11 @@
 # Asset pipeline
 
+## Vesper researcher reuse (2026-10-18)
+
+Reuse the existing licensed Ely by K. Atienza crew character and captured Idle/Walking clips, with independent skeleton/mixer. This character is the existing crew asset, not a newly acquired CGTrader model. The room, kit door, cargo and recorder remain the reviewed CGTrader derivatives with original maps/source motion. All14 CGTrader derivative/provenance/motion files and Ely GLB remain byte-identical. No login/download, conversion, recolored map, invented gesture or new stock animation claim.
+
+One retained kinematic capsule/controller and local patrol state in Vesper's world. Existing geometry/material references are shared; object/skeleton/mixer state is separate. Distance-hide the researcher beyond24m while retaining walking-phase physical collision; hide/disable on guided phases or exit. No new light, texture or shadow pass. Idle/walk pose fitting adds bounded CPU/GPU work; no measured performance improvement is claimed. A simple capsule visual remains only a load-failure fallback.
+
 ## Vesper shelter reuse (2026-10-18)
 
 Reuse the reviewed CGTrader modular corridor kit and original Door_Open clip, plus existing cargo and recorder derivatives. Three shared source cells form a walk-in room; sealed structural sides/back/roof, matching collision and prepared ground surround it. Original source materials/image/geometry/animation references remain unchanged. All14 derivative/provenance/motion files are byte-identical; no new acquisition/login/download or source conversion. Static props have no source motion and none is invented.

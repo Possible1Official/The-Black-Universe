@@ -12,6 +12,8 @@ Recovered **ECHO** now accompanies Vesper visits, using its reviewed CGTrader mo
 
 Vesper's **Archive06** is now inside a walk-in research shelter built from the reviewed CGTrader modular kit. Both basin readings release its source-animated entrance door; walk inside to recover the recorder. Original maps, solid walls and clear floor lanes are retained.
 
+Meet **Dr Sora** inside the shelter: a physical, animated researcher with progress-aware survey/archive/return briefings. Approach and press E. The resident uses the existing licensed crew model and captured motion; the short patrol and conversations are authored locally.
+
 ## Run
 
 Node.js 22+: `npm ci`, then `npm run dev`. Open the printed URL. `npm test` verifies progression/save invariants; `npm run build` checks TypeScript and produces static `dist/`. `npm run preview` serves that build. With the dev server running, `npm run test:browser` exercises the mission and collision flow in Chromium (first install it with `npx playwright install chromium`).
