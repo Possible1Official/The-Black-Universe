@@ -2,6 +2,7 @@ import type {FlightState,Vec3} from './flight';
 export const VESPER={x:710,y:130,z:-1230},VESPER_RADIUS=92;
 export const VESPER_APPROACH={x:710,y:130,z:-1090};
 export const VESPER_CAPTURE={x:710,y:130,z:-1130};
+export const VESPER_SHELTER={x:1,z:-23,title:'VESPER / ARCHIVE06',subtitle:'BASIN RESEARCH SHELTER'};
 export const VESPER_HALF=48,VESPER_PAD={x:0,z:22};
 export const VESPER_SITES=[{id:'ice',label:'Frost shelf',x:-23,z:2,reading:'Subsurface water ice beneath an insulating mineral crust.'},{id:'vent',label:'Warm fissure',x:20,z:-18,reading:'Geothermal warmth; dormant organic compounds survive below the frost.'}] as const;
 export type VesperReading=typeof VESPER_SITES[number]['id'];
@@ -11,7 +12,8 @@ const smooth=(x:number)=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
 export function vesperHeight(x:number,z:number){
  const r=Math.hypot(x,z),rim=8*smooth((r-32)/15),waves=.5*Math.sin(x*.14)*Math.cos(z*.11),ridge=3*Math.exp(-((x-22)**2/100+(z+18)**2/180));
  const pad=1-smooth((Math.hypot(x-VESPER_PAD.x,z-VESPER_PAD.z)-7)/7);
- return (rim+waves+ridge)*(1-pad);
+ const shelter=1-smooth(Math.max(Math.abs(x-VESPER_SHELTER.x)-5.8,Math.abs(z-VESPER_SHELTER.z)-8)/3);
+ return (rim+waves+ridge)*(1-pad)*(1-shelter);
 }
 export function vesperMesh(n=96){
  const vertices=new Float32Array((n+1)**2*3),indices=new Uint32Array(n*n*6);let v=0,t=0;

@@ -1,5 +1,11 @@
 # Asset pipeline
 
+## Vesper shelter reuse (2026-10-18)
+
+Reuse the reviewed CGTrader modular corridor kit and original Door_Open clip, plus existing cargo and recorder derivatives. Three shared source cells form a walk-in room; sealed structural sides/back/roof, matching collision and prepared ground surround it. Original source materials/image/geometry/animation references remain unchanged. All14 derivative/provenance/motion files are byte-identical; no new acquisition/login/download or source conversion. Static props have no source motion and none is invented.
+
+Reuse Signal Vault's tested assembly with optional site/sign presentation; Nysa defaults retain their layout and receiver tuning. Two small generated readout/sign canvas maps describe the Vesper survey lock; they do not replace stock albedo/normal maps. Two distance-limited local point lights illuminate the entrance/interior without shadows. Source floor/door collision replaces their fallback proxies once loaded; shell collision stays sealed. Additional retained room/collider/render allocations are not a measured performance gain. Node geometry fixtures omit image decoding; browser QA inspects actual maps and the source door motion.
+
 ## Vesper ECHO reuse (2026-10-17)
 
 Reuse the reviewed CGTrader ECHO drone derivative unchanged:8 meshes/15,366 triangles, authored metallic materials and the existing source rotor animation. This source has no image textures; no replacement maps, emission glow or stock animation are invented. The four rotor nodes animate through the existing mixer. Shared cached source geometry/materials remain separate from per-instance transforms/mixer. No login/download/conversion or raw-source redistribution this cycle; all14 CGTrader derivative/provenance/motion files remain unchanged.

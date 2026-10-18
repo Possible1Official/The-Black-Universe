@@ -10,6 +10,8 @@ Vesper now has the reviewed Turbo Bike and Sci-fi Rover beside its landing apron
 
 Recovered **ECHO** now accompanies Vesper visits, using its reviewed CGTrader model and source rotor loop. Approach for Follow/Hold or a two-second nearby sampler scan; FIELD LOG can locate it. Vehicles make it wait, and readings share existing saved survey progress.
 
+Vesper's **Archive06** is now inside a walk-in research shelter built from the reviewed CGTrader modular kit. Both basin readings release its source-animated entrance door; walk inside to recover the recorder. Original maps, solid walls and clear floor lanes are retained.
+
 ## Run
 
 Node.js 22+: `npm ci`, then `npm run dev`. Open the printed URL. `npm test` verifies progression/save invariants; `npm run build` checks TypeScript and produces static `dist/`. `npm run preview` serves that build. With the dev server running, `npm run test:browser` exercises the mission and collision flow in Chromium (first install it with `npx playwright install chromium`).
