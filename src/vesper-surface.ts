@@ -4,8 +4,9 @@ import type {Vec3} from './flight';import {PLAYER_SHAPE} from './player-shape';
 import {WALK_SPEED,RUN_SPEED,JUMP_SPEED} from './pilot-controls';import {turnToward} from './patrol';
 import {makeShuttle} from './flight-scene';import {loadAuthoredAsset} from './authored-assets';import {requestedAsset} from './requested-assets';
 import {SHUTTLE_SIZE,SHUTTLE_HATCH_Z,SHUTTLE_EYE_HEIGHT} from './shuttle';import {walkingCamera,flightCamera,orbitalCameraDistance} from './view-camera';
-import {orientRock,seatRock} from './rock-placement';import {ROCK_HULL_VERTICES,ROCK_HULL_INDICES} from './rock-hull';import {RockScenery,type RockInstance} from './rock-scenery';import {createRockCollider} from './rock-collider';import {groundMapData} from './terrain-material';
+import {orientRock,seatRock} from './rock-placement';import {ROCK_HULL_VERTICES,ROCK_HULL_INDICES} from './rock-hull';import {RockScenery,type RockInstance} from './rock-scenery';import {createRockCollider} from './rock-collider';
 import {SurfaceContact} from './surface-contact';
+import {createVesperMaterial,vesperBlend,vesperTint} from './vesper-material';
 import {SignalVaultScene} from './signal-vault-scene';
 import {VesperResearcher} from './vesper-researcher';
 import {VesperCompanion} from './vesper-companion';
@@ -14,7 +15,7 @@ export type VesperPhase='capture'|'descent'|'walking'|'ascent'|'departure'|'done
 export class VesperSurface{
  readonly scene=new THREE.Scene();readonly world=new RAPIER.World({x:0,y:-9.81,z:0});readonly player:RAPIER.RigidBody;readonly collider:RAPIER.Collider;readonly controller:RAPIER.KinematicCharacterController;
  readonly craft=makeShuttle();readonly rocks:RockScenery;readonly terrain:RAPIER.Collider;
- readonly contact=new SurfaceContact();readonly vehicles:VesperVehicles;readonly companion:VesperCompanion;readonly researcher:VesperResearcher;
+ readonly groundMaterial=createVesperMaterial();readonly contact=new SurfaceContact();readonly vehicles:VesperVehicles;readonly companion:VesperCompanion;readonly researcher:VesperResearcher;
  phase:VesperPhase='capture';timer=0;private start:Vec3={...VESPER_APPROACH};private velocity=new THREE.Vector3();vertical=0;private jumpBuffer=0;private heading=Math.PI;
  private readings:VesperReading[]=[];private archived=false;private nearest=-1;private loaded=false;private pending?:Promise<void>;private attempted=false;
  private look={yaw:0,pitch:0};
@@ -25,15 +26,14 @@ export class VesperSurface{
   this.scene.add(new THREE.HemisphereLight(0xabc8e7,0x333238,1.2));const sun=new THREE.DirectionalLight(0xffe4c5,2.1);sun.position.set(-35,65,25);this.scene.add(sun);
   if(stars){const material=(stars.material as THREE.PointsMaterial).clone();material.fog=false;material.size=.8;material.transparent=true;material.opacity=.65;this.scene.add(new THREE.Points(stars.geometry,material));}
   const data=vesperMesh(),geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(data.vertices,3));geometry.setIndex(new THREE.BufferAttribute(data.indices,1));geometry.computeVertexNormals();
-  const c=new Float32Array(data.vertices.length),uv=new Float32Array(data.vertices.length/3*2),normal=geometry.getAttribute('normal'),color=new THREE.Color();
-  for(let i=0;i<data.vertices.length/3;i++){const x=data.vertices[i*3],y=data.vertices[i*3+1],z=data.vertices[i*3+2],frost=Math.max(0,Math.min(1,.65-x/50+y*.04+.12*Math.sin(x*.23+z*.11)));color.set(0x303d4c).lerp(new THREE.Color(0x8faab3),frost*normal.getY(i));c.set([color.r,color.g,color.b],i*3);uv.set([x/3,z/3],i*2);}
-  geometry.setAttribute('color',new THREE.BufferAttribute(c,3));geometry.setAttribute('uv',new THREE.BufferAttribute(uv,2));const detail=groundMapData(),pixels=new Uint8Array(detail.packed.length);for(let i=0;i<pixels.length;i+=4){const v=180+Math.round(detail.packed[i+1]*.28);pixels.set([v,v,v,255],i);}
-  const map=new THREE.DataTexture(pixels,128,128);map.wrapS=map.wrapT=THREE.RepeatWrapping;map.magFilter=THREE.LinearFilter;map.minFilter=THREE.LinearMipmapLinearFilter;map.generateMipmaps=true;map.needsUpdate=true;
-  const ground=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({vertexColors:true,map,bumpMap:map,bumpScale:.09,roughness:.92}));this.contact.bind(ground.material);ground.receiveShadow=true;this.scene.add(ground);this.terrain=this.world.createCollider(RAPIER.ColliderDesc.trimesh(data.vertices,data.indices,RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES));
+  const c=new Float32Array(data.vertices.length),blend=new Float32Array(data.vertices.length),normal=geometry.getAttribute('normal');
+  for(let i=0;i<data.vertices.length/3;i++){const x=data.vertices[i*3],z=data.vertices[i*3+2],weights=vesperBlend(x,z,normal.getY(i)),color=vesperTint(weights);blend.set(weights,i*3);c.set([color.r,color.g,color.b],i*3);}
+  geometry.setAttribute('color',new THREE.BufferAttribute(c,3));geometry.setAttribute('vesperBlend',new THREE.BufferAttribute(blend,3));
+  const ground=new THREE.Mesh(geometry,this.groundMaterial.material);ground.name='Vesper survey terrain';this.contact.bind(ground.material);ground.receiveShadow=true;this.scene.add(ground);this.terrain=this.world.createCollider(RAPIER.ColliderDesc.trimesh(data.vertices,data.indices,RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES));
   // Distant crater walls: visual scenery beyond the visible survey perimeter.
   const ring=new THREE.BufferGeometry(),rv:number[]=[],ri:number[]=[],ru:number[]=[],rc:number[]=[];
   for(let row=0;row<4;row++)for(let i=0;i<=128;i++){const a=i/128*Math.PI*2,r=row===0?48/Math.max(Math.abs(Math.cos(a)),Math.abs(Math.sin(a))):55+row*35,x=Math.cos(a)*r,z=Math.sin(a)*r,h=row===0?vesperHeight(x,z):8+row*(7+6*Math.sin(a*7)**2)+3*Math.sin(a*11+row);rv.push(x,h,z);ru.push(x/3,z/3);rc.push(.12,.17,.22);if(row<3&&i<128){const n=row*129+i;ri.push(n,n+1,n+129,n+1,n+130,n+129);}}
-  ring.setAttribute('position',new THREE.Float32BufferAttribute(rv,3));ring.setAttribute('uv',new THREE.Float32BufferAttribute(ru,2));ring.setAttribute('color',new THREE.Float32BufferAttribute(rc,3));ring.setIndex(ri);ring.computeVertexNormals();const mountains=new THREE.Mesh(ring,ground.material);mountains.name='Distant Vesper crater rim';this.scene.add(mountains);
+  ring.setAttribute('position',new THREE.Float32BufferAttribute(rv,3));ring.setAttribute('uv',new THREE.Float32BufferAttribute(ru,2));ring.setAttribute('color',new THREE.Float32BufferAttribute(rc,3));const rimBlend=new Float32Array(rv.length);for(let i=1;i<rimBlend.length;i+=3)rimBlend[i]=1;ring.setAttribute('vesperBlend',new THREE.BufferAttribute(rimBlend,3));ring.setIndex(ri);ring.computeVertexNormals();const mountains=new THREE.Mesh(ring,ground.material);mountains.name='Distant Vesper crater rim';this.scene.add(mountains);
   const alloy=new THREE.MeshStandardMaterial({color:0x75858d,metalness:.6,roughness:.55}),light=new THREE.MeshBasicMaterial({color:0x78dfe6});
   this.contact.bind(alloy);
   const box=(size:number[],p:number[],mat:THREE.Material=alloy)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(...size as [number,number,number]),mat);m.position.fromArray(p);this.scene.add(m);this.world.createCollider(RAPIER.ColliderDesc.cuboid(size[0]/2,size[1]/2,size[2]/2).setTranslation(p[0],p[1],p[2]));return m;};
@@ -82,5 +82,5 @@ export class VesperSurface{
   this.shelter.update(0,false,camera.position);
   if(this.walking&&this.craft.parent!==this.scene)this.scene.add(this.craft);this.contact.clear();this.contact.update('player',{x:avatar.position.x,y:avatar.position.y,z:avatar.position.z,yaw:this.heading,visible:avatar.visible},vesperHeight(avatar.position.x,avatar.position.z));this.contact.update('shuttle',{x:this.craft.position.x,y:this.craft.position.y,z:this.craft.position.z,yaw:this.craft.rotation.y,visible:!orbital&&this.craft.visible},vesperHeight(this.craft.position.x,this.craft.position.z));this.rocks.update(camera.position,false,!orbital);for(const [i,r]of this.rocks.contacts().entries())this.contact.updateRock(i,r.x,r.z,r.width,r.depth);return orbital?orbitalScene:this.scene;
  }
- snapshot(){return {phase:this.phase,timer:this.timer,position:this.player.translation(),readings:[...this.readings],archived:this.archived,loaded:this.loaded,rocks:this.rocks.snapshot(),colliders:this.world.colliders.len(),vehicles:this.vehicles.snapshot(),companion:this.companion.snapshot(),shelter:this.shelter.snapshot(),researcher:this.researcher.snapshot()};}
+ snapshot(){return {ground:this.groundMaterial.snapshot(),phase:this.phase,timer:this.timer,position:this.player.translation(),readings:[...this.readings],archived:this.archived,loaded:this.loaded,rocks:this.rocks.snapshot(),colliders:this.world.colliders.len(),vehicles:this.vehicles.snapshot(),companion:this.companion.snapshot(),shelter:this.shelter.snapshot(),researcher:this.researcher.snapshot()};}
 }

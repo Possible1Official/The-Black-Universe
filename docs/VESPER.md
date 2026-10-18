@@ -1,5 +1,7 @@
 # Vesper frozen-basin expedition
 
+The western frost shelf now has pale blue fractured surface detail; exposed slopes reveal dark basalt, while the northeastern warm fissure has brown mineral staining. Regional transitions and broad/fine detail share the existing terrain geometry and collision. Performance mode retains the regional textures; High adds bump and different ice/stone roughness. These are visual material differences: footing, traction and terrain heights are unchanged. There is no glowing lava or simulated thawing.
+
 Recover Wayfinder **Archive05**, then choose **J / FIELD LOG → Track Vesper landing**. Fly Kestrel to Vesper's near-side approach ring at sector **710/130/−1090**, within100m and below18m/s, then press **E**. **T** cancels tracking and restores ordinary Nysa/Erebus guidance. The frozen globe has its own visible physical safety hull.
 
 Three seconds of orbital capture lead into seven seconds of guided descent. Land beside the parked jet in a new96×96m survey basin. Walk, run and jump with existing controls and captured Mixamo clips; INFO remains optional, C switches first/third person. Follow guidance to the western **frost shelf** and northeastern **warm fissure**. Approach each sampler and press E. Both readings unlock **Archive06** inside the northern research shelter. The field log and Vega's survey debrief reflect your findings.
